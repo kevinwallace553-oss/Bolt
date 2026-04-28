@@ -907,3 +907,398 @@ const DASH = {
     }).join('');
   }
 };
+
+/* ════════════════════════════════════════════════════
+   DASH EXTENSIONS — navTab, analytics, at-risk,
+   lookup, report
+════════════════════════════════════════════════════ */
+
+/* ── NAV TAB SWITCHING ── */
+DASH.navTab = function(tab, btn) {
+  // Switch nav buttons
+  document.querySelectorAll('.dash-nav-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+
+  // Switch tab panels
+  document.querySelectorAll('.dash-tab').forEach(t => t.classList.remove('active'));
+  const panel = document.getElementById(`dt${tab.charAt(0).toUpperCase()+tab.slice(1)}`);
+  if (panel) panel.classList.add('active');
+
+  // Load data for the tab being opened
+  if (tab === 'analytics') DASH.loadAnalytics();
+  if (tab === 'atrisk')    DASH.loadAtRisk();
+  if (tab === 'lookup')    { /* ready on demand */ }
+  if (tab === 'report')    DASH.loadReport(0);
+};
+
+/* ── ANALYTICS TAB ── */
+DASH._weekOffset = 0;
+DASH._analyticsLoaded = false;
+
+DASH.loadAnalytics = async function() {
+  if (DASH._analyticsLoaded) return;
+  DASH._analyticsLoaded = true;
+  DASH.loadWeek(0);
+  DASH.loadTrend();
+  DASH.loadGrades();
+};
+
+DASH.loadWeek = async function(offset) {
+  DASH._weekOffset = offset;
+  const el = document.getElementById('weekPanel');
+  el.innerHTML = '<div class="empty-state"><p class="empty-txt">Loading…</p></div>';
+  try {
+    const r = await API.getWeeklyReport(offset);
+    const days = r?.days || r?.weekly || (Array.isArray(r) ? r : []);
+    if (!days.length) {
+      el.innerHTML = '<div class="empty-state"><p class="empty-txt">No data for this week</p></div>';
+      return;
+    }
+    const max = Math.max(...days.map(d => +(d.count||d.total||0)), 1);
+    el.innerHTML = `<div style="padding:14px 12px;display:flex;flex-direction:column;gap:11px">${
+      days.map(d => {
+        const count = d.count||d.total||0;
+        const label = d.label||d.date||d.day||'';
+        const pct = (count/max*100).toFixed(1);
+        return `<div style="display:flex;align-items:center;gap:10px">
+          <div style="font-size:10px;font-weight:700;color:var(--muted);width:80px;flex-shrink:0;text-align:right">${label}</div>
+          <div style="flex:1;height:10px;background:var(--surface);border-radius:5px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--green),var(--teal));border-radius:5px;transition:width .6s .1s ease"></div>
+          </div>
+          <div style="font-family:var(--font);font-size:14px;font-weight:800;color:#67e8f9;min-width:28px;text-align:right">${count}</div>
+        </div>`;
+      }).join('')
+    }</div>`;
+  } catch(e) {
+    el.innerHTML = '<div class="empty-state"><p class="empty-txt">Failed to load — check connection</p></div>';
+  }
+};
+
+DASH.loadTrend = async function() {
+  const el = document.getElementById('trendPanel');
+  if (!el) return;
+  el.innerHTML = '<div class="empty-state"><p class="empty-txt">Loading…</p></div>';
+  try {
+    const r = await API.getAnalytics();
+    const weeks = r?.weekly || r?.trend || [];
+    if (!weeks.length) {
+      el.innerHTML = '<div class="empty-state"><p class="empty-txt">Not enough data yet</p></div>';
+      return;
+    }
+    const max = Math.max(...weeks.map(w => +(w.count||w.total||w.attended||0)), 1);
+    el.innerHTML = `<div style="padding:14px 12px;display:flex;flex-direction:column;gap:8px">${
+      weeks.map(w => {
+        const count = w.count||w.total||w.attended||0;
+        const label = w.label||w.week||w.date||'';
+        return `<div style="display:flex;align-items:center;gap:10px">
+          <div style="font-size:9px;font-weight:700;color:var(--muted);width:72px;flex-shrink:0;text-align:right">${label}</div>
+          <div style="flex:1;height:8px;background:var(--surface);border-radius:4px;overflow:hidden">
+            <div style="height:100%;width:${(count/max*100).toFixed(1)}%;background:linear-gradient(90deg,var(--teal),#7c3aed);border-radius:4px"></div>
+          </div>
+          <div style="font-family:var(--font);font-size:12px;font-weight:800;color:#a5f3fc;min-width:24px;text-align:right">${count}</div>
+        </div>`;
+      }).join('')
+    }</div>`;
+  } catch(e) {
+    el.innerHTML = '<div class="empty-state"><p class="empty-txt">Failed to load analytics</p></div>';
+  }
+};
+
+DASH.loadGrades = async function() {
+  const el = document.getElementById('gradePanel');
+  if (!el) return;
+  el.innerHTML = '<div class="empty-state"><p class="empty-txt">Loading…</p></div>';
+  try {
+    const r = await API.getAnalytics();
+    const grades = r?.gradeBreakdown || r?.grades || r?.monthly || [];
+    if (!grades.length) {
+      el.innerHTML = '<div class="empty-state"><p class="empty-txt">No grade data available</p></div>';
+      return;
+    }
+    const max = Math.max(...grades.map(g => +(g.count||g.total||g.students||0)), 1);
+    const colors = ['#0d9488','#06b6d4','#8b5cf6','#f59e0b','#ef4444','#10b981','#3b82f6'];
+    el.innerHTML = `<div style="padding:14px 12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px">${
+      grades.map((g,i) => {
+        const count = g.count||g.total||g.students||0;
+        const label = g.grade!==undefined ? `Grade ${g.grade}` : (g.label||g.name||'?');
+        const color = colors[i % colors.length];
+        const pct = (count/max*100).toFixed(0);
+        return `<div style="background:var(--ink2);border:1px solid var(--rim);border-radius:14px;padding:14px 12px;text-align:center;position:relative;overflow:hidden">
+          <div style="position:absolute;bottom:0;left:0;right:0;height:${pct}%;background:${color};opacity:0.12;transition:height .6s ease"></div>
+          <div style="font-family:var(--font);font-size:24px;font-weight:900;color:${color};line-height:1">${count}</div>
+          <div style="font-size:10px;font-weight:700;color:var(--muted);margin-top:4px">${label}</div>
+        </div>`;
+      }).join('')
+    }</div>`;
+  } catch(e) {
+    el.innerHTML = '<div class="empty-state"><p class="empty-txt">Failed to load grade data</p></div>';
+  }
+};
+
+/* ── AT-RISK TAB ── */
+DASH.loadAtRisk = async function() {
+  const el = document.getElementById('atRiskList');
+  if (!el) return;
+  el.innerHTML = '<div class="empty-state" style="padding:40px"><div class="empty-icon">⏳</div><p class="empty-txt">Loading at-risk students…</p></div>';
+  try {
+    const r = await API.getAtRisk();
+    const students = r?.twoWeeks || r?.atRisk || (Array.isArray(r) ? r : []);
+    if (!students.length) {
+      el.innerHTML = '<div class="empty-state" style="padding:40px"><div class="empty-icon">✅</div><p class="empty-txt">No at-risk students — great attendance!</p></div>';
+      return;
+    }
+    el.innerHTML = `<div style="padding:16px;display:flex;flex-direction:column;gap:8px">${
+      students.map(s => {
+        const name = s.name || ((s.firstName||'')+' '+(s.lastName||'')).trim() || 'Unknown';
+        const pct  = Math.round(+(s.attendanceRate||s.rate||0));
+        const weeks = s.weeksAbsent||s.missedWeeks||s.missed||0;
+        const grade = s.grade||'';
+        const barColor = pct < 25 ? '#ef4444' : pct < 50 ? '#f59e0b' : '#0d9488';
+        return `<div style="background:var(--ink2);border:1px solid rgba(239,68,68,.2);border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:12px">
+          <div style="width:44px;height:44px;border-radius:50%;background:rgba(239,68,68,.15);display:flex;align-items:center;justify-content:center;font-family:var(--font);font-size:14px;font-weight:800;color:#fca5a5;flex-shrink:0">${initials(name)}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:14px;font-weight:700;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</div>
+            <div style="font-size:10px;color:var(--muted);margin-bottom:6px;font-weight:500">${grade?`Grade ${grade} · `:''}${weeks} week${weeks!==1?'s':''} absent</div>
+            <div style="height:5px;background:var(--surface);border-radius:3px;overflow:hidden">
+              <div style="height:100%;width:${pct}%;background:${barColor};border-radius:3px;transition:width .6s ease"></div>
+            </div>
+          </div>
+          <div style="font-family:var(--font);font-size:18px;font-weight:900;color:${barColor};flex-shrink:0;min-width:40px;text-align:right">${pct}%</div>
+        </div>`;
+      }).join('')
+    }</div>`;
+  } catch(e) {
+    el.innerHTML = '<div class="empty-state" style="padding:40px"><p class="empty-txt">Failed to load — check connection</p></div>';
+  }
+};
+
+/* ── LOOKUP TAB ── */
+DASH._lookupResults = [];
+
+DASH.lookupSearch = async function(q) {
+  const el = document.getElementById('lookupResults');
+  document.getElementById('lookupHistory').style.display = 'none';
+  el.style.display = 'block';
+  if (!q.trim()) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🔎</div><p class="empty-txt">Search for a student to see their attendance history</p></div>';
+    return;
+  }
+  const ql = q.toLowerCase();
+  const matches = _allStudents.filter(s => (s.name||'').toLowerCase().includes(ql));
+  DASH._lookupResults = matches;
+  if (!matches.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">😕</div><p class="empty-txt">No students found matching that name</p></div>';
+    return;
+  }
+  el.innerHTML = matches.slice(0,15).map(s =>
+    `<div class="lookup-results-row" onclick="DASH.lookupOpen('${s.id}')">
+      <div class="ci-av-ph" style="background:${gradientForName(s.name)}">${initials(s.name)}</div>
+      <div class="ci-info">
+        <div class="ci-name">${s.name}</div>
+        <div class="ci-meta">Grade ${s.grade||'—'} · ${s.parent||'No contact on file'}</div>
+      </div>
+      <div style="font-size:14px;color:var(--muted2)">›</div>
+    </div>`
+  ).join('');
+};
+
+DASH.lookupOpen = async function(studentId) {
+  const student = _allStudents.find(s => String(s.id) === String(studentId));
+  if (!student) return;
+  document.getElementById('lookupResults').style.display = 'none';
+  const histEl = document.getElementById('lookupHistory');
+  histEl.style.display = 'block';
+  // Student card
+  document.getElementById('lookupStudentCard').innerHTML = `
+    <div class="lookup-av-ph" style="background:${gradientForName(student.name)}">${initials(student.name)}</div>
+    <div>
+      <div style="font-family:var(--font);font-size:18px;font-weight:800">${student.name}</div>
+      <div style="font-size:12px;color:var(--muted);font-weight:500;margin-top:3px">Grade ${student.grade||'—'} · ${student.dob||'No DOB'}</div>
+      <div style="font-size:12px;color:var(--muted2);margin-top:2px">${student.parent||''} ${student.phone?'· '+student.phone:''}</div>
+    </div>`;
+  // Load history
+  const listEl = document.getElementById('lookupHistoryList');
+  const cntEl  = document.getElementById('lookupCount');
+  listEl.innerHTML = '<div class="empty-state"><p class="empty-txt">Loading history…</p></div>';
+  try {
+    const r = await API.getHistory(studentId, student.name);
+    const history = Array.isArray(r) ? r : (r?.history || r?.checkins || []);
+    cntEl.textContent = history.length + ' sessions';
+    if (!history.length) {
+      listEl.innerHTML = '<div class="empty-state"><p class="empty-txt">No attendance history found</p></div>';
+      return;
+    }
+    listEl.innerHTML = history.slice().reverse().map(h => {
+      const date  = h.date||h.sessionDate||'';
+      const event = h.event||h.sessionType||h.type||'';
+      const leader= h.leader||'';
+      const fmt   = date ? new Date(date).toLocaleDateString([],{weekday:'short',month:'short',day:'numeric',year:'numeric'}) : date;
+      return `<div class="ci-row" style="cursor:default">
+        <div style="width:34px;height:34px;border-radius:50%;background:var(--soft);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">✅</div>
+        <div class="ci-info">
+          <div class="ci-name">${fmt||'Unknown date'}</div>
+          <div class="ci-meta">${event} ${leader?'· '+leader:''}</div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    listEl.innerHTML = '<div class="empty-state"><p class="empty-txt">Failed to load history</p></div>';
+  }
+};
+
+DASH.lookupBack = function() {
+  document.getElementById('lookupHistory').style.display = 'none';
+  document.getElementById('lookupResults').style.display = 'block';
+};
+
+/* ── REPORT TAB ── */
+DASH._reportOffset = 0;
+
+DASH.loadReport = async function(offset) {
+  DASH._reportOffset = offset;
+  const el = document.getElementById('reportContent');
+  const lbl = document.getElementById('reportWeekLabel');
+  const nextBtn = document.getElementById('reportNextBtn');
+  if(nextBtn) nextBtn.disabled = offset <= 0;
+  el.innerHTML = '<div class="empty-state" style="padding:40px"><div class="empty-icon">⏳</div><p class="empty-txt">Loading report…</p></div>';
+  try {
+    const r = await API.getWeeklyReport(offset);
+    const days  = r?.days || r?.weekly || (Array.isArray(r) ? r : []);
+    const label = r?.weekLabel || r?.label || (offset===0 ? 'This Week' : `${offset} week${offset!==1?'s':''} ago`);
+    if(lbl) lbl.textContent = label;
+    const total = days.reduce((a,d)=>a+(d.count||d.total||0),0);
+    const peak  = days.reduce((a,d)=>(d.count||d.total||0)>(a.count||a.total||0)?d:a, days[0]||{});
+    const peakLabel = peak?.label||peak?.date||'—';
+    const peakCount = peak?.count||peak?.total||0;
+    el.innerHTML = `
+      <div style="padding:16px;display:flex;flex-direction:column;gap:14px">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+          <div style="background:var(--ink2);border:1px solid var(--rim);border-radius:14px;padding:14px;text-align:center">
+            <div style="font-family:var(--font);font-size:28px;font-weight:900;color:#67e8f9">${total}</div>
+            <div style="font-size:10px;font-weight:700;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:1px">Total</div>
+          </div>
+          <div style="background:var(--ink2);border:1px solid var(--rim);border-radius:14px;padding:14px;text-align:center">
+            <div style="font-family:var(--font);font-size:28px;font-weight:900;color:#67e8f9">${days.filter(d=>(d.count||d.total||0)>0).length}</div>
+            <div style="font-size:10px;font-weight:700;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:1px">Active Days</div>
+          </div>
+          <div style="background:var(--ink2);border:1px solid var(--rim);border-radius:14px;padding:14px;text-align:center">
+            <div style="font-family:var(--font);font-size:28px;font-weight:900;color:#67e8f9">${peakCount}</div>
+            <div style="font-size:10px;font-weight:700;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:1px">Peak Day</div>
+          </div>
+        </div>
+        ${days.length ? `<div style="background:var(--ink2);border:1px solid var(--rim);border-radius:16px;padding:16px">
+          <div style="font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Daily Breakdown</div>
+          ${(() => {
+            const max = Math.max(...days.map(d=>+(d.count||d.total||0)),1);
+            return days.map(d=>{
+              const count=d.count||d.total||0,label=d.label||d.date||'';
+              const isPeak=label===peakLabel&&count===peakCount;
+              return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+                <div style="font-size:10px;font-weight:700;color:var(--muted);width:80px;text-align:right;flex-shrink:0">${label}</div>
+                <div style="flex:1;height:10px;background:var(--surface);border-radius:5px;overflow:hidden">
+                  <div style="height:100%;width:${(count/max*100).toFixed(1)}%;background:${isPeak?'linear-gradient(90deg,#f59e0b,var(--teal))':'linear-gradient(90deg,var(--green),var(--teal))'};border-radius:5px;transition:width .6s ease"></div>
+                </div>
+                <div style="font-family:var(--font);font-size:13px;font-weight:800;color:${isPeak?'#fcd34d':'#67e8f9'};min-width:24px;text-align:right">${count}</div>
+              </div>`;
+            }).join('');
+          })()}
+        </div>` : ''}
+        ${r?.topStudents||r?.students ? `<div style="background:var(--ink2);border:1px solid var(--rim);border-radius:16px;padding:16px">
+          <div style="font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Top Attendees</div>
+          ${(r.topStudents||r.students||[]).slice(0,10).map(s=>{
+            const name=s.name||((s.firstName||'')+' '+(s.lastName||'')).trim()||'?';
+            return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--rim)">
+              <div style="width:28px;height:28px;border-radius:50%;background:var(--soft);display:flex;align-items:center;justify-content:center;font-family:var(--font);font-size:9px;font-weight:800;flex-shrink:0">${initials(name)}</div>
+              <div style="flex:1;font-size:13px;font-weight:600">${name}</div>
+              <div style="font-size:11px;font-weight:800;color:#67e8f9">${s.count||s.sessions||s.attended||1} session${(s.count||s.sessions||s.attended||1)!==1?'s':''}</div>
+            </div>`;
+          }).join('')}
+        </div>` : ''}
+      </div>`;
+  } catch(e) {
+    el.innerHTML = '<div class="empty-state" style="padding:40px"><p class="empty-txt">Failed to load report — check connection</p></div>';
+  }
+};
+
+DASH.reportPrev = function() { DASH.loadReport(DASH._reportOffset + 1); };
+DASH.reportNext = function() { if(DASH._reportOffset > 0) DASH.loadReport(DASH._reportOffset - 1); };
+
+/* also update at-risk count on overview */
+const _origRenderAtRisk = DASH.renderAtRisk.bind(DASH);
+DASH.renderAtRisk = function(data) {
+  _origRenderAtRisk(data);
+  const cnt = document.getElementById('atRiskCount');
+  if(cnt){
+    const students = data?.twoWeeks||data?.atRisk||(Array.isArray(data)?data:[]);
+    cnt.textContent = students.length||'0';
+  }
+};
+
+/* ── REPORT DOWNLOAD ── */
+DASH.downloadReport = async function() {
+  showSaving('Preparing download…');
+  try {
+    const r = await API.getWeeklyReport(DASH._reportOffset);
+    const days = r?.days || r?.weekly || (Array.isArray(r) ? r : []);
+    const label = r?.weekLabel || r?.label ||
+      (DASH._reportOffset === 0 ? 'This Week' : `${DASH._reportOffset} weeks ago`);
+    const students = r?.topStudents || r?.students || [];
+
+    // Build CSV
+    const rows = [];
+    rows.push(['Bolt Kiosk — Weekly Attendance Report']);
+    rows.push([`Week: ${label}`]);
+    rows.push([`Generated: ${new Date().toLocaleString()}`]);
+    rows.push([]);
+
+    // Summary
+    const total = days.reduce((a,d) => a + (d.count||d.total||0), 0);
+    const activeDays = days.filter(d => (d.count||d.total||0) > 0).length;
+    rows.push(['Summary']);
+    rows.push(['Total Check-Ins', total]);
+    rows.push(['Active Days', activeDays]);
+    rows.push([]);
+
+    // Daily breakdown
+    rows.push(['Daily Breakdown']);
+    rows.push(['Day', 'Check-Ins']);
+    days.forEach(d => rows.push([d.label||d.date||'', d.count||d.total||0]));
+    rows.push([]);
+
+    // Top attendees
+    if (students.length) {
+      rows.push(['Top Attendees']);
+      rows.push(['Name', 'Grade', 'Sessions']);
+      students.forEach(s => {
+        const name = s.name || ((s.firstName||'')+' '+(s.lastName||'')).trim();
+        rows.push([name, s.grade||'', s.count||s.sessions||s.attended||1]);
+      });
+    }
+
+    // Convert to CSV string
+    const csv = rows.map(row =>
+      row.map(cell => {
+        const str = String(cell ?? '');
+        return str.includes(',') || str.includes('"') || str.includes('\n')
+          ? `"${str.replace(/"/g, '""')}"` : str;
+      }).join(',')
+    ).join('\r\n');
+
+    // Trigger download
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `bolt-report-${label.replace(/\s+/g,'-').toLowerCase()}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast('📥 Report downloaded!', 'ok');
+  } catch(e) {
+    toast('⚠️ Download failed — try again', 'err');
+    console.error(e);
+  }
+  hideSaving();
+};
