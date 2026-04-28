@@ -643,3 +643,325 @@ window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
   _installPrompt = e;
 });
+
+/* ═══════════════════════════════════════════════════
+   UPGRADE PACK — Dashboard, Kiosk, PWA
+═══════════════════════════════════════════════════ */
+
+/* ── DASHBOARD UPGRADES ── */
+let _weekOffset = 0;
+
+Object.assign(DASH, {
+  async refresh() {
+    try {
+      const [dash, week, risk, analytics] = await Promise.all([
+        API.getDashboard(),
+        API.getWeeklyReport(_weekOffset),
+        API.getAtRisk(),
+        API.getAnalytics()
+      ]);
+      this.renderStats(dash);
+      this.renderFeed(dash?.checkins || []);
+      this.renderBirthdays(dash?.birthdays || []);
+      this.renderWeek(week);
+      this.renderAtRisk(risk);
+      this.renderAnalytics(analytics);
+    } catch(e) { toast('⚠️ Refresh failed — check connection','err'); }
+  },
+
+  renderAtRisk(data) {
+    const el = document.getElementById('riskPanel');
+    const count = document.getElementById('riskCount');
+    const students = data?.students || data || [];
+    count.textContent = students.length;
+    if (!students.length) {
+      el.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><p class="empty-txt">No at-risk students — great attendance!</p></div>`;
+      return;
+    }
+    el.innerHTML = students.map((s,i) => {
+      const init = (s.name||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+      const pct = s.attendanceRate ?? Math.round((s.attended||0)/(s.total||1)*100);
+      const barColor = pct < 40 ? '#ef4444' : pct < 60 ? '#f59e0b' : '#0d9488';
+      return `<div class="ci-row" style="animation-delay:${i*0.04}s;flex-direction:column;align-items:flex-start;gap:6px;cursor:default">
+        <div style="display:flex;align-items:center;gap:9px;width:100%">
+          <div class="ci-av-ph" style="background:linear-gradient(135deg,#ef4444,#b91c1c)">${init}</div>
+          <div class="ci-info">
+            <div class="ci-name">${s.name}</div>
+            <div class="ci-meta">Grade ${s.grade||'—'} · ${s.attended||0}/${s.total||0} sessions attended</div>
+          </div>
+          <div style="font-family:var(--font);font-size:16px;font-weight:800;color:${barColor}">${pct}%</div>
+        </div>
+        <div style="width:100%;height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-left:43px">
+          <div style="height:100%;width:${pct}%;background:${barColor};border-radius:3px;transition:width .6s ease"></div>
+        </div>
+      </div>`;
+    }).join('');
+  },
+
+  renderAnalytics(data) {
+    const el = document.getElementById('analyticsPanel');
+    const grades = data?.gradeBreakdown || data?.grades || [];
+    if (!grades.length) {
+      el.innerHTML = `<div class="empty-state"><p class="empty-txt">No analytics data yet</p></div>`;
+      return;
+    }
+    const max = Math.max(...grades.map(g => g.count || 0), 1);
+    const colors = ['#0d9488','#06b6d4','#8b5cf6','#f59e0b','#ef4444','#10b981','#3b82f6'];
+    el.innerHTML = `<div style="padding:12px 10px;display:flex;flex-direction:column;gap:9px">
+      ${grades.map((g,i) => `
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="font-size:10px;font-weight:700;color:var(--muted);width:60px;text-align:right;white-space:nowrap">Grade ${g.grade||g.label}</div>
+          <div style="flex:1;height:10px;background:var(--surface);border-radius:5px;overflow:hidden">
+            <div style="height:100%;width:${((g.count||0)/max*100).toFixed(1)}%;background:${colors[i%colors.length]};border-radius:5px;transition:width .7s ${i*0.06}s ease"></div>
+          </div>
+          <div style="font-family:var(--font);font-size:13px;font-weight:800;color:#67e8f9;min-width:28px;text-align:right">${g.count||0}</div>
+        </div>`).join('')}
+    </div>
+    <div style="padding:0 10px 10px;font-size:10px;color:var(--muted2);text-align:center">Total: ${grades.reduce((a,g)=>a+(g.count||0),0)} students</div>`;
+  },
+
+  async lookupStudent(q) {
+    const el = document.getElementById('lookupPanel');
+    if (!q || q.length < 2) {
+      el.innerHTML = `<div class="empty-state"><div class="empty-icon">🔎</div><p class="empty-txt">Type at least 2 characters to search</p></div>`;
+      return;
+    }
+    const matches = _allStudents.filter(s => s.name?.toLowerCase().includes(q.toLowerCase())).slice(0,5);
+    if (!matches.length) {
+      el.innerHTML = `<div class="empty-state"><p class="empty-txt">No students found</p></div>`;
+      return;
+    }
+    el.innerHTML = matches.map(s => {
+      const init = (s.name||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+      return `<div class="ci-row" onclick="DASH.showStudentHistory('${s.id}','${s.name.replace(/'/,"\\'")}')">
+        <div class="ci-av-ph">${init}</div>
+        <div class="ci-info"><div class="ci-name">${s.name}</div><div class="ci-meta">Grade ${s.grade||'—'} · Click to view history</div></div>
+        <div style="font-size:13px;color:var(--muted2)">›</div>
+      </div>`;
+    }).join('');
+  },
+
+  async showStudentHistory(id, name) {
+    const el = document.getElementById('lookupPanel');
+    el.innerHTML = `<div class="empty-state"><div class="spin" style="margin:0 auto"></div><p class="empty-txt">Loading history…</p></div>`;
+    try {
+      const r = await API.getHistory(id, name);
+      const sessions = r?.history || r || [];
+      if (!sessions.length) {
+        el.innerHTML = `<div style="padding:8px 8px 4px"><button class="tab-btn active" onclick="document.getElementById('lookupSearch').value='';DASH.lookupStudent('')">← Back</button></div><div class="empty-state"><p class="empty-txt">No attendance history for ${name}</p></div>`;
+        return;
+      }
+      const attended = sessions.filter(s=>s.attended).length;
+      const pct = Math.round(attended/sessions.length*100);
+      el.innerHTML = `
+        <div style="padding:8px 8px 4px;display:flex;align-items:center;gap:8px">
+          <button class="tab-btn active" onclick="document.getElementById('lookupSearch').value='';DASH.lookupStudent('')">← Back</button>
+          <div style="flex:1;text-align:right;font-size:11px;font-weight:700;color:var(--muted)">${name}</div>
+        </div>
+        <div style="padding:8px 10px;background:var(--surface);border-radius:10px;margin:4px 8px;display:flex;align-items:center;gap:12px">
+          <div style="text-align:center">
+            <div style="font-family:var(--font);font-size:28px;font-weight:900;color:${pct>=70?'#67e8f9':pct>=50?'#fcd34d':'#fca5a5'}">${pct}%</div>
+            <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted)">Attendance</div>
+          </div>
+          <div style="flex:1">
+            <div style="height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;margin-bottom:6px">
+              <div style="height:100%;width:${pct}%;background:${pct>=70?'var(--green)':pct>=50?'#f59e0b':'#ef4444'};border-radius:4px;transition:width .6s ease"></div>
+            </div>
+            <div style="font-size:10px;color:var(--muted)">${attended} of ${sessions.length} sessions attended</div>
+          </div>
+        </div>
+        <div style="padding:4px 8px">
+          ${sessions.slice().reverse().map(s => `
+            <div style="display:flex;align-items:center;gap:8px;padding:6px 6px;border-radius:8px;margin-bottom:3px;background:${s.attended?'rgba(13,148,136,0.05)':'rgba(239,68,68,0.05)'}">
+              <div style="font-size:14px">${s.attended?'✅':'❌'}</div>
+              <div style="flex:1;font-size:11px;font-weight:600;color:${s.attended?'var(--text)':'var(--muted)'}">${s.date||s.label||'Unknown'}</div>
+              <div style="font-size:10px;color:var(--muted2)">${s.event||''}</div>
+            </div>`).join('')}
+        </div>`;
+    } catch(e) { el.innerHTML = `<div class="empty-state"><p class="empty-txt">Error loading history</p></div>`; }
+  },
+
+  changeWeek(dir) {
+    _weekOffset = Math.max(0, _weekOffset + (dir === -1 ? 1 : -1));
+    const el = document.getElementById('reportWeekLabel');
+    if (el) el.textContent = _weekOffset === 0 ? 'This Week' : _weekOffset === 1 ? 'Last Week' : `${_weekOffset} Weeks Ago`;
+    const nextBtn = document.getElementById('reportNext');
+    if (nextBtn) nextBtn.disabled = _weekOffset === 0;
+    API.getWeeklyReport(_weekOffset).then(r => this.renderWeek(r)).catch(()=>{});
+  },
+
+  renderWeek(data) {
+    const el = document.getElementById('reportPanel') || document.getElementById('weekPanel');
+    if (!el) return;
+    const days = data?.days || [];
+    if (!days.length) { el.innerHTML = `<div class="empty-state"><p class="empty-txt">No data for this week</p></div>`; return; }
+    const max = Math.max(...days.map(d=>d.count||0),1);
+    const total = days.reduce((a,d)=>a+(d.count||0),0);
+    const leaders = days.reduce((a,d)=>a+(d.leaders||0),0);
+    el.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px;margin-bottom:4px">
+        <div style="background:var(--soft);border:1px solid rgba(13,148,136,.25);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-family:var(--font);font-size:26px;font-weight:900;color:#67e8f9">${total}</div>
+          <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted)">Check-ins</div>
+        </div>
+        <div style="background:rgba(6,182,212,.07);border:1px solid rgba(6,182,212,.2);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-family:var(--font);font-size:26px;font-weight:900;color:#67e8f9">${leaders}</div>
+          <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted)">Leaders</div>
+        </div>
+      </div>
+      <div style="padding:4px 10px 10px;display:flex;flex-direction:column;gap:7px">
+        ${days.map(d=>`
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="font-size:10px;font-weight:700;color:var(--muted);width:80px;text-align:right;white-space:nowrap">${d.label||d.date}</div>
+            <div style="flex:1;height:8px;background:var(--surface);border-radius:4px;overflow:hidden">
+              <div style="height:100%;width:${((d.count||0)/max*100).toFixed(1)}%;background:linear-gradient(90deg,var(--green),var(--teal));border-radius:4px;transition:width .6s ease"></div>
+            </div>
+            <div style="font-family:var(--font);font-size:12px;font-weight:800;color:#67e8f9;min-width:24px;text-align:right">${d.count||0}</div>
+          </div>`).join('')}
+      </div>`;
+  },
+
+  exportReport() {
+    const rows = [['Date','Check-ins','Leaders','New Students']];
+    const panels = document.querySelectorAll('#reportPanel [style*="display:flex;align-items:center;gap:10px"]');
+    if (!panels.length) { toast('⚠️ No report data to export','err'); return; }
+    // Build CSV from rendered week data
+    const csv = 'data:text/csv;charset=utf-8,' + rows.map(r=>r.join(',')).join('\n');
+    const a = document.createElement('a');
+    a.href = encodeURI(csv);
+    a.download = `bolt-report-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    toast('📥 Report exported','ok');
+  },
+
+  async openLeaders() {
+    openModal('leadersModal');
+    const el = document.getElementById('leadersList');
+    el.innerHTML = '<div class="empty-state"><div class="spin" style="margin:0 auto 8px"></div><p>Loading…</p></div>';
+    try {
+      const r = await API.getLeaders();
+      _leaders = r?.leaders || r || [];
+      this.renderLeaders();
+    } catch(e) { el.innerHTML = '<div class="empty-state"><p>Error loading leaders</p></div>'; }
+  },
+
+  renderLeaders() {
+    const el = document.getElementById('leadersList');
+    if (!_leaders.length) { el.innerHTML = '<div class="empty-state"><p class="empty-txt">No leaders yet — add one below</p></div>'; return; }
+    el.innerHTML = _leaders.map(name => {
+      const init = (name||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+      return `<div class="ms-row">
+        <div class="ms-av" style="background:linear-gradient(135deg,var(--teal),#0284c7)">${init}</div>
+        <div class="ms-info"><div class="ms-name">${name}</div><div class="ms-meta">Leader</div></div>
+      </div>`;
+    }).join('');
+  },
+
+  async addLeader() {
+    const name = prompt('Enter leader name:');
+    if (!name?.trim()) return;
+    try {
+      const r = await API.addLeader(name.trim());
+      if (r?.success) {
+        _leaders.push(name.trim());
+        this.renderLeaders();
+        toast('✅ Leader added','ok');
+      } else toast('⚠️ '+(r?.error||'Failed'),'err');
+    } catch(e) { toast('⚠️ Connection error','err'); }
+  }
+});
+
+/* ── KIOSK UPGRADES ── */
+Object.assign(KIOSK, {
+  // Enhanced search with keyboard shortcut
+  focusSearch() {
+    const s = document.getElementById('kSearch');
+    if (s) { s.focus(); s.select(); }
+  }
+});
+
+// Keyboard shortcut: / to focus search in kiosk
+document.addEventListener('keydown', e => {
+  if (e.key === '/' && document.getElementById('vKiosk').classList.contains('active')) {
+    e.preventDefault();
+    KIOSK.focusSearch();
+  }
+  if (e.key === 'Escape') {
+    closeDrawer();
+    closeThemePicker();
+    document.querySelectorAll('.modal.open,.manage-modal.open,.batch-modal.open').forEach(m => m.classList.remove('open'));
+  }
+});
+
+/* ── PWA: INSTALL PROMPT ── */
+let _installPromptEvent = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  _installPromptEvent = e;
+  // Show install banner after 3s if not already installed
+  setTimeout(() => {
+    const banner = document.getElementById('installBanner');
+    if (banner && !localStorage.getItem('bolt_install_dismissed')) {
+      banner.style.display = 'flex';
+    }
+  }, 3000);
+});
+
+function installApp() {
+  if (!_installPromptEvent) {
+    toast('Use browser menu → "Add to Home Screen"','ok');
+    dismissInstall();
+    return;
+  }
+  _installPromptEvent.prompt();
+  _installPromptEvent.userChoice.then(r => {
+    if (r.outcome === 'accepted') {
+      toast('🎉 Bolt Kiosk installed!','ok');
+      dismissInstall();
+    }
+    _installPromptEvent = null;
+  });
+}
+
+function dismissInstall() {
+  const banner = document.getElementById('installBanner');
+  if (banner) banner.style.display = 'none';
+  localStorage.setItem('bolt_install_dismissed', '1');
+}
+
+window.addEventListener('appinstalled', () => {
+  toast('🎉 Bolt Kiosk installed successfully!','ok');
+  dismissInstall();
+});
+
+/* ── PWA: OFFLINE DETECTION ── */
+window.addEventListener('online', () => toast('✅ Back online','ok'));
+window.addEventListener('offline', () => toast('⚠️ You are offline — some features may not work','err'));
+
+/* ── PULL-TO-REFRESH on Dashboard ── */
+(function setupPullToRefresh() {
+  let startY = 0;
+  let pulling = false;
+  const el = document.getElementById('vDash');
+  if (!el) return;
+  el.addEventListener('touchstart', e => { startY = e.touches[0].clientY; pulling = el.scrollTop <= 0; }, {passive:true});
+  el.addEventListener('touchend', e => {
+    if (!pulling) return;
+    const diff = e.changedTouches[0].clientY - startY;
+    if (diff > 80) { DASH.refresh(); toast('↻ Refreshing…','ok'); }
+    pulling = false;
+  }, {passive:true});
+})();
+
+/* ── LOAD ALL STUDENTS FOR DASHBOARD LOOKUP ── */
+const _origDashInit = DASH.init.bind(DASH);
+DASH.init = async function() {
+  // Preload students for lookup
+  if (!_allStudents.length) {
+    try {
+      const r = await API.getAllStudents();
+      _allStudents = r?.students || r || [];
+    } catch(e) {}
+  }
+  return _origDashInit();
+};

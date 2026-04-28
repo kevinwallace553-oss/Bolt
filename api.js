@@ -48,3 +48,7 @@ const API = {
   getAtRisk:      ()          => gasRun('getAtRiskStudents'),
   getHistory:     (id, name)  => gasRun('getStudentAttendanceHistory', id, name),
 };
+
+/* ── OFFLINE BODY CLASS ── */
+window.addEventListener('online',  () => document.body.classList.remove('offline'));
+window.addEventListener('offline', () => document.body.classList.add('offline'));
