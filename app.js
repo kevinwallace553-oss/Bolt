@@ -91,6 +91,7 @@ tick(); setInterval(tick, 1000);
 /* ── THEME ── */
 function setTheme(t) {
   document.documentElement.setAttribute('data-theme', t);
+  document.body.setAttribute('data-theme', t);
   localStorage.setItem('bolt_theme', t);
   document.querySelectorAll('.theme-swatch').forEach(s =>
     s.classList.toggle('active', s.dataset.theme === t)
@@ -103,6 +104,7 @@ function closeThemePicker() { document.getElementById('themePicker').classList.r
 (function loadTheme() {
   const t = localStorage.getItem('bolt_theme') || '';
   document.documentElement.setAttribute('data-theme', t);
+  document.body.setAttribute('data-theme', t);
   document.querySelectorAll('.theme-swatch').forEach(s =>
     s.classList.toggle('active', s.dataset.theme === t)
   );
@@ -119,8 +121,19 @@ function toast(msg, type='ok') {
 }
 
 /* ── MODALS ── */
-function openModal(id) { document.getElementById(id)?.classList.add('open'); }
-function closeModal(id) { document.getElementById(id)?.classList.remove('open'); }
+function openModal(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  // cmPrintModal uses inline display style, others use class
+  if (id === 'cmPrintModal') { el.style.display = 'flex'; }
+  else { el.classList.add('open'); }
+}
+function closeModal(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (id === 'cmPrintModal') { el.style.display = 'none'; }
+  else { el.classList.remove('open'); }
+}
 function showSaving(label='Saving…') {
   document.getElementById('savLbl').textContent = label;
   document.getElementById('savOverlay').classList.add('on');
@@ -209,7 +222,10 @@ const AUTH = {
       const r = await API.login(u,p);
       if(r?.success){
         SESSION.token=r.token; SESSION.name=r.name; SESSION.role=r.role; SESSION.username=r.username;
-        const _first=(r.name||r.username||'').split(' ')[0];const _el=document.getElementById('homeName');if(_el)_el.textContent=_first?`Welcome, ${_first}`:'Youth Check-In System';
+        const _first=(r.name||r.username||'').split(' ')[0];
+        const _el=document.getElementById('homeName');if(_el)_el.textContent=_first?`${_first}`:'Youth Check-In System';
+        const _gh=document.getElementById('homeGreeting');
+        if(_gh){const hr=new Date().getHours();_gh.textContent=hr<12?'morning':hr<17?'afternoon':'evening';}
         showView('vHome');
       } else this.showErr('loginErr', r?.error||'Invalid username or password.');
     } catch(e) { this.showErr('loginErr','Connection error — check your internet.'); }
@@ -1718,59 +1734,154 @@ const CM = {
     if (!family || !family.children.length) return;
     const today = new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
     const time  = new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
-    const tagsHTML = family.children.map(child => {
+    // Unique 4-char security code for this print session
+    const secCode = (Math.random().toString(36).substring(2,6)).toUpperCase();
+
+    // Build one pair per child: child tag + parent stub
+    const pairs = family.children.map(child => {
       const hasAllergy = child.allergies && child.allergies.toLowerCase()!=='none' && child.allergies.trim();
-      return '<div class="tag">'
-        + '<div class="ts"></div>'
-        + '<div class="tc">'
-        +   '<div class="tm">CHILDREN&#8217;S MINISTRY</div>'
-        +   '<div class="tfn">' + child.firstName + '</div>'
-        +   '<div class="tln">' + child.lastName + '</div>'
-        +   '<div class="tb">'
-        +     (child.room ? '<span class="tbr">' + child.room + '</span>' : '')
-        +     (child.grade ? '<span class="tbg">Grade ' + child.grade + '</span>' : '')
-        +   '</div>'
-        +   (hasAllergy ? '<div class="tal">⚠️ ' + child.allergies + '</div>' : '')
+      const grade = child.grade ? 'Grade ' + child.grade : '';
+      const qrId  = 'qr_' + child.id.replace(/[^a-z0-9]/gi,'_');
+      // QR data — volunteer scans to see who to page
+      const qrData = 'BOLT:'
+        + '\nChild: ' + child.firstName + ' ' + child.lastName
+        + (child.room  ? '\nRoom: '  + child.room  : '')
+        + (child.grade ? '\nGrade: ' + child.grade  : '')
+        + '\nParent: '  + family.parentName
+        + '\nPhone: '   + family.phone
+        + '\nCode: '    + secCode
+        + '\nDate: '    + today;
+      return (
+        '<div class="pair">'
+        // ── CHILD TAG ──────────────────────────────────────────
+        + '<div class="tag">'
+          + '<div class="ts"></div>'
+          + '<div class="tc">'
+            + '<div class="tm">CHILDREN&#39;S MINISTRY</div>'
+            + '<div class="tfn">' + child.firstName + '</div>'
+            + '<div class="tln">' + child.lastName  + '</div>'
+            + '<div class="tb">'
+              + (child.room  ? '<span class="tbr">' + child.room + '</span>' : '')
+              + (grade       ? '<span class="tbg">' + grade + '</span>'      : '')
+            + '</div>'
+            + (hasAllergy ? '<div class="tal">&#9888; ' + child.allergies + '</div>' : '')
+          + '</div>'
+          + '<div class="tdiv"></div>'
+          + '<div class="tp">'
+            + '<div class="tpl">SCAN TO PAGE PARENT</div>'
+            + '<div class="qr-wrap" id="' + qrId + '"></div>'
+            + '<div class="tpl" style="margin-top:6px">PICKUP CODE</div>'
+            + '<div class="tcode">' + secCode + '</div>'
+            + '<div class="tdt">' + today + ' &bull; ' + time + '</div>'
+          + '</div>'
         + '</div>'
-        + '<div class="tdiv"></div>'
-        + '<div class="tp">'
-        +   '<div class="tpl">PARENT / GUARDIAN</div>'
-        +   '<div class="tpn">' + family.parentName + '</div>'
-        +   '<div class="tph">' + family.phone + '</div>'
-        +   '<div class="tdt">' + today + ' · ' + time + '</div>'
+        // ── PARENT SECURITY STUB ────────────────────────────────
+        + '<div class="stub">'
+          + '<div class="sb-stripe"></div>'
+          + '<div class="sb-body">'
+            + '<div class="sb-header">SECURITY PICKUP STUB</div>'
+            + '<div class="sb-row">'
+              + '<div class="sb-child">'
+                + '<div class="sb-name">' + child.firstName + ' ' + child.lastName + '</div>'
+                + '<div class="sb-detail">' + [child.room, grade].filter(Boolean).join(' &bull; ') + '</div>'
+              + '</div>'
+              + '<div class="sb-code-box">'
+                + '<div class="sb-code-lbl">CODE</div>'
+                + '<div class="sb-code">' + secCode + '</div>'
+              + '</div>'
+            + '</div>'
+            + '<div class="sb-parent">'
+              + '<div class="sb-parent-name">&#128100; ' + family.parentName + '</div>'
+              + '<div class="sb-parent-phone">&#128222; ' + family.phone + '</div>'
+            + '</div>'
+            + '<div class="sb-footer">' + today + ' &bull; ' + time + '</div>'
+          + '</div>'
         + '</div>'
-        + '</div>';
+        + '</div>'
+        + '|QR|' + qrId + '|' + JSON.stringify(qrData) + '|END|'
+      );
+    });
+
+    // Split QR metadata from HTML
+    const qrMeta = [];
+    const tagsHTML = pairs.map(p => {
+      const match = p.match(/\|QR\|([^|]+)\|(.+)\|END\|$/s);
+      if (match) qrMeta.push({ id: match[1], data: JSON.parse(match[2]) });
+      return p.replace(/\|QR\|.+\|END\|$/s, '');
     }).join('');
-    const css = '*{box-sizing:border-box;margin:0;padding:0}'
-      + 'body{font-family:Arial,sans-serif;background:#f0f0f0;padding:20px}'
-      + 'h2{text-align:center;font-size:14px;color:#444;margin-bottom:20px}'
-      + '.grid{display:flex;flex-wrap:wrap;gap:16px;justify-content:center}'
-      + '.tag{width:260px;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.12);page-break-inside:avoid}'
-      + '.ts{height:10px;background:linear-gradient(90deg,#10b981,#06b6d4)}'
-      + '.tc{padding:18px 20px 14px;text-align:center}'
-      + '.tm{font-size:8px;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:#10b981;margin-bottom:10px}'
-      + '.tfn{font-size:42px;font-weight:900;color:#111;line-height:1;margin-bottom:2px}'
-      + '.tln{font-size:18px;font-weight:700;color:#333;margin-bottom:10px}'
-      + '.tb{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:8px}'
-      + '.tbr{font-size:10px;font-weight:800;padding:3px 12px;border-radius:100px;background:#ecfdf5;border:1.5px solid #10b981;color:#059669}'
-      + '.tbg{font-size:10px;font-weight:800;padding:3px 12px;border-radius:100px;background:#eff6ff;border:1.5px solid #3b82f6;color:#1d4ed8}'
-      + '.tal{background:#fff5f5;border:1.5px solid #ef4444;border-radius:8px;padding:5px 12px;font-size:10px;font-weight:800;color:#dc2626;margin-top:4px;display:inline-block}'
-      + '.tdiv{height:1px;background:repeating-linear-gradient(90deg,#ddd 0,#ddd 6px,transparent 6px,transparent 12px);margin:0 16px}'
-      + '.tp{padding:12px 20px 16px;text-align:center;background:#fafafa}'
-      + '.tpl{font-size:7px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:#999;margin-bottom:5px}'
-      + '.tpn{font-size:16px;font-weight:700;color:#222;margin-bottom:2px}'
-      + '.tph{font-size:12px;color:#555;margin-bottom:5px}'
-      + '.tdt{font-size:9px;color:#bbb}'
-      + '@media print{body{background:#fff;padding:8px}h2{display:none}.grid{gap:10px}.tag{box-shadow:none;border:1px solid #ddd}}';
-    const win = window.open('','_blank','width=900,height=700');
-    win.document.write('<!DOCTYPE html><html><head><title>Name Tags</title><style>'+css+'</style></head><body>'
-      + '<h2>Children Ministry - '+family.parentName+' Family - '+today+'</h2>'
-      + '<div class="grid">'+tagsHTML+'</div>'
-      + '<scr'+'ipt>window.onload=function(){window.print()}<'+'/scr'+'ipt>'
-      + '</body></html>');
+
+    const qrScript = qrMeta.map(q =>
+      'new QRCode(document.getElementById(' + JSON.stringify(q.id) + '),'
+      + '{text:' + JSON.stringify(q.data) + ',width:76,height:76,'
+      + 'colorDark:"#064e3b",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M});'
+    ).join('');
+
+    const css = [
+      '*{box-sizing:border-box;margin:0;padding:0}',
+      'body{font-family:Arial,sans-serif;background:#f0f0f0;padding:24px}',
+      'h2{text-align:center;font-size:14px;color:#555;margin-bottom:22px}',
+      '.grid{display:flex;flex-wrap:wrap;gap:20px;justify-content:center;align-items:flex-start}',
+      '.pair{display:flex;flex-direction:column;gap:10px;page-break-inside:avoid}',
+      // Child tag
+      '.tag{width:260px;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 4px 18px rgba(0,0,0,.13)}',
+      '.ts{height:9px;background:linear-gradient(90deg,#10b981,#06b6d4)}',
+      '.tc{padding:16px 18px 12px;text-align:center}',
+      '.tm{font-size:8px;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:#10b981;margin-bottom:8px}',
+      '.tfn{font-size:40px;font-weight:900;color:#111;line-height:1;margin-bottom:1px}',
+      '.tln{font-size:17px;font-weight:700;color:#333;margin-bottom:8px}',
+      '.tb{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-bottom:6px}',
+      '.tbr{font-size:10px;font-weight:800;padding:3px 11px;border-radius:100px;background:#ecfdf5;border:1.5px solid #10b981;color:#059669}',
+      '.tbg{font-size:10px;font-weight:800;padding:3px 11px;border-radius:100px;background:#eff6ff;border:1.5px solid #3b82f6;color:#1d4ed8}',
+      '.tal{background:#fff5f5;border:1.5px solid #ef4444;border-radius:8px;padding:4px 11px;font-size:10px;font-weight:800;color:#dc2626;margin-top:4px;display:inline-block}',
+      '.tdiv{height:1px;background:repeating-linear-gradient(90deg,#ddd 0,#ddd 6px,transparent 6px,transparent 12px);margin:0 14px}',
+      '.tp{padding:10px 18px 14px;text-align:center;background:#f9fafb}',
+      '.tpl{font-size:7px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#9ca3af;margin-bottom:4px}',
+      '.qr-wrap{display:flex;justify-content:center;margin:4px 0 6px}',
+      '.qr-wrap>div{display:flex!important;justify-content:center!important}',
+      '.tcode{font-size:28px;font-weight:900;color:#10b981;letter-spacing:5px;line-height:1;margin-bottom:4px}',
+      '.tdt{font-size:9px;color:#bbb}',
+      // Parent stub
+      '.stub{width:260px;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.1);border:2px dashed #10b981}',
+      '.sb-stripe{height:6px;background:linear-gradient(90deg,#10b981,#06b6d4)}',
+      '.sb-body{padding:12px 14px}',
+      '.sb-header{font-size:7px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#9ca3af;margin-bottom:9px}',
+      '.sb-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px}',
+      '.sb-child{flex:1;min-width:0}',
+      '.sb-name{font-size:16px;font-weight:900;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
+      '.sb-detail{font-size:10px;color:#666;margin-top:2px}',
+      '.sb-code-box{background:#064e3b;border-radius:10px;padding:7px 12px;text-align:center;flex-shrink:0}',
+      '.sb-code-lbl{font-size:7px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.7);margin-bottom:2px}',
+      '.sb-code{font-size:20px;font-weight:900;color:#6ee7b7;letter-spacing:4px;line-height:1}',
+      '.sb-parent{background:#f0fdf4;border-radius:8px;padding:7px 10px;margin-bottom:7px}',
+      '.sb-parent-name{font-size:12px;font-weight:700;color:#065f46}',
+      '.sb-parent-phone{font-size:11px;color:#047857;margin-top:2px}',
+      '.sb-footer{font-size:9px;color:#bbb;text-align:center}',
+      // Print
+      '@media print{body{background:#fff;padding:12px}h2{display:none}.grid{gap:14px}.tag,.stub{box-shadow:none}.tag{border:1px solid #ddd}}'
+    ].join('');
+
+    const win = window.open('', '_blank', 'width=960,height=700');
+    win.document.write(
+      '<!DOCTYPE html><html><head>'
+      + '<title>Name Tags \u2014 ' + family.parentName + '</title>'
+      + '<style>' + css + '</style>'
+      + '<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>'
+      + '</head><body>'
+      + '<h2>&#129306; Children\'s Ministry &mdash; ' + family.parentName + ' Family &mdash; ' + today + '</h2>'
+      + '<div class="grid">' + tagsHTML + '</div>'
+      + '<p style="text-align:center;margin-top:20px;font-size:11px;color:#9ca3af">'
+      + 'Scan QR on child tag to page parent &bull; Match code for secure pickup</p>'
+      + '<script>'
+      + 'window.addEventListener("load",function(){'
+      + qrScript
+      + 'setTimeout(function(){window.print();},800);'
+      + '});'
+      + '<\/script>'
+      + '</body></html>'
+    );
     win.document.close();
     closeModal('cmPrintModal');
-    toast('🖨️ Print dialog opened','ok');
+    toast('&#128247; Name tags ready \u2014 print dialog opening\u2026', 'ok');
   }
 };
 
