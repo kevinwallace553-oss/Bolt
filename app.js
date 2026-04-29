@@ -1770,77 +1770,83 @@ const CM = {
     if (!family || !family.children.length) return;
     const today = new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
     const time  = new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
-    // Unique 4-char security code for this print session
     const secCode = (Math.random().toString(36).substring(2,6)).toUpperCase();
 
-    // Build one pair per child: child tag + parent stub
-    const pairs = family.children.map(child => {
+    // One PAGE per child — child tag on page 1, parent stub on page 2 (repeated per child)
+    const pages = family.children.map((child, ci) => {
       const hasAllergy = child.allergies && child.allergies.toLowerCase()!=='none' && child.allergies.trim();
       const grade = child.grade ? 'Grade ' + child.grade : '';
-      const qrId  = 'qr_' + child.id.replace(/[^a-z0-9]/gi,'_');
-      // QR data — volunteer scans to see who to page
+      const qrId  = 'qr_' + ci;
       const qrData = 'BOLT:'
-        + '\nChild: ' + child.firstName + ' ' + child.lastName
+        + '\nChild: '  + child.firstName + ' ' + child.lastName
         + (child.room  ? '\nRoom: '  + child.room  : '')
         + (child.grade ? '\nGrade: ' + child.grade  : '')
-        + '\nParent: '  + family.parentName
-        + '\nPhone: '   + family.phone
-        + '\nCode: '    + secCode
-        + '\nDate: '    + today;
+        + '\nParent: ' + family.parentName
+        + '\nPhone: '  + family.phone
+        + '\nCode: '   + secCode
+        + '\nDate: '   + today;
+
       return (
-        '<div class="pair">'
-        // ── CHILD TAG ──────────────────────────────────────────
-        + '<div class="tag">'
-          + '<div class="ts"></div>'
-          + '<div class="tc">'
-            + '<div class="tm">CHILDREN&#39;S MINISTRY</div>'
-            + '<div class="tfn">' + child.firstName + '</div>'
-            + '<div class="tln">' + child.lastName  + '</div>'
-            + '<div class="tb">'
-              + (child.room  ? '<span class="tbr">' + child.room + '</span>' : '')
-              + (grade       ? '<span class="tbg">' + grade + '</span>'      : '')
-            + '</div>'
-            + (hasAllergy ? '<div class="tal">&#9888; ' + child.allergies + '</div>' : '')
-          + '</div>'
-          + '<div class="tdiv"></div>'
-          + '<div class="tp">'
-            + '<div class="tpl">SCAN TO PAGE PARENT</div>'
-            + '<div class="qr-wrap" id="' + qrId + '"></div>'
-            + '<div class="tpl" style="margin-top:6px">PICKUP CODE</div>'
-            + '<div class="tcode">' + secCode + '</div>'
-            + '<div class="tdt">' + today + ' &bull; ' + time + '</div>'
-          + '</div>'
-        + '</div>'
-        // ── PARENT SECURITY STUB ────────────────────────────────
-        + '<div class="stub">'
-          + '<div class="sb-stripe"></div>'
-          + '<div class="sb-body">'
-            + '<div class="sb-header">SECURITY PICKUP STUB</div>'
-            + '<div class="sb-row">'
-              + '<div class="sb-child">'
-                + '<div class="sb-name">' + child.firstName + ' ' + child.lastName + '</div>'
-                + '<div class="sb-detail">' + [child.room, grade].filter(Boolean).join(' &bull; ') + '</div>'
+        // ── PAGE 1: CHILD TAG ──────────────────────────────────
+        '<div class="page child-page">'
+          + '<div class="page-label">Child Name Tag &mdash; ' + child.firstName + ' ' + child.lastName + '</div>'
+          + '<div class="tag">'
+            + '<div class="ts"></div>'
+            + '<div class="tc">'
+              + '<div class="tm">CHILDREN&#39;S MINISTRY</div>'
+              + '<div class="tfn">' + child.firstName + '</div>'
+              + '<div class="tln">' + child.lastName  + '</div>'
+              + '<div class="tb">'
+                + (child.room  ? '<span class="tbr">' + child.room  + '</span>' : '')
+                + (grade       ? '<span class="tbg">' + grade       + '</span>' : '')
               + '</div>'
-              + '<div class="sb-code-box">'
-                + '<div class="sb-code-lbl">CODE</div>'
-                + '<div class="sb-code">' + secCode + '</div>'
-              + '</div>'
+              + (hasAllergy ? '<div class="tal">&#9888; ' + child.allergies + '</div>' : '')
             + '</div>'
-            + '<div class="sb-parent">'
-              + '<div class="sb-parent-name">&#128100; ' + family.parentName + '</div>'
-              + '<div class="sb-parent-phone">&#128222; ' + family.phone + '</div>'
+            + '<div class="tdiv"></div>'
+            + '<div class="tp">'
+              + '<div class="tpl">SCAN TO PAGE PARENT</div>'
+              + '<div class="qr-wrap" id="' + qrId + '"></div>'
+              + '<div class="tpl mt">PICKUP CODE</div>'
+              + '<div class="tcode">' + secCode + '</div>'
+              + '<div class="tdt">' + today + ' &bull; ' + time + '</div>'
             + '</div>'
-            + '<div class="sb-footer">' + today + ' &bull; ' + time + '</div>'
           + '</div>'
         + '</div>'
+
+        // ── PAGE 2: PARENT STUB ───────────────────────────────
+        + '<div class="page parent-page">'
+          + '<div class="page-label">Parent Pickup Stub &mdash; ' + child.firstName + ' ' + child.lastName + '</div>'
+          + '<div class="stub">'
+            + '<div class="sb-stripe"></div>'
+            + '<div class="sb-body">'
+              + '<div class="sb-header">SECURITY PICKUP STUB</div>'
+              + '<div class="sb-row">'
+                + '<div class="sb-child">'
+                  + '<div class="sb-name">' + child.firstName + ' ' + child.lastName + '</div>'
+                  + '<div class="sb-detail">' + [child.room, grade].filter(Boolean).join(' &bull; ') + '</div>'
+                + '</div>'
+                + '<div class="sb-code-box">'
+                  + '<div class="sb-code-lbl">CODE</div>'
+                  + '<div class="sb-code">' + secCode + '</div>'
+                + '</div>'
+              + '</div>'
+              + '<div class="sb-parent">'
+                + '<div class="sb-parent-name">&#128100; ' + family.parentName + '</div>'
+                + '<div class="sb-parent-phone">&#128222; ' + family.phone + '</div>'
+              + '</div>'
+              + '<div class="sb-note">Present this stub at pickup. Staff will match the code on your child\'s name tag.</div>'
+              + '<div class="sb-footer">' + today + ' &bull; ' + time + '</div>'
+            + '</div>'
+          + '</div>'
         + '</div>'
+
         + '|QR|' + qrId + '|' + JSON.stringify(qrData) + '|END|'
       );
     });
 
-    // Split QR metadata from HTML
+    // Strip QR metadata
     const qrMeta = [];
-    const tagsHTML = pairs.map(p => {
+    const pagesHTML = pages.map(p => {
       const match = p.match(/\|QR\|([^|]+)\|(.+)\|END\|$/s);
       if (match) qrMeta.push({ id: match[1], data: JSON.parse(match[2]) });
       return p.replace(/\|QR\|.+\|END\|$/s, '');
@@ -1848,76 +1854,101 @@ const CM = {
 
     const qrScript = qrMeta.map(q =>
       'new QRCode(document.getElementById(' + JSON.stringify(q.id) + '),'
-      + '{text:' + JSON.stringify(q.data) + ',width:76,height:76,'
+      + '{text:' + JSON.stringify(q.data) + ',width:90,height:90,'
       + 'colorDark:"#064e3b",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M});'
     ).join('');
 
+    // Tag size: standard label size ~3.375" x 2.3125" → 324px x 222px at 96dpi
+    // Both tags same physical size
+    const TAG_W = '340px';
+    const TAG_H = '220px';
+
     const css = [
       '*{box-sizing:border-box;margin:0;padding:0}',
-      'body{font-family:Arial,sans-serif;background:#f0f0f0;padding:24px}',
-      'h2{text-align:center;font-size:14px;color:#555;margin-bottom:22px}',
-      '.grid{display:flex;flex-wrap:wrap;gap:20px;justify-content:center;align-items:flex-start}',
-      '.pair{display:flex;flex-direction:column;gap:10px;page-break-inside:avoid}',
+      'html,body{width:100%;height:100%;background:#f5f5f5;font-family:Arial,sans-serif}',
+      // Each page centres one tag — prints as its own sheet
+      '.page{',
+        'width:100%;min-height:100vh;',
+        'display:flex;flex-direction:column;align-items:center;justify-content:center;',
+        'page-break-after:always;',
+        'padding:20px;',
+      '}',
+      '.page-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;',
+        'color:#9ca3af;margin-bottom:14px;text-align:center}',
       // Child tag
-      '.tag{width:260px;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 4px 18px rgba(0,0,0,.13)}',
-      '.ts{height:9px;background:linear-gradient(90deg,#10b981,#06b6d4)}',
-      '.tc{padding:16px 18px 12px;text-align:center}',
-      '.tm{font-size:8px;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:#10b981;margin-bottom:8px}',
-      '.tfn{font-size:40px;font-weight:900;color:#111;line-height:1;margin-bottom:1px}',
-      '.tln{font-size:17px;font-weight:700;color:#333;margin-bottom:8px}',
-      '.tb{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-bottom:6px}',
-      '.tbr{font-size:10px;font-weight:800;padding:3px 11px;border-radius:100px;background:#ecfdf5;border:1.5px solid #10b981;color:#059669}',
-      '.tbg{font-size:10px;font-weight:800;padding:3px 11px;border-radius:100px;background:#eff6ff;border:1.5px solid #3b82f6;color:#1d4ed8}',
-      '.tal{background:#fff5f5;border:1.5px solid #ef4444;border-radius:8px;padding:4px 11px;font-size:10px;font-weight:800;color:#dc2626;margin-top:4px;display:inline-block}',
-      '.tdiv{height:1px;background:repeating-linear-gradient(90deg,#ddd 0,#ddd 6px,transparent 6px,transparent 12px);margin:0 14px}',
-      '.tp{padding:10px 18px 14px;text-align:center;background:#f9fafb}',
+      '.tag{width:' + TAG_W + ';background:#fff;border-radius:18px;overflow:hidden;',
+        'box-shadow:0 6px 24px rgba(0,0,0,.14)}',
+      '.ts{height:10px;background:linear-gradient(90deg,#10b981,#06b6d4)}',
+      '.tc{padding:18px 20px 12px;text-align:center}',
+      '.tm{font-size:8px;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:#10b981;margin-bottom:10px}',
+      '.tfn{font-size:44px;font-weight:900;color:#111;line-height:1;margin-bottom:2px}',
+      '.tln{font-size:20px;font-weight:700;color:#333;margin-bottom:10px}',
+      '.tb{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:8px}',
+      '.tbr{font-size:11px;font-weight:800;padding:3px 12px;border-radius:100px;',
+        'background:#ecfdf5;border:1.5px solid #10b981;color:#059669}',
+      '.tbg{font-size:11px;font-weight:800;padding:3px 12px;border-radius:100px;',
+        'background:#eff6ff;border:1.5px solid #3b82f6;color:#1d4ed8}',
+      '.tal{background:#fff5f5;border:1.5px solid #ef4444;border-radius:8px;',
+        'padding:5px 12px;font-size:11px;font-weight:800;color:#dc2626;',
+        'margin-top:4px;display:inline-block}',
+      '.tdiv{height:1px;',
+        'background:repeating-linear-gradient(90deg,#ddd 0,#ddd 6px,transparent 6px,transparent 12px);',
+        'margin:0 16px}',
+      '.tp{padding:12px 20px 16px;text-align:center;background:#f9fafb}',
       '.tpl{font-size:7px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#9ca3af;margin-bottom:4px}',
-      '.qr-wrap{display:flex;justify-content:center;margin:4px 0 6px}',
-      '.qr-wrap>div{display:flex!important;justify-content:center!important}',
-      '.tcode{font-size:28px;font-weight:900;color:#10b981;letter-spacing:5px;line-height:1;margin-bottom:4px}',
+      '.mt{margin-top:6px}',
+      '.qr-wrap{display:flex;justify-content:center;margin:6px 0}',
+      '.tcode{font-size:32px;font-weight:900;color:#10b981;letter-spacing:6px;line-height:1;margin-bottom:4px}',
       '.tdt{font-size:9px;color:#bbb}',
-      // Parent stub
-      '.stub{width:260px;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.1);border:2px dashed #10b981}',
-      '.sb-stripe{height:6px;background:linear-gradient(90deg,#10b981,#06b6d4)}',
-      '.sb-body{padding:12px 14px}',
-      '.sb-header{font-size:7px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#9ca3af;margin-bottom:9px}',
-      '.sb-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px}',
+      // Parent stub — same width as child tag
+      '.stub{width:' + TAG_W + ';background:#fff;border-radius:18px;overflow:hidden;',
+        'box-shadow:0 6px 24px rgba(0,0,0,.14);border:3px dashed #10b981}',
+      '.sb-stripe{height:10px;background:linear-gradient(90deg,#10b981,#06b6d4)}',
+      '.sb-body{padding:20px 22px}',
+      '.sb-header{font-size:7px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;',
+        'color:#9ca3af;margin-bottom:14px;text-align:center}',
+      '.sb-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}',
       '.sb-child{flex:1;min-width:0}',
-      '.sb-name{font-size:16px;font-weight:900;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
-      '.sb-detail{font-size:10px;color:#666;margin-top:2px}',
-      '.sb-code-box{background:#064e3b;border-radius:10px;padding:7px 12px;text-align:center;flex-shrink:0}',
-      '.sb-code-lbl{font-size:7px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.7);margin-bottom:2px}',
-      '.sb-code{font-size:20px;font-weight:900;color:#6ee7b7;letter-spacing:4px;line-height:1}',
-      '.sb-parent{background:#f0fdf4;border-radius:8px;padding:7px 10px;margin-bottom:7px}',
-      '.sb-parent-name{font-size:12px;font-weight:700;color:#065f46}',
-      '.sb-parent-phone{font-size:11px;color:#047857;margin-top:2px}',
+      '.sb-name{font-size:22px;font-weight:900;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
+      '.sb-detail{font-size:12px;color:#666;margin-top:3px}',
+      '.sb-code-box{background:#064e3b;border-radius:12px;padding:10px 16px;text-align:center;flex-shrink:0}',
+      '.sb-code-lbl{font-size:7px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;',
+        'color:rgba(255,255,255,.7);margin-bottom:3px}',
+      '.sb-code{font-size:26px;font-weight:900;color:#6ee7b7;letter-spacing:5px;line-height:1}',
+      '.sb-parent{background:#f0fdf4;border-radius:10px;padding:10px 14px;margin-bottom:12px}',
+      '.sb-parent-name{font-size:15px;font-weight:700;color:#065f46}',
+      '.sb-parent-phone{font-size:13px;color:#047857;margin-top:3px}',
+      '.sb-note{font-size:10px;color:#9ca3af;text-align:center;margin-bottom:8px;line-height:1.5;font-style:italic}',
       '.sb-footer{font-size:9px;color:#bbb;text-align:center}',
-      // Print
-      '@media print{body{background:#fff;padding:12px}h2{display:none}.grid{gap:14px}.tag,.stub{box-shadow:none}.tag{border:1px solid #ddd}}'
+      // Print styles
+      '@media print{',
+        'html,body{background:#fff}',
+        '.page{min-height:100vh;padding:30px;box-shadow:none}',
+        '.page-label{display:none}',
+        '.tag,.stub{box-shadow:none}',
+        '.child-page .tag{border:1.5px solid #ddd}',
+      '}',
     ].join('');
 
-    const win = window.open('', '_blank', 'width=960,height=700');
+    const win = window.open('', '_blank', 'width=960,height=800');
     win.document.write(
       '<!DOCTYPE html><html><head>'
-      + '<title>Name Tags \u2014 ' + family.parentName + '</title>'
+      + '<title>Name Tags \u2014 ' + family.parentName + ' Family</title>'
       + '<style>' + css + '</style>'
       + '<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>'
       + '</head><body>'
-      + '<h2>&#129306; Children\'s Ministry &mdash; ' + family.parentName + ' Family &mdash; ' + today + '</h2>'
-      + '<div class="grid">' + tagsHTML + '</div>'
-      + '<p style="text-align:center;margin-top:20px;font-size:11px;color:#9ca3af">'
-      + 'Scan QR on child tag to page parent &bull; Match code for secure pickup</p>'
+      + pagesHTML
       + '<script>'
       + 'window.addEventListener("load",function(){'
       + qrScript
-      + 'setTimeout(function(){window.print();},800);'
+      + 'setTimeout(function(){window.print();},900);'
       + '});'
       + '<\/script>'
       + '</body></html>'
     );
     win.document.close();
     closeModal('cmPrintModal');
-    toast('&#128247; Name tags ready \u2014 print dialog opening\u2026', 'ok');
+    toast('🖨\ufe0f Printing \u2014 child tag then parent stub per child', 'ok');
   }
 };
 
