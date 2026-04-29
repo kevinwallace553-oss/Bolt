@@ -388,7 +388,7 @@ const KIOSK = {
 
     // Show & style the event banner in the kiosk main area
     const bannerConfig = {
-      'Sunday Service':     { bg:'rgba(245,158,11,0.1)',  border:'rgba(245,158,11,0.35)',  color:'#fcd34d', title:'Sunday Service',    desc:'Main weekly gathering — search to check in members',       icon:'🙏' },
+      'Sunday Service':     { bg:'rgba(245,158,11,0.1)',  border:'rgba(245,158,11,0.35)',  color:'#fcd34d', title:'Sunday Service',    desc:'Register first timers · update member records · check in',       icon:'🙏' },
       'Youth Night':        { bg:'rgba(6,182,212,0.1)',   border:'rgba(6,182,212,0.35)',   color:'#67e8f9', title:'Youth Night',        desc:'Wednesday or Friday event — check in youth & leaders',     icon:'⚡' },
       'Special Event':      { bg:'rgba(139,92,246,0.1)',  border:'rgba(139,92,246,0.35)',  color:'#c4b5fd', title:'Special Event',      desc:'Camp, conference, or retreat check-in',                   icon:'🎉' },
       'Childrens Ministry': { bg:'rgba(16,185,129,0.1)', border:'rgba(16,185,129,0.35)', color:'#6ee7b7', title:"Children's Ministry", desc:'Use the Families button for child check-in & name tags',  icon:'🧒' },
@@ -406,15 +406,61 @@ const KIOSK = {
       const desc = document.getElementById('kBannerDesc'); if(desc) desc.textContent = bc.desc;
     }
 
-    // If Children's Ministry, swap action buttons to focus on families
+    // Swap action buttons based on event type
+    const acts = document.getElementById('kActionsRow');
+    const searchEl = document.getElementById('kSearch');
+
     if (eventName === 'Childrens Ministry') {
-      const acts = document.getElementById('kActionsRow');
       if (acts) acts.innerHTML = `
         <button class="k-btn teal full" onclick="showCM()" style="background:rgba(16,185,129,0.18);border-color:rgba(16,185,129,0.5);color:#6ee7b7">🧒 Open Family Registry</button>
         <button class="k-btn" onclick="KIOSK.openNewStudent()">➕ New Student</button>
         <button class="k-btn" onclick="KIOSK.openManage()">📋 Manage</button>`;
+
+    } else if (eventName === 'Sunday Service') {
+      if (searchEl) searchEl.placeholder = 'Search members or guests by name…';
+      if (acts) acts.innerHTML = `
+        <button class="k-btn amber full" onclick="KIOSK.openFirstTimerFlow()" style="background:rgba(245,158,11,0.18);border-color:rgba(245,158,11,0.5);color:#fcd34d;font-weight:800">🌟 Register First Timer / Guest</button>
+        <button class="k-btn" onclick="KIOSK.openBatch()" style="background:rgba(245,158,11,0.08);border-color:rgba(245,158,11,0.25);color:#fcd34d">👥 Batch Check-In</button>
+        <button class="k-btn" onclick="KIOSK.openNewStudent()">➕ New Member</button>
+        <button class="k-btn" onclick="KIOSK.openManage()">📋 Update Records</button>`;
+      // Also update search empty state
+      const results = document.getElementById('kResults');
+      if (results) results.innerHTML = `
+        <div style="padding:30px 20px;text-align:center">
+          <div style="font-size:48px;margin-bottom:14px">🙏</div>
+          <div style="font-family:var(--font);font-size:17px;font-weight:800;color:var(--text);margin-bottom:6px">Welcome to Sunday Service</div>
+          <div style="font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.6">Search for a member or guest above,<br>or register a first-time visitor below</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:400px;margin:0 auto">
+            <button onclick="KIOSK.openFirstTimerFlow()" style="padding:14px 10px;border-radius:14px;background:rgba(245,158,11,0.12);border:1.5px solid rgba(245,158,11,0.4);color:#fcd34d;font-family:var(--body);font-size:12px;font-weight:800;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px">
+              <span style="font-size:24px">🌟</span>First Timer
+            </button>
+            <button onclick="KIOSK.openBatch()" style="padding:14px 10px;border-radius:14px;background:var(--surface2);border:1.5px solid var(--rim);color:var(--muted);font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px">
+              <span style="font-size:24px">👥</span>Batch Check-In
+            </button>
+            <button onclick="KIOSK.openNewStudent()" style="padding:14px 10px;border-radius:14px;background:var(--surface2);border:1.5px solid var(--rim);color:var(--muted);font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px">
+              <span style="font-size:24px">➕</span>New Member
+            </button>
+            <button onclick="KIOSK.openManage()" style="padding:14px 10px;border-radius:14px;background:var(--surface2);border:1.5px solid var(--rim);color:var(--muted);font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px">
+              <span style="font-size:24px">📋</span>Update Records
+            </button>
+          </div>
+        </div>`;
+
+    } else if (eventName === 'Special Event') {
+      if (acts) acts.innerHTML = `
+        <button class="k-btn teal full" onclick="KIOSK.openBatch()">👥 Batch Check-In</button>
+        <button class="k-btn" onclick="KIOSK.openFirstTimerFlow()">🌟 Register Guest</button>
+        <button class="k-btn" onclick="KIOSK.openNewStudent()">➕ New Attendee</button>
+        <button class="k-btn" onclick="KIOSK.openManage()">📋 Manage</button>`;
+
+    } else if (eventName === 'Youth Night') {
+      if (searchEl) searchEl.placeholder = 'Search students by name…';
+      if (acts) acts.innerHTML = `
+        <button class="k-btn teal full" onclick="KIOSK.openBatch()">👥 Batch Check-In</button>
+        <button class="k-btn" onclick="KIOSK.openNewStudent()">➕ New Student</button>
+        <button class="k-btn" onclick="KIOSK.openManage()">📋 Manage</button>`;
+
     } else {
-      const acts = document.getElementById('kActionsRow');
       if (acts) acts.innerHTML = `
         <button class="k-btn teal full" onclick="KIOSK.openBatch()">👥 Batch Check-In</button>
         <button class="k-btn" onclick="KIOSK.openNewStudent()">➕ New Student</button>
@@ -576,12 +622,28 @@ const KIOSK = {
     hideSaving();
   },
 
+  openFirstTimerFlow() {
+    ['ns_name','ns_grade','ns_dob','ns_parent','ns_phone','ns_email','ns_ec','ns_allergy'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('ns_checkin').checked = true;
+    const title = document.getElementById('nsModalTitle');
+    if (title) { title.textContent = '🌟 First Timer / Guest Registration'; title.style.color = '#fcd34d'; }
+    const saveBtn = document.getElementById('nsModalSave');
+    if (saveBtn) saveBtn.textContent = 'Register & Check In';
+    openModal('newStudentModal');
+  },
+
   openNewStudent() {
-    // Clear form
     ['ns_name','ns_grade','ns_dob','ns_parent','ns_phone','ns_email','ns_ec','ns_allergy'].forEach(id=>{
       document.getElementById(id).value='';
     });
     document.getElementById('ns_checkin').checked = true;
+    // Reset title in case first-timer flow changed it
+    const title = document.getElementById('nsModalTitle');
+    if (title) { title.textContent = '➕ New Student'; title.style.color = ''; }
+    const saveBtn = document.getElementById('nsModalSave');
+    if (saveBtn) saveBtn.textContent = 'Save & Add';
     openModal('newStudentModal');
   },
 

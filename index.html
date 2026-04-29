@@ -546,21 +546,21 @@
 <div class="modal" id="newStudentModal">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title">➕ New Student</div>
+    <div class="modal-title" id="nsModalTitle">➕ New Student</div>
     <div class="form-grid">
-      <div class="fg full"><div class="fg-label">Full Name *</div><input class="fg-inp" id="ns_name" placeholder="First Last"></div>
-      <div class="fg"><div class="fg-label">Grade</div><input class="fg-inp" id="ns_grade" placeholder="e.g. 8"></div>
-      <div class="fg"><div class="fg-label">Date of Birth</div><input class="fg-inp" id="ns_dob" type="date"></div>
-      <div class="fg"><div class="fg-label">Parent/Guardian</div><input class="fg-inp" id="ns_parent" placeholder="Name"></div>
+      <div class="fg full"><div class="fg-label">Full Name *</div><input class="fg-inp" id="ns_name" placeholder="First and last name" autocapitalize="words"></div>
       <div class="fg"><div class="fg-label">Phone</div><input class="fg-inp" id="ns_phone" type="tel" placeholder="(555) 000-0000"></div>
-      <div class="fg full"><div class="fg-label">Email</div><input class="fg-inp" id="ns_email" type="email" placeholder="parent@example.com"></div>
-      <div class="fg full"><div class="fg-label">Emergency Contact</div><input class="fg-inp" id="ns_ec" placeholder="Name & phone"></div>
-      <div class="fg full"><div class="fg-label">Allergies / Medical Notes</div><input class="fg-inp" id="ns_allergy" placeholder="None"></div>
+      <div class="fg"><div class="fg-label">Email</div><input class="fg-inp" id="ns_email" type="email" placeholder="email@example.com" autocapitalize="none"></div>
+      <div class="fg"><div class="fg-label">Grade / Age Group</div><input class="fg-inp" id="ns_grade" placeholder="e.g. Adult, Youth, 8"></div>
+      <div class="fg"><div class="fg-label">Date of Birth</div><input class="fg-inp" id="ns_dob" type="date"></div>
+      <div class="fg"><div class="fg-label">Parent / Guardian</div><input class="fg-inp" id="ns_parent" placeholder="If applicable" autocapitalize="words"></div>
+      <div class="fg"><div class="fg-label">Emergency Contact</div><input class="fg-inp" id="ns_ec" placeholder="Name &amp; phone"></div>
+      <div class="fg"><div class="fg-label">Allergies / Medical</div><input class="fg-inp" id="ns_allergy" placeholder="None"></div>
     </div>
     <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);cursor:pointer;margin-bottom:4px">
-      <input type="checkbox" id="ns_checkin" checked style="width:14px;height:14px;accent-color:var(--green)"> Check in immediately after adding
+      <input type="checkbox" id="ns_checkin" checked style="width:14px;height:14px;accent-color:var(--green)"> Check in immediately after registering
     </label>
-    <button class="modal-save" onclick="KIOSK.saveNewStudent()">Save &amp; Add Student</button>
+    <button class="modal-save" id="nsModalSave" onclick="KIOSK.saveNewStudent()">Save &amp; Add</button>
     <button class="modal-cancel" onclick="closeModal('newStudentModal')">Cancel</button>
   </div>
 </div>
