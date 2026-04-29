@@ -197,30 +197,27 @@
   </div>
   <div class="event-picker" id="eventPicker">
     <div class="ep-card">
-      <button class="ep-back" onclick="document.getElementById('eventPicker').classList.remove('open')">← Back</button>
-      <div class="ep-greeting" id="epGreeting">Hey there!</div>
-      <div class="ep-title">What's today's event?</div>
-      <div class="ep-sub">Choose the session type for accurate attendance tracking</div>
-      <div style="font-size:9px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;margin-top:2px">Gatherings</div>
-      <div class="ep-opt" id="epCM" onclick="KIOSK.selectCM(this)" style="border-left:3px solid #10b981"><div class="ep-opt-icon" style="background:rgba(16,185,129,0.15);border-color:rgba(16,185,129,0.3)">🧒</div><div><div class="ep-opt-name">Children's Ministry</div><div class="ep-opt-desc" style="color:#6ee7b7">Family registry, check-in & name tags</div></div><div class="ep-check">✓</div></div>
-      <div class="ep-opt" onclick="KIOSK.selectEvent(this,'Sunday Service','🙏','Sunday Service')" style="border-left:3px solid #f59e0b"><div class="ep-opt-icon" style="background:rgba(245,158,11,0.15);border-color:rgba(245,158,11,0.3)">🙏</div><div><div class="ep-opt-name">Sunday Service</div><div class="ep-opt-desc" style="color:#fcd34d">Members, guests & department volunteers</div></div><div class="ep-check">✓</div></div>
-      <div class="ep-opt" onclick="KIOSK.selectEvent(this,'Youth Night','⚡','Youth Night')" style="border-left:3px solid #06b6d4"><div class="ep-opt-icon" style="background:rgba(6,182,212,0.15);border-color:rgba(6,182,212,0.3)">⚡</div><div><div class="ep-opt-name">Youth Night</div><div class="ep-opt-desc" style="color:#67e8f9">Student check-in only</div></div><div class="ep-check">✓</div></div>
-      <div class="ep-opt" onclick="KIOSK.selectEvent(this,'Special Event','🎉','Special Event')" style="border-left:3px solid #8b5cf6"><div class="ep-opt-icon" style="background:rgba(139,92,246,0.15);border-color:rgba(139,92,246,0.3)">🎉</div><div><div class="ep-opt-name">Special Event</div><div class="ep-opt-desc" style="color:#c4b5fd">Camp, conference, or trip — full roster</div></div><div class="ep-check">✓</div></div>
-
-      <div style="font-size:9px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin:10px 0 6px">Departments & Volunteers</div>
-      <div class="ep-opt" onclick="KIOSK.selectVolunteer(this,'Worship Team','🎵','Worship Team')" style="border-left:3px solid #ec4899"><div class="ep-opt-icon" style="background:rgba(236,72,153,0.15);border-color:rgba(236,72,153,0.3)">🎵</div><div><div class="ep-opt-name">Worship Team</div><div class="ep-opt-desc" style="color:#f9a8d4">Singers, musicians & AV crew</div></div><div class="ep-check">✓</div></div>
-      <div class="ep-opt" onclick="KIOSK.selectVolunteer(this,'Ushers & Greeters','🤝','Ushers & Greeters')" style="border-left:3px solid #0891b2"><div class="ep-opt-icon" style="background:rgba(8,145,178,0.15);border-color:rgba(8,145,178,0.3)">🤝</div><div><div class="ep-opt-name">Ushers & Greeters</div><div class="ep-opt-desc" style="color:#67e8f9">Front-of-house hospitality team</div></div><div class="ep-check">✓</div></div>
-      <div class="ep-opt" onclick="KIOSK.selectVolunteer(this,'Security','🛡️','Security')" style="border-left:3px solid #dc2626"><div class="ep-opt-icon" style="background:rgba(220,38,38,0.15);border-color:rgba(220,38,38,0.3)">🛡️</div><div><div class="ep-opt-name">Security</div><div class="ep-opt-desc" style="color:#fca5a5">Safety & access control volunteers</div></div><div class="ep-check">✓</div></div>
-      <div class="ep-opt" onclick="KIOSK.selectVolunteer(this,'Media & Tech','📽️','Media & Tech')" style="border-left:3px solid #7c3aed"><div class="ep-opt-icon" style="background:rgba(124,58,237,0.15);border-color:rgba(124,58,237,0.3)">📽️</div><div><div class="ep-opt-name">Media & Tech</div><div class="ep-opt-desc" style="color:#c4b5fd">Livestream, screens & recording</div></div><div class="ep-check">✓</div></div>
-      <div class="ep-opt" onclick="KIOSK.selectVolunteer(this,'Parking & Traffic','🚗','Parking & Traffic')" style="border-left:3px solid #d97706"><div class="ep-opt-icon" style="background:rgba(217,119,6,0.15);border-color:rgba(217,119,6,0.3)">🚗</div><div><div class="ep-opt-name">Parking & Traffic</div><div class="ep-opt-desc" style="color:#fcd34d">Lot attendants & traffic directors</div></div><div class="ep-check">✓</div></div>
-      <div class="ep-opt" onclick="KIOSK.selectVolunteer(this,'Prayer Team','🙌','Prayer Team')" style="border-left:3px solid #10b981"><div class="ep-opt-icon" style="background:rgba(16,185,129,0.15);border-color:rgba(16,185,129,0.3)">🙌</div><div><div class="ep-opt-name">Prayer Team</div><div class="ep-opt-desc" style="color:#6ee7b7">Altar & prayer ministry volunteers</div></div><div class="ep-check">✓</div></div>
-      <div class="ep-opt" onclick="KIOSK.selectVolunteer(this,'Hospitality','☕','Hospitality')" style="border-left:3px solid #78716c"><div class="ep-opt-icon" style="background:rgba(120,113,108,0.15);border-color:rgba(120,113,108,0.3)">☕</div><div><div class="ep-opt-name">Hospitality</div><div class="ep-opt-desc" style="color:#d6d3d1">Coffee, café & refreshments team</div></div><div class="ep-check">✓</div></div>
-      <div class="ep-opt" onclick="KIOSK.selectVolunteer(this,'__new_dept__','🏷️','New Department')" style="border-left:3px solid rgba(148,163,184,0.4)"><div class="ep-opt-icon" style="background:rgba(148,163,184,0.1);border-color:rgba(148,163,184,0.2)">🏷️</div><div><div class="ep-opt-name">Add / Manage Departments</div><div class="ep-opt-desc" style="color:rgba(148,163,184,0.8)">Create new departments or view all</div></div><div class="ep-check">✓</div></div>
-
-      <div style="font-size:9px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin:10px 0 6px">Other</div>
-      <div class="ep-opt" onclick="KIOSK.selectEvent(this,'__other__','✏️','Other')" style="border-left:3px solid rgba(148,163,184,0.4)"><div class="ep-opt-icon" style="background:rgba(148,163,184,0.1);border-color:rgba(148,163,184,0.2)">✏️</div><div><div class="ep-opt-name">Custom Event</div><div class="ep-opt-desc" style="color:rgba(148,163,184,0.8)">Enter any event name</div></div><div class="ep-check">✓</div></div>
-      <div class="ep-other-wrap" id="epOtherWrap"><input id="epOtherInput" type="text" placeholder="Event name…"></div>
-      <button class="btn-primary" style="margin-top:16px" onclick="KIOSK.confirmEvent()">Start Check-In →</button>
+      <!-- Sticky header -->
+      <div style="padding:26px 24px 16px;flex-shrink:0;border-bottom:1px solid var(--rim);position:relative">
+        <div class="ep-card-shine"></div>
+        <button class="ep-back" onclick="document.getElementById('eventPicker').classList.remove('open')">← Back</button>
+        <div class="ep-greeting" id="epGreeting">Hey there!</div>
+        <div class="ep-title">What's today's event?</div>
+        <div class="ep-sub">Choose the session type for accurate attendance tracking</div>
+      </div>
+      <!-- Scrollable options -->
+      <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 24px 8px">
+      <div class="ep-opt" id="epCM" onclick="KIOSK.selectCM(this)" style="border-left:3px solid #10b981"><div class="ep-opt-icon" style="background:rgba(16,185,129,0.15);border-color:rgba(16,185,129,0.3)">🧒</div><div><div class="ep-opt-name">Children's Ministry</div><div class="ep-opt-desc" style="color:#6ee7b7">Family registry, check-in &amp; name tags</div></div><div class="ep-check">✓</div></div>
+      <div class="ep-opt" onclick="KIOSK.selectEvent(this,'Sunday Service','🙏','Sunday Service')" style="border-left:3px solid #f59e0b"><div class="ep-opt-icon" style="background:rgba(245,158,11,0.15)">🙏</div><div><div class="ep-opt-name">Sunday Service</div><div class="ep-opt-desc" style="color:#fcd34d">Members, guests &amp; volunteers</div></div><div class="ep-check">✓</div></div>
+      <div class="ep-opt" onclick="KIOSK.selectEvent(this,'Youth Night','⚡','Youth Night')" style="border-left:3px solid #06b6d4"><div class="ep-opt-icon" style="background:rgba(6,182,212,0.15)">⚡</div><div><div class="ep-opt-name">Youth Night</div><div class="ep-opt-desc" style="color:#67e8f9">Student check-in only</div></div><div class="ep-check">✓</div></div>
+      <div class="ep-opt" onclick="KIOSK.selectEvent(this,'Special Event','🎉','Special Event')" style="border-left:3px solid #8b5cf6"><div class="ep-opt-icon" style="background:rgba(139,92,246,0.15)">🎉</div><div><div class="ep-opt-name">Special Event</div><div class="ep-opt-desc" style="color:#c4b5fd">Camp, conference, or trip</div></div><div class="ep-check">✓</div></div>
+      <div class="ep-opt" onclick="KIOSK.openDeptPicker()" style="border-left:3px solid #ec4899"><div class="ep-opt-icon" style="background:rgba(236,72,153,0.15)">🛡️</div><div><div class="ep-opt-name">Volunteer Departments</div><div class="ep-opt-desc" style="color:#f9a8d4">Worship, Ushers, Security, Media &amp; more</div></div><div class="ep-check">›</div></div>
+              <div class="ep-other-wrap" id="epOtherWrap"><input id="epOtherInput" type="text" placeholder="Event name…"></div>
+      </div>
+      <!-- Sticky footer -->
+      <div style="padding:14px 24px 20px;flex-shrink:0;border-top:1px solid var(--rim);background:var(--ink2)">
+        <button class="btn-primary" onclick="KIOSK.confirmEvent()">Start Check-In →</button>
+      </div>
     </div>
   </div>
   <div class="k-layout">
@@ -241,8 +238,8 @@
       <div class="k-side-btns">
         <button class="k-side-btn" id="cmKioskBtn" onclick="CM.openKiosk()" style="display:none;background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.35);color:#6ee7b7">🧒 Families</button>
         <button class="k-side-btn" onclick="openThemePicker()">🎨 Theme</button>
-        <button class="k-side-btn" onclick="showView('vHome')">🏠 Home</button>
-        <button class="k-side-btn danger" onclick="signOut()">🚪 Sign Out</button>
+        <button class="k-side-btn" onclick="showView('vHome')" style="border-color:rgba(6,182,212,0.3);color:var(--teal)">← Home</button>
+        <button class="k-side-btn danger" onclick="signOut()">Sign Out</button>
       </div>
     </div>
     <div class="k-main">
@@ -275,6 +272,30 @@
         <div class="k-empty"><div class="k-empty-icon">🔍</div><div class="k-empty-title">Search for a student</div><div class="k-empty-sub">Type a name to find and check in</div></div>
       </div>
     </div>
+
+  <!-- Department sub-picker -->
+  <div class="ep-card" id="deptPicker" style="display:none">
+    <div style="padding:26px 24px 16px;flex-shrink:0;border-bottom:1px solid var(--rim);position:relative">
+      <div class="ep-card-shine"></div>
+      <button class="ep-back" onclick="KIOSK.closeDeptPicker()">← Back</button>
+      <div class="ep-title" style="font-size:18px">Select Department</div>
+      <div class="ep-sub">Check in volunteers by ministry department</div>
+    </div>
+    <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 24px 8px">
+      <div class="ep-opt" onclick="KIOSK.selectVolunteer(this,'Worship Team','🎵','Worship Team')" style="border-left:3px solid #ec4899"><div class="ep-opt-icon" style="background:rgba(236,72,153,0.15)">🎵</div><div><div class="ep-opt-name">Worship Team</div><div class="ep-opt-desc" style="color:#f9a8d4">Singers, musicians &amp; AV crew</div></div><div class="ep-check">✓</div></div>
+      <div class="ep-opt" onclick="KIOSK.selectVolunteer(this,'Ushers &amp; Greeters','🤝','Ushers &amp; Greeters')" style="border-left:3px solid #0891b2"><div class="ep-opt-icon" style="background:rgba(8,145,178,0.15)">🤝</div><div><div class="ep-opt-name">Ushers &amp; Greeters</div><div class="ep-opt-desc" style="color:#67e8f9">Front-of-house hospitality team</div></div><div class="ep-check">✓</div></div>
+      <div class="ep-opt" onclick="KIOSK.selectVolunteer(this,'Security','🛡️','Security')" style="border-left:3px solid #dc2626"><div class="ep-opt-icon" style="background:rgba(220,38,38,0.15)">🛡️</div><div><div class="ep-opt-name">Security</div><div class="ep-opt-desc" style="color:#fca5a5">Safety &amp; access control</div></div><div class="ep-check">✓</div></div>
+      <div class="ep-opt" onclick="KIOSK.selectVolunteer(this,'Media &amp; Tech','📽️','Media &amp; Tech')" style="border-left:3px solid #7c3aed"><div class="ep-opt-icon" style="background:rgba(124,58,237,0.15)">📽️</div><div><div class="ep-opt-name">Media &amp; Tech</div><div class="ep-opt-desc" style="color:#c4b5fd">Livestream, screens &amp; recording</div></div><div class="ep-check">✓</div></div>
+      <div class="ep-opt" onclick="KIOSK.selectVolunteer(this,'Parking &amp; Traffic','🚗','Parking &amp; Traffic')" style="border-left:3px solid #d97706"><div class="ep-opt-icon" style="background:rgba(217,119,6,0.15)">🚗</div><div><div class="ep-opt-name">Parking &amp; Traffic</div><div class="ep-opt-desc" style="color:#fcd34d">Lot attendants &amp; traffic directors</div></div><div class="ep-check">✓</div></div>
+      <div class="ep-opt" onclick="KIOSK.selectVolunteer(this,'Prayer Team','🙌','Prayer Team')" style="border-left:3px solid #10b981"><div class="ep-opt-icon" style="background:rgba(16,185,129,0.15)">🙌</div><div><div class="ep-opt-name">Prayer Team</div><div class="ep-opt-desc" style="color:#6ee7b7">Altar &amp; prayer ministry</div></div><div class="ep-check">✓</div></div>
+      <div class="ep-opt" onclick="KIOSK.selectVolunteer(this,'Hospitality','☕','Hospitality')" style="border-left:3px solid #78716c"><div class="ep-opt-icon" style="background:rgba(120,113,108,0.15)">☕</div><div><div class="ep-opt-name">Hospitality</div><div class="ep-opt-desc" style="color:#d6d3d1">Coffee, café &amp; refreshments</div></div><div class="ep-check">✓</div></div>
+      <div class="ep-opt" onclick="VOL.openDeptManager()" style="border-left:3px solid rgba(148,163,184,0.4)"><div class="ep-opt-icon" style="background:rgba(148,163,184,0.1)">🏷️</div><div><div class="ep-opt-name">Add / Manage Departments</div><div class="ep-opt-desc" style="color:rgba(148,163,184,0.8)">Create new departments</div></div><div class="ep-check">›</div></div>
+    </div>
+    <div style="padding:14px 24px 20px;flex-shrink:0;border-top:1px solid var(--rim);background:var(--ink2)">
+      <button class="btn-primary" onclick="KIOSK.confirmEvent()">Start Check-In →</button>
+    </div>
+  </div>
+
   </div>
 </div>
 
@@ -285,9 +306,9 @@
     <div class="dash-brand">BOLT <em>KIOSK</em></div>
     <div class="live-chip"><div class="live-dot"></div>LIVE</div>
     <div class="dash-btns">
+      <button class="d-btn" onclick="showView('vHome')" style="gap:4px">← Home</button>
       <button class="d-btn teal" onclick="DASH.refresh()" id="dashRefreshBtn">↻ Refresh</button>
       <button class="d-btn" onclick="openThemePicker()">🎨</button>
-      <button class="d-btn" onclick="showView('vHome')">🏠</button>
       <button class="d-btn red" onclick="signOut()">Sign Out</button>
     </div>
   </div>
@@ -424,7 +445,7 @@
     <div style="display:flex;align-items:center;gap:5px;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);border-radius:100px;padding:4px 11px;font-size:10px;font-weight:800;color:#6ee7b7;flex-shrink:0"><div style="width:5px;height:5px;border-radius:50%;background:#10b981;box-shadow:0 0 6px #10b981;animation:pulse 2s ease-in-out infinite"></div>LIVE</div>
     <div style="display:flex;gap:6px;flex-shrink:0">
       <button onclick="CM.openAddFamily()" style="padding:7px 14px;border-radius:100px;border:1px solid rgba(16,185,129,0.4);background:rgba(16,185,129,0.12);color:#6ee7b7;font-family:var(--body);font-size:12px;font-weight:800;cursor:pointer">+ Family</button>
-      <button onclick="showView('vHome')" style="padding:7px 14px;border-radius:100px;border:1px solid var(--rim);background:transparent;color:var(--muted);font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer">🏠 Home</button>
+      <button onclick="showView('vHome')" style="padding:7px 14px;border-radius:100px;border:1px solid var(--rim);background:transparent;color:var(--muted);font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer">← Home</button>
     </div>
   </div>
 
@@ -638,7 +659,7 @@
     <div style="display:flex;align-items:center;gap:5px;background:rgba(236,72,153,0.12);border:1px solid rgba(236,72,153,0.3);border-radius:100px;padding:4px 11px;font-size:10px;font-weight:800;color:#f9a8d4;flex-shrink:0" id="volLiveChip"><div style="width:5px;height:5px;border-radius:50%;background:#ec4899;box-shadow:0 0 6px #ec4899;animation:pulse 2s ease-in-out infinite"></div>LIVE</div>
     <div style="display:flex;gap:6px;flex-shrink:0">
       <button onclick="VOL.openAddVolunteer()" style="padding:7px 14px;border-radius:100px;border:1px solid rgba(236,72,153,0.4);background:rgba(236,72,153,0.12);color:#f9a8d4;font-family:var(--body);font-size:12px;font-weight:800;cursor:pointer">+ Volunteer</button>
-      <button onclick="showView('vKiosk')" style="padding:7px 14px;border-radius:100px;border:1px solid var(--rim);background:transparent;color:var(--muted);font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer">← Kiosk</button>
+      <button onclick="showView('vHome')" style="padding:7px 14px;border-radius:100px;border:1px solid var(--rim);background:transparent;color:var(--muted);font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer">← Home</button>
     </div>
   </div>
 

@@ -2309,18 +2309,31 @@ const VOL = {
   }
 };
 
+/* ── KIOSK: dept picker ── */
+KIOSK.openDeptPicker = function() {
+  // Hide main ep-card, show dept picker
+  const main = document.querySelector('#eventPicker .ep-card:not(#deptPicker)');
+  const dept = document.getElementById('deptPicker');
+  if (main) main.style.display = 'none';
+  if (dept) dept.style.display = 'flex';
+};
+
+KIOSK.closeDeptPicker = function() {
+  const main = document.querySelector('#eventPicker .ep-card:not(#deptPicker)');
+  const dept = document.getElementById('deptPicker');
+  if (dept) dept.style.display = 'none';
+  if (main) main.style.display = 'flex';
+};
+
 /* ── KIOSK: selectVolunteer ── */
 KIOSK.selectVolunteer = function(el, deptName, icon, desc) {
-  if (deptName === '__new_dept__') {
-    // Go back, show dept manager
-    document.getElementById('eventPicker').classList.remove('open');
-    VOL.openDeptManager();
-    return;
-  }
-  KIOSK.selectEvent(el, deptName, icon, desc);
-  // Store as volunteer department session
+  // Deselect all ep-opts
+  document.querySelectorAll('.ep-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  _selectedEvent = { name: deptName, icon, desc };
   _kEvent = deptName;
   _kEventType = 'volunteer';
+  document.getElementById('epOtherWrap')?.classList.remove('show');
 };
 
 let _kEventType = 'general'; // 'general' | 'volunteer' | 'children'
