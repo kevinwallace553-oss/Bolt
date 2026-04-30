@@ -1939,189 +1939,206 @@ const CM = {
   printTags() {
     const family = this._printFamily;
     if (!family || !family.children.length) return;
-    const today = new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
-    const time  = new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
-    const secCode = (Math.random().toString(36).substring(2,6)).toUpperCase();
 
-    // One PAGE per child — child tag on page 1, parent stub on page 2 (repeated per child)
+    const today   = new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+    const time    = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+
+    // One unique code per child for security matching
     const pages = family.children.map((child, ci) => {
+      const secCode   = (Math.random().toString(36).substring(2,6)).toUpperCase();
       const hasAllergy = child.allergies && child.allergies.toLowerCase()!=='none' && child.allergies.trim();
-      const grade = child.grade ? 'Grade ' + child.grade : '';
-      const qrId  = 'qr_' + ci;
-      const qrData = 'BOLT:'
-        + '\nChild: '  + child.firstName + ' ' + child.lastName
-        + (child.room  ? '\nRoom: '  + child.room  : '')
-        + (child.grade ? '\nGrade: ' + child.grade  : '')
-        + '\nParent: ' + family.parentName
-        + '\nPhone: '  + family.phone
-        + '\nCode: '   + secCode
-        + '\nDate: '   + today;
+      const grade      = child.grade ? 'Grade ' + child.grade : '';
+      const qrId       = 'qr_' + ci;
+
+      // QR encodes a URL-style payload that shows a parent paging screen
+      // Using a data URI so the QR renders a local HTML page in the browser
+      const childName  = (child.firstName + ' ' + child.lastName).trim();
+      const parentInfo = encodeURIComponent(JSON.stringify({
+        child: childName,
+        room:  child.room  || '',
+        grade: child.grade || '',
+        parent: family.parentName,
+        phone:  family.phone,
+        code:   secCode,
+        date:   today,
+        time:   time
+      }));
+      // QR points to a paging page — opens in browser and shows parent info
+      const qrURL = 'https://kevinwallace553-oss.github.io/bolt/page.html?d=' + parentInfo;
 
       return (
-        // ── PAGE 1: CHILD TAG ──────────────────────────────────
+        // ── PAGE: CHILD TAG (horizontal/landscape) left | right ──
         '<div class="page child-page">'
-          + '<div class="page-label">Child Name Tag &mdash; ' + child.firstName + ' ' + child.lastName + '</div>'
           + '<div class="tag">'
-            + '<div class="ts"></div>'
-            + '<div class="tc">'
-              + '<div class="tm">CHILDREN&#39;S MINISTRY</div>'
-              + '<div class="tfn">' + child.firstName + '</div>'
-              + '<div class="tln">' + child.lastName  + '</div>'
-              + '<div class="tb">'
-                + (child.room  ? '<span class="tbr">' + child.room  + '</span>' : '')
-                + (grade       ? '<span class="tbg">' + grade       + '</span>' : '')
+            // Left section — name & details
+            + '<div class="tag-left">'
+              + '<div class="tag-ministry">CHILDREN&#39;S MINISTRY</div>'
+              + '<div class="tag-firstname">' + child.firstName + '</div>'
+              + '<div class="tag-lastname">'  + child.lastName  + '</div>'
+              + '<div class="tag-badges">'
+                + (child.room ? '<span class="badge-room">'  + child.room + '</span>' : '')
+                + (grade      ? '<span class="badge-grade">' + grade      + '</span>' : '')
               + '</div>'
-              + (hasAllergy ? '<div class="tal">&#9888; ' + child.allergies + '</div>' : '')
+              + (hasAllergy ? '<div class="tag-allergy">&#9888; ' + child.allergies + '</div>' : '')
             + '</div>'
-            + '<div class="tdiv"></div>'
-            + '<div class="tp">'
-              + '<div class="tpl">SCAN TO PAGE PARENT</div>'
+            // Right section — QR + pickup code
+            + '<div class="tag-right">'
+              + '<div class="tag-scan-lbl">SCAN TO PAGE PARENT</div>'
               + '<div class="qr-wrap" id="' + qrId + '"></div>'
-              + '<div class="tpl mt">PICKUP CODE</div>'
-              + '<div class="tcode">' + secCode + '</div>'
-              + '<div class="tdt">' + today + ' &bull; ' + time + '</div>'
+              + '<div class="tag-code-lbl">PICKUP CODE</div>'
+              + '<div class="tag-code">' + secCode + '</div>'
             + '</div>'
           + '</div>'
+          + '<div class="page-meta">' + today + ' &bull; ' + time + '</div>'
         + '</div>'
 
-        // ── PAGE 2: PARENT STUB ───────────────────────────────
+        // ── PAGE: PARENT STUB (same size, horizontal) ──
         + '<div class="page parent-page">'
-          + '<div class="page-label">Parent Pickup Stub &mdash; ' + child.firstName + ' ' + child.lastName + '</div>'
           + '<div class="stub">'
-            + '<div class="sb-stripe"></div>'
-            + '<div class="sb-body">'
-              + '<div class="sb-header">SECURITY PICKUP STUB</div>'
-              + '<div class="sb-row">'
-                + '<div class="sb-child">'
-                  + '<div class="sb-name">' + child.firstName + ' ' + child.lastName + '</div>'
-                  + '<div class="sb-detail">' + [child.room, grade].filter(Boolean).join(' &bull; ') + '</div>'
-                + '</div>'
-                + '<div class="sb-code-box">'
-                  + '<div class="sb-code-lbl">CODE</div>'
-                  + '<div class="sb-code">' + secCode + '</div>'
-                + '</div>'
+            // Left section — child info
+            + '<div class="stub-left">'
+              + '<div class="stub-header">SECURITY PICKUP STUB</div>'
+              + '<div class="stub-child">' + childName + '</div>'
+              + '<div class="stub-detail">' + [child.room, grade].filter(Boolean).join(' &bull; ') + '</div>'
+              + '<div class="stub-parent-box">'
+                + '<div class="stub-parent-name">&#128100; ' + family.parentName + '</div>'
+                + '<div class="stub-parent-phone">&#128222; ' + family.phone + '</div>'
               + '</div>'
-              + '<div class="sb-parent">'
-                + '<div class="sb-parent-name">&#128100; ' + family.parentName + '</div>'
-                + '<div class="sb-parent-phone">&#128222; ' + family.phone + '</div>'
-              + '</div>'
-              + '<div class="sb-note">Present this stub at pickup. Staff will match the code on your child\'s name tag.</div>'
-              + '<div class="sb-footer">' + today + ' &bull; ' + time + '</div>'
+              + '<div class="stub-note">Present this stub at pickup. Staff will match the code.</div>'
+            + '</div>'
+            // Right section — big code
+            + '<div class="stub-right">'
+              + '<div class="stub-code-lbl">PICKUP CODE</div>'
+              + '<div class="stub-code">' + secCode + '</div>'
+              + '<div class="stub-date">' + today + '</div>'
             + '</div>'
           + '</div>'
+          + '<div class="page-meta">' + time + '</div>'
         + '</div>'
 
-        + '|QR|' + qrId + '|' + JSON.stringify(qrData) + '|END|'
+        + '|QR|' + qrId + '|' + JSON.stringify(qrURL) + '|END|'
       );
     });
 
-    // Strip QR metadata
+    // Parse QR metadata
     const qrMeta = [];
     const pagesHTML = pages.map(p => {
       const match = p.match(/\|QR\|([^|]+)\|(.+)\|END\|$/s);
-      if (match) qrMeta.push({ id: match[1], data: JSON.parse(match[2]) });
+      if (match) qrMeta.push({ id: match[1], url: JSON.parse(match[2]) });
       return p.replace(/\|QR\|.+\|END\|$/s, '');
     }).join('');
 
     const qrScript = qrMeta.map(q =>
-      'new QRCode(document.getElementById(' + JSON.stringify(q.id) + '),'
-      + '{text:' + JSON.stringify(q.data) + ',width:90,height:90,'
-      + 'colorDark:"#064e3b",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M});'
+      'new QRCode(document.getElementById(' + JSON.stringify(q.id) + '),{'
+      + 'text:' + JSON.stringify(q.url) + ','
+      + 'width:88,height:88,'
+      + 'colorDark:"#064e3b",colorLight:"#ffffff",'
+      + 'correctLevel:QRCode.CorrectLevel.M'
+      + '});'
     ).join('');
 
-    // Tag size: standard label size ~3.375" x 2.3125" → 324px x 222px at 96dpi
-    // Both tags same physical size
-    const TAG_W = '340px';
-    const TAG_H = '220px';
+    // ── TAG DIMENSIONS: 4" x 2" horizontal label (384px x 192px at 96dpi) ──
+    const TW = '400px';
+    const TH = '192px';
 
     const css = [
       '*{box-sizing:border-box;margin:0;padding:0}',
-      'html,body{width:100%;height:100%;background:#f5f5f5;font-family:Arial,sans-serif}',
-      // Each page centres one tag — prints as its own sheet
-      '.page{',
-        'width:100%;min-height:100vh;',
-        'display:flex;flex-direction:column;align-items:center;justify-content:center;',
-        'page-break-after:always;',
-        'padding:20px;',
-      '}',
-      '.page-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;',
-        'color:#9ca3af;margin-bottom:14px;text-align:center}',
-      // Child tag
-      '.tag{width:' + TAG_W + ';background:#fff;border-radius:18px;overflow:hidden;',
-        'box-shadow:0 6px 24px rgba(0,0,0,.14)}',
-      '.ts{height:10px;background:linear-gradient(90deg,#10b981,#06b6d4)}',
-      '.tc{padding:18px 20px 12px;text-align:center}',
-      '.tm{font-size:8px;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:#10b981;margin-bottom:10px}',
-      '.tfn{font-size:44px;font-weight:900;color:#111;line-height:1;margin-bottom:2px}',
-      '.tln{font-size:20px;font-weight:700;color:#333;margin-bottom:10px}',
-      '.tb{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:8px}',
-      '.tbr{font-size:11px;font-weight:800;padding:3px 12px;border-radius:100px;',
+      'html,body{background:#f0f0f0;font-family:Arial,Helvetica,sans-serif}',
+
+      // Page wrapper — one tag centered per printed page
+      '.page{width:100%;min-height:100vh;display:flex;flex-direction:column;',
+        'align-items:center;justify-content:center;page-break-after:always}',
+      '.page-meta{font-size:9px;color:#bbb;margin-top:8px;letter-spacing:0.5px}',
+
+      // ── CHILD TAG — horizontal card ──
+      '.tag{width:' + TW + ';height:' + TH + ';background:#fff;border-radius:14px;',
+        'overflow:hidden;box-shadow:0 4px 18px rgba(0,0,0,.15);display:flex;',
+        'border-top:8px solid #10b981}',
+
+      // Left panel (name side)
+      '.tag-left{flex:1;padding:12px 14px;display:flex;flex-direction:column;justify-content:center;',
+        'border-right:1.5px dashed #d1fae5}',
+      '.tag-ministry{font-size:6.5px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;',
+        'color:#10b981;margin-bottom:6px}',
+      '.tag-firstname{font-size:38px;font-weight:900;color:#111;line-height:1;margin-bottom:1px}',
+      '.tag-lastname{font-size:15px;font-weight:700;color:#444;margin-bottom:7px}',
+      '.tag-badges{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:5px}',
+      '.badge-room{font-size:9px;font-weight:800;padding:2px 9px;border-radius:100px;',
         'background:#ecfdf5;border:1.5px solid #10b981;color:#059669}',
-      '.tbg{font-size:11px;font-weight:800;padding:3px 12px;border-radius:100px;',
+      '.badge-grade{font-size:9px;font-weight:800;padding:2px 9px;border-radius:100px;',
         'background:#eff6ff;border:1.5px solid #3b82f6;color:#1d4ed8}',
-      '.tal{background:#fff5f5;border:1.5px solid #ef4444;border-radius:8px;',
-        'padding:5px 12px;font-size:11px;font-weight:800;color:#dc2626;',
-        'margin-top:4px;display:inline-block}',
-      '.tdiv{height:1px;',
-        'background:repeating-linear-gradient(90deg,#ddd 0,#ddd 6px,transparent 6px,transparent 12px);',
-        'margin:0 16px}',
-      '.tp{padding:12px 20px 16px;text-align:center;background:#f9fafb}',
-      '.tpl{font-size:7px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#9ca3af;margin-bottom:4px}',
-      '.mt{margin-top:6px}',
-      '.qr-wrap{display:flex;justify-content:center;margin:6px 0}',
-      '.tcode{font-size:32px;font-weight:900;color:#10b981;letter-spacing:6px;line-height:1;margin-bottom:4px}',
-      '.tdt{font-size:9px;color:#bbb}',
-      // Parent stub — same width as child tag
-      '.stub{width:' + TAG_W + ';background:#fff;border-radius:18px;overflow:hidden;',
-        'box-shadow:0 6px 24px rgba(0,0,0,.14);border:3px dashed #10b981}',
-      '.sb-stripe{height:10px;background:linear-gradient(90deg,#10b981,#06b6d4)}',
-      '.sb-body{padding:20px 22px}',
-      '.sb-header{font-size:7px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;',
-        'color:#9ca3af;margin-bottom:14px;text-align:center}',
-      '.sb-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}',
-      '.sb-child{flex:1;min-width:0}',
-      '.sb-name{font-size:22px;font-weight:900;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
-      '.sb-detail{font-size:12px;color:#666;margin-top:3px}',
-      '.sb-code-box{background:#064e3b;border-radius:12px;padding:10px 16px;text-align:center;flex-shrink:0}',
-      '.sb-code-lbl{font-size:7px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;',
-        'color:rgba(255,255,255,.7);margin-bottom:3px}',
-      '.sb-code{font-size:26px;font-weight:900;color:#6ee7b7;letter-spacing:5px;line-height:1}',
-      '.sb-parent{background:#f0fdf4;border-radius:10px;padding:10px 14px;margin-bottom:12px}',
-      '.sb-parent-name{font-size:15px;font-weight:700;color:#065f46}',
-      '.sb-parent-phone{font-size:13px;color:#047857;margin-top:3px}',
-      '.sb-note{font-size:10px;color:#9ca3af;text-align:center;margin-bottom:8px;line-height:1.5;font-style:italic}',
-      '.sb-footer{font-size:9px;color:#bbb;text-align:center}',
-      // Print styles
+      '.tag-allergy{background:#fff5f5;border:1.5px solid #ef4444;border-radius:6px;',
+        'padding:3px 9px;font-size:9px;font-weight:800;color:#dc2626;display:inline-block}',
+
+      // Right panel (QR + code side)
+      '.tag-right{width:130px;flex-shrink:0;background:#f9fafb;display:flex;flex-direction:column;',
+        'align-items:center;justify-content:center;padding:10px 8px;gap:3px}',
+      '.tag-scan-lbl{font-size:6px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;',
+        'color:#9ca3af;text-align:center}',
+      '.qr-wrap{display:flex;align-items:center;justify-content:center}',
+      '.tag-code-lbl{font-size:6px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;',
+        'color:#9ca3af;text-align:center;margin-top:2px}',
+      '.tag-code{font-size:22px;font-weight:900;color:#10b981;letter-spacing:5px;line-height:1}',
+
+      // ── PARENT STUB — same size, same layout ──
+      '.stub{width:' + TW + ';height:' + TH + ';background:#fff;border-radius:14px;',
+        'overflow:hidden;box-shadow:0 4px 18px rgba(0,0,0,.15);display:flex;',
+        'border-top:8px solid #10b981;border:3px dashed #10b981}',
+
+      // Stub left (child + parent info)
+      '.stub-left{flex:1;padding:12px 14px;display:flex;flex-direction:column;justify-content:center;',
+        'border-right:1.5px dashed #d1fae5}',
+      '.stub-header{font-size:6.5px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;',
+        'color:#9ca3af;margin-bottom:6px}',
+      '.stub-child{font-size:22px;font-weight:900;color:#111;line-height:1.1;margin-bottom:2px}',
+      '.stub-detail{font-size:10px;color:#666;margin-bottom:7px}',
+      '.stub-parent-box{background:#f0fdf4;border-radius:8px;padding:6px 10px;margin-bottom:6px}',
+      '.stub-parent-name{font-size:12px;font-weight:700;color:#065f46}',
+      '.stub-parent-phone{font-size:11px;color:#047857;margin-top:2px}',
+      '.stub-note{font-size:8px;color:#9ca3af;line-height:1.4;font-style:italic}',
+
+      // Stub right (big code)
+      '.stub-right{width:130px;flex-shrink:0;background:#064e3b;display:flex;flex-direction:column;',
+        'align-items:center;justify-content:center;padding:10px 8px;gap:4px}',
+      '.stub-code-lbl{font-size:6.5px;font-weight:800;letter-spacing:2px;text-transform:uppercase;',
+        'color:rgba(255,255,255,.6);text-align:center}',
+      '.stub-code{font-size:34px;font-weight:900;color:#6ee7b7;letter-spacing:5px;line-height:1}',
+      '.stub-date{font-size:8px;color:rgba(255,255,255,.4);text-align:center;margin-top:2px}',
+
+      // Print
       '@media print{',
         'html,body{background:#fff}',
-        '.page{min-height:100vh;padding:30px;box-shadow:none}',
-        '.page-label{display:none}',
+        '.page{min-height:100vh}',
+        '.page-meta{display:none}',
         '.tag,.stub{box-shadow:none}',
-        '.child-page .tag{border:1.5px solid #ddd}',
+        '.tag{border:1.5px solid #10b981;border-top:8px solid #10b981}',
       '}',
     ].join('');
 
-    const win = window.open('', '_blank', 'width=960,height=800');
+    const win = window.open('', '_blank', 'width=900,height=700');
+    if (!win) { toast('⚠️ Allow pop-ups to print tags','err'); return; }
     win.document.write(
       '<!DOCTYPE html><html><head>'
-      + '<title>Name Tags \u2014 ' + family.parentName + ' Family</title>'
+      + '<meta charset="utf-8">'
+      + '<title>Name Tags — ' + family.parentName + ' Family</title>'
       + '<style>' + css + '</style>'
       + '<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>'
       + '</head><body>'
       + pagesHTML
       + '<script>'
       + 'window.addEventListener("load",function(){'
-      + qrScript
-      + 'setTimeout(function(){window.print();},900);'
+      +   qrScript
+      +   'setTimeout(function(){window.print();},1200);'
       + '});'
       + '<\/script>'
       + '</body></html>'
     );
     win.document.close();
     closeModal('cmPrintModal');
-    toast('🖨\ufe0f Printing \u2014 child tag then parent stub per child', 'ok');
+    toast('\uD83D\uDDA8\uFE0F Printing tags — child + parent stub per child','ok');
   }
 };
+
 
 CM.printAllTags = function() {
   const checked = this._families.filter(f=>f.children.some(ch=>this._checkedFamilies.has(ch.id)));

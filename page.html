@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bolt Kiosk — Parent Page</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0a1628;
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .card {
+      background: #111f35;
+      border: 1px solid rgba(16,185,129,0.25);
+      border-radius: 24px;
+      padding: 32px 28px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+      animation: fadeUp .4s ease both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity:0; transform:translateY(20px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    .logo-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg,#10b981,#06b6d4);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .logo-text {
+      font-size: 13px; font-weight: 900; letter-spacing: 2px;
+      color: #fff;
+    }
+    .logo-sub {
+      font-size: 9px; font-weight: 700; letter-spacing: 2px;
+      color: #10b981; text-transform: uppercase;
+    }
+
+    .section-lbl {
+      font-size: 9px; font-weight: 800; letter-spacing: 2.5px;
+      text-transform: uppercase; color: rgba(255,255,255,.4);
+      margin-bottom: 8px;
+    }
+
+    .child-name {
+      font-size: 36px; font-weight: 900; color: #fff;
+      line-height: 1.1; margin-bottom: 4px;
+    }
+    .child-details {
+      display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px;
+    }
+    .badge {
+      font-size: 11px; font-weight: 700; padding: 3px 12px;
+      border-radius: 100px;
+    }
+    .badge-room  { background: rgba(16,185,129,0.15); border: 1.5px solid rgba(16,185,129,0.4); color: #6ee7b7; }
+    .badge-grade { background: rgba(59,130,246,0.15); border: 1.5px solid rgba(59,130,246,0.4); color: #93c5fd; }
+
+    .divider {
+      height: 1px;
+      background: repeating-linear-gradient(90deg,rgba(255,255,255,.1) 0,rgba(255,255,255,.1) 6px,transparent 6px,transparent 12px);
+      margin: 18px 0;
+    }
+
+    .parent-box {
+      background: rgba(16,185,129,0.08);
+      border: 1px solid rgba(16,185,129,0.2);
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 20px;
+    }
+    .parent-name  { font-size: 17px; font-weight: 700; color: #6ee7b7; margin-bottom: 4px; }
+    .parent-phone {
+      font-size: 22px; font-weight: 800; color: #fff;
+      letter-spacing: 1px; margin-bottom: 8px;
+    }
+    .call-btn {
+      display: block; width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg,#10b981,#059669);
+      border: none; border-radius: 12px;
+      color: #fff; font-size: 15px; font-weight: 800;
+      cursor: pointer; text-decoration: none; text-align: center;
+      letter-spacing: 0.5px;
+      transition: opacity .2s;
+    }
+    .call-btn:hover { opacity: .9; }
+
+    .code-row {
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(6,78,59,0.4);
+      border: 1.5px solid rgba(16,185,129,0.3);
+      border-radius: 14px;
+      padding: 14px 18px;
+      margin-bottom: 16px;
+    }
+    .code-lbl { font-size: 9px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,.5); }
+    .code-val  { font-size: 32px; font-weight: 900; color: #6ee7b7; letter-spacing: 7px; }
+
+    .timestamp {
+      font-size: 10px; color: rgba(255,255,255,.3);
+      text-align: center; margin-top: 16px;
+    }
+
+    .error-state {
+      text-align: center; padding: 40px 20px;
+    }
+    .error-icon  { font-size: 48px; margin-bottom: 14px; }
+    .error-title { font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+    .error-sub   { font-size: 13px; color: rgba(255,255,255,.5); line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <div class="card" id="card">
+    <div class="logo-row">
+      <div class="logo-icon">⚡</div>
+      <div>
+        <div class="logo-text">BOLT KIOSK</div>
+        <div class="logo-sub">Children's Ministry</div>
+      </div>
+    </div>
+    <div id="content">
+      <div class="error-state">
+        <div class="error-icon">🔍</div>
+        <div class="error-title">Loading…</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      // Parse the ?d= query param
+      const params = new URLSearchParams(window.location.search);
+      const raw = params.get('d');
+
+      if (!raw) {
+        showError('No data found', 'This QR code appears to be invalid or expired.');
+        return;
+      }
+
+      let data;
+      try {
+        data = JSON.parse(decodeURIComponent(raw));
+      } catch(e) {
+        showError('Invalid QR code', 'Could not read the check-in data from this tag.');
+        return;
+      }
+
+      const { child, room, grade, parent, phone, code, date, time } = data;
+
+      const roomBadge  = room  ? `<span class="badge badge-room">${room}</span>` : '';
+      const gradeBadge = grade ? `<span class="badge badge-grade">Grade ${grade}</span>` : '';
+
+      document.getElementById('content').innerHTML = `
+        <div class="section-lbl">Child</div>
+        <div class="child-name">${child || '—'}</div>
+        <div class="child-details">${roomBadge}${gradeBadge}</div>
+
+        <div class="divider"></div>
+
+        <div class="section-lbl">Parent / Guardian</div>
+        <div class="parent-box">
+          <div class="parent-name">👤 ${parent || '—'}</div>
+          <div class="parent-phone">${phone || '—'}</div>
+          <a class="call-btn" href="tel:${(phone||'').replace(/\D/g,'')}">📞 Call Parent Now</a>
+        </div>
+
+        <div class="section-lbl">Pickup Code</div>
+        <div class="code-row">
+          <div>
+            <div class="code-lbl">Security Code</div>
+            <div class="code-val">${code || '—'}</div>
+          </div>
+          <div style="font-size:28px">🔒</div>
+        </div>
+
+        <div class="timestamp">Checked in ${date || ''} at ${time || ''}</div>
+      `;
+    })();
+
+    function showError(title, sub) {
+      document.getElementById('content').innerHTML = `
+        <div class="error-state">
+          <div class="error-icon">⚠️</div>
+          <div class="error-title">${title}</div>
+          <div class="error-sub">${sub}</div>
+        </div>
+      `;
+    }
+  </script>
+</body>
+</html>
