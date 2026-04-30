@@ -75,3 +75,13 @@ API.getDepartments       = ()           => gasRun('getDepartmentsAPI');
 API.addDepartment        = (n, i, c)    => gasRun('addDepartmentAPI', n, i, c);
 API.deleteDepartment     = (id)         => gasRun('deleteDepartmentAPI', id);
 API.getVolunteerDashboard= ()           => gasRun('getVolunteerDashboardAPI');
+
+// Small Groups
+API.getSmallGroups   = ()           => gasRun('getSmallGroupsAPI');
+API.addSmallGroup    = (data)       => gasRun('addSmallGroupAPI', data);
+API.editSmallGroup   = (id, data)   => gasRun('editSmallGroupAPI', id, data);
+API.deleteSmallGroup = (id)         => gasRun('deleteSmallGroupAPI', id);
+API.addSGMember      = (data)       => gasRun('addSGMemberAPI', data);
+API.editSGMember     = (id, data)   => gasRun('editSGMemberAPI', id, data);
+API.deleteSGMember   = (id)         => gasRun('deleteSGMemberAPI', id);
+API.checkInSGGroup   = (id, meta)   => gasRun('checkInSGGroupAPI', id, meta);

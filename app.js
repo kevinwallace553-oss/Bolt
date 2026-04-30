@@ -2072,14 +2072,7 @@ const CM = {
   }
 };
 
-/* ── SHOW CM BUTTON WHEN CHILDREN'S MINISTRY SELECTED ── */
-const _origConfirmEvent = KIOSK.confirmEvent.bind(KIOSK);
-KIOSK.confirmEvent = function() {
-  _origConfirmEvent();
-  const isCM = _kEvent === "Children's Ministry";
-  const btn = document.getElementById('cmKioskBtn');
-  if (btn) btn.style.display = isCM ? 'flex' : 'none';
-};CM.printAllTags = function() {
+CM.printAllTags = function() {
   const checked = this._families.filter(f=>f.children.some(ch=>this._checkedFamilies.has(ch.id)));
   if (!checked.length) { toast('⚠️ No checked-in children yet','err'); return; }
   const today = new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
@@ -2372,50 +2365,360 @@ const VOL = {
 };
 
 /* ── KIOSK: dept picker ── */
-KIOSK.openDeptPicker = function() {
-  // Hide main ep-card, show dept picker
-  const main = document.querySelector('#eventPicker .ep-card:not(#deptPicker)');
-  const dept = document.getElementById('deptPicker');
-  if (main) main.style.display = 'none';
-  if (dept) dept.style.display = 'flex';
-};
-
-KIOSK.closeDeptPicker = function() {
-  const main = document.querySelector('#eventPicker .ep-card:not(#deptPicker)');
-  const dept = document.getElementById('deptPicker');
-  if (dept) dept.style.display = 'none';
-  if (main) main.style.display = 'flex';
-};
+// Dept picker removed — volunteer depts now accessed via home card
 
 /* ── KIOSK: selectVolunteer ── */
-KIOSK.selectVolunteer = function(el, deptName, icon, desc) {
-  // Deselect all ep-opts
-  document.querySelectorAll('.ep-opt').forEach(o => o.classList.remove('selected'));
-  el.classList.add('selected');
-  _selectedEvent = { name: deptName, icon, desc };
-  _kEvent = deptName;
-  _kEventType = 'volunteer';
-  document.getElementById('epOtherWrap')?.classList.remove('show');
-};
+let _kEventType = 'general';
 
-let _kEventType = 'general'; // 'general' | 'volunteer' | 'children'
+// Add Volunteers option to home card and update API
 
-// Override confirmEvent to route to correct view for volunteer depts
-const _origConfirmVolEvent = KIOSK.confirmEvent.bind(KIOSK);
-KIOSK.confirmEvent = function() {
-  // Check if this is a volunteer department
-  const volunteerDepts = ['Worship Team','Ushers & Greeters','Security','Media & Tech',
-    'Parking & Traffic','Prayer Team','Hospitality'];
-  if (volunteerDepts.includes(_selectedEvent?.name)) {
-    // Confirm the event (sets _kLeader, shows leader box, sends check-in)
-    _origConfirmVolEvent();
-    // Then route to volunteer view
-    setTimeout(() => {
-      VOL.open(_selectedEvent.name, _selectedEvent.icon);
-    }, 300);
-  } else {
-    _origConfirmVolEvent();
+/* ════════════════════════════════════════════════════
+   SMALL GROUPS MODULE
+════════════════════════════════════════════════════ */
+const SG = {
+  _groups: [],
+  _filtered: [],
+  _checkedGroups: new Set(),
+
+  async open() {
+    showView('vSmallGroups');
+    await this.load();
+  },
+
+  async load() {
+    showSaving('Loading groups…');
+    try {
+      const r = await API.getSmallGroups();
+      this._groups = r?.groups || [];
+      this._filtered = [...this._groups];
+      this.updateStats();
+      this.render(this._filtered);
+    } catch(e) { toast('⚠️ Failed to load groups','err'); }
+    hideSaving();
+  },
+
+  updateStats() {
+    const totalMembers = this._groups.reduce((a,g)=>a+g.members.length,0);
+    const el1 = document.getElementById('sgStatGroups');
+    const el2 = document.getElementById('sgStatMembers');
+    if(el1) el1.textContent = this._groups.length;
+    if(el2) el2.textContent = totalMembers;
+  },
+
+  search(q) {
+    document.getElementById('sgClear').classList.toggle('show', q.length>0);
+    if (!q.trim()) { this._filtered = [...this._groups]; }
+    else {
+      const ql = q.toLowerCase();
+      this._filtered = this._groups.filter(g=>
+        g.name.toLowerCase().includes(ql) ||
+        g.leader.toLowerCase().includes(ql) ||
+        g.category.toLowerCase().includes(ql)
+      );
+    }
+    this.render(this._filtered);
+  },
+
+  clearSearch() {
+    document.getElementById('sgSearch').value = '';
+    document.getElementById('sgClear').classList.remove('show');
+    this._filtered = [...this._groups];
+    this.render(this._filtered);
+  },
+
+  render(groups) {
+    const el = document.getElementById('sgGroupList');
+    if (!groups.length) {
+      el.innerHTML = `<div class="empty-state" style="padding:60px 20px">
+        <div class="empty-icon">${this._groups.length?'🔍':'👥'}</div>
+        <div class="k-empty-title">${this._groups.length?'No groups match':'No small groups yet'}</div>
+        <div class="k-empty-sub">${this._groups.length?'Try a different search':'Tap <strong>+ Group</strong> to create your first small group'}</div>
+      </div>`;
+      return;
+    }
+    const roleColors = { Leader:'rgba(245,158,11,0.2)', 'Co-Leader':'rgba(139,92,246,0.2)', Host:'rgba(6,182,212,0.2)', Guest:'rgba(148,163,184,0.1)', Member:'' };
+    const roleText   = { Leader:'#fcd34d','Co-Leader':'#c4b5fd', Host:'#67e8f9', Guest:'rgba(148,163,184,0.8)', Member:'var(--muted)' };
+
+    el.innerHTML = groups.map((g,gi)=>{
+      const isChecked = this._checkedGroups.has(g.id);
+      return `<div style="background:var(--ink2);border:2px solid ${isChecked?'rgba(16,185,129,0.5)':'var(--rim)'};border-radius:22px;margin-bottom:12px;overflow:hidden;animation:fadeUp .2s ease both;animation-delay:${Math.min(gi,5)*0.05}s">
+        <!-- Group header -->
+        <div style="display:flex;align-items:center;gap:12px;padding:16px 18px;cursor:pointer" onclick="SG.toggleGroup('${g.id}')">
+          <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#0d9488,#06b6d4);display:flex;align-items:center;justify-content:center;font-family:var(--font);font-size:15px;font-weight:900;color:#fff;flex-shrink:0;box-shadow:0 0 18px rgba(13,148,136,0.3)">${initials(g.name)}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-family:var(--font);font-size:16px;font-weight:900;color:#fff;margin-bottom:3px">${g.name}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:7px;align-items:center">
+              ${g.leader?`<span style="font-size:11px;color:#6ee7b7;font-weight:700">👤 ${g.leader}</span>`:''}
+              ${g.day?`<span style="font-size:10px;color:var(--muted)">${g.day}${g.time?' · '+g.time:''}</span>`:''}
+              ${g.category?`<span style="font-size:10px;font-weight:700;background:rgba(13,148,136,0.12);color:#6ee7b7;padding:2px 8px;border-radius:100px;border:1px solid rgba(13,148,136,0.25)">${g.category}</span>`:''}
+              <span style="font-size:10px;font-weight:700;background:rgba(6,182,212,0.1);color:#67e8f9;padding:2px 8px;border-radius:100px">${g.members.length} member${g.members.length!==1?'s':''}</span>
+              ${isChecked?'<span style="font-size:10px;font-weight:800;background:rgba(16,185,129,0.15);color:#6ee7b7;padding:2px 8px;border-radius:100px;border:1px solid rgba(16,185,129,0.3)">✅ Checked In</span>':''}
+            </div>
+          </div>
+          <div style="font-size:20px;color:var(--muted2);flex-shrink:0" id="sgArrow_${g.id}">›</div>
+        </div>
+
+        <!-- Expanded members + actions -->
+        <div id="sgBody_${g.id}" style="display:none;border-top:1px solid rgba(13,148,136,0.12)">
+          ${g.location?`<div style="padding:8px 18px;font-size:11px;color:var(--muted);border-bottom:1px solid var(--rim)">📍 ${g.location}</div>`:''}
+          ${g.notes?`<div style="padding:8px 18px;font-size:11px;color:var(--muted2);border-bottom:1px solid var(--rim);font-style:italic">${g.notes}</div>`:''}
+
+          ${g.members.length===0
+            ? `<div style="padding:14px 18px;text-align:center;font-size:12px;color:var(--muted)">No members yet — add one below</div>`
+            : g.members.map(m=>{
+              const rc = roleColors[m.role]||'';
+              const rt = roleText[m.role]||'var(--muted)';
+              return `<div style="display:flex;align-items:center;gap:11px;padding:11px 18px;border-bottom:1px solid rgba(13,148,136,0.07)">
+                <div style="width:36px;height:36px;border-radius:10px;background:${rc||'var(--surface2)'};display:flex;align-items:center;justify-content:center;font-family:var(--font);font-size:11px;font-weight:800;color:${rt};flex-shrink:0;border:1px solid ${rc?rt.replace('0.2','0.4'):'var(--rim)'}">${initials(m.name)}</div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:13px;font-weight:700;color:#fff;display:flex;align-items:center;gap:6px">
+                    ${m.name}
+                    ${m.role!=='Member'?`<span style="font-size:9px;font-weight:800;padding:2px 7px;border-radius:100px;background:${rc};color:${rt};border:1px solid ${rt.replace('var(--muted)','rgba(148,163,184,0.3)')}">${m.role}</span>`:''}
+                  </div>
+                  <div style="font-size:10px;color:var(--muted);margin-top:2px">${m.phone||''} ${m.email?'· '+m.email:''}</div>
+                </div>
+                <div style="display:flex;gap:4px;flex-shrink:0">
+                  <button onclick="SG.editMember('${m.id}','${g.id}')" style="width:28px;height:28px;border-radius:8px;background:var(--surface2);border:1px solid var(--rim);color:var(--muted);cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center">✏️</button>
+                  <button onclick="SG.deleteMember('${m.id}','${m.name.replace(/'/,"\\'")}')" style="width:28px;height:28px;border-radius:8px;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);color:#fca5a5;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center">🗑️</button>
+                </div>
+              </div>`;
+            }).join('')}
+
+          <!-- Group actions bar -->
+          <div style="display:flex;gap:7px;padding:11px 16px;background:rgba(6,14,16,0.4)">
+            <button onclick="SG.checkInAll('${g.id}')" style="flex:1;padding:9px;border-radius:11px;background:rgba(13,148,136,0.15);border:1px solid rgba(13,148,136,0.4);color:#6ee7b7;font-family:var(--body);font-size:12px;font-weight:800;cursor:pointer">✅ Check In All</button>
+            <button onclick="SG.addMemberToGroup('${g.id}','${g.name.replace(/'/,"\\'")}')" style="padding:9px 13px;border-radius:11px;background:rgba(13,148,136,0.08);border:1px solid rgba(13,148,136,0.2);color:#6ee7b7;font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer">+ Member</button>
+            <button onclick="SG.editGroup('${g.id}')" style="padding:9px 11px;border-radius:11px;background:var(--surface2);border:1px solid var(--rim);color:var(--muted);font-family:var(--body);font-size:12px;cursor:pointer">✏️</button>
+            <button onclick="SG.deleteGroup('${g.id}','${g.name.replace(/'/,"\\'")}')" style="padding:9px 11px;border-radius:11px;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);color:#fca5a5;font-family:var(--body);font-size:12px;cursor:pointer">🗑️</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  },
+
+  toggleGroup(id) {
+    const body = document.getElementById(`sgBody_${id}`);
+    const arrow = document.getElementById(`sgArrow_${id}`);
+    if (!body) return;
+    const open = body.style.display === 'none';
+    body.style.display = open ? 'block' : 'none';
+    if (arrow) arrow.textContent = open ? '⌄' : '›';
+  },
+
+  /* ── CHECK IN ── */
+  async checkInAll(groupId) {
+    const group = this._groups.find(g=>g.id===groupId);
+    if (!group || !group.members.length) { toast('⚠️ No members in this group','err'); return; }
+    showSaving('Checking in group…');
+    try {
+      const r = await API.checkInSGGroup(groupId, { leader:_kLeader, event:_kEvent||'Small Groups' });
+      if (r?.success) {
+        this._checkedGroups.add(groupId);
+        const el2 = document.getElementById('sgStatChecked');
+        if (el2) el2.textContent = parseInt(el2.textContent||0) + (r.count||group.members.length);
+        this.render(this._filtered);
+        toast(`✅ ${group.name} — ${r.count||group.members.length} members checked in!`,'ok');
+      } else toast('⚠️ '+(r?.error||'Check-in failed'),'err');
+    } catch(e) { toast('⚠️ Connection error','err'); }
+    hideSaving();
+  },
+
+  /* ── ADD / EDIT GROUP ── */
+  openAddGroup() {
+    document.getElementById('sg_id').value = '';
+    ['sg_name','sg_leader','sg_leader_phone','sg_time','sg_location','sg_notes'].forEach(id=>{ document.getElementById(id).value=''; });
+    document.getElementById('sg_day').value = '';
+    document.getElementById('sg_category').value = '';
+    document.getElementById('sgGroupModalTitle').textContent = '👥 Create Small Group';
+    openModal('sgGroupModal');
+  },
+
+  editGroup(groupId) {
+    const g = this._groups.find(g=>g.id===groupId);
+    if (!g) return;
+    document.getElementById('sg_id').value = g.id;
+    document.getElementById('sg_name').value = g.name;
+    document.getElementById('sg_leader').value = g.leader;
+    document.getElementById('sg_leader_phone').value = g.leaderPhone;
+    document.getElementById('sg_day').value = g.day;
+    document.getElementById('sg_time').value = g.time;
+    document.getElementById('sg_location').value = g.location;
+    document.getElementById('sg_category').value = g.category;
+    document.getElementById('sg_notes').value = g.notes;
+    document.getElementById('sgGroupModalTitle').textContent = '✏️ Edit Group';
+    openModal('sgGroupModal');
+  },
+
+  async saveGroup() {
+    const id   = document.getElementById('sg_id').value;
+    const name = document.getElementById('sg_name').value.trim();
+    const leader = document.getElementById('sg_leader').value.trim();
+    if (!name)  { toast('⚠️ Group name is required','err'); return; }
+    if (!leader){ toast('⚠️ Leader name is required','err'); return; }
+    const data = { name, leader, leaderPhone:document.getElementById('sg_leader_phone').value.trim(),
+      day:document.getElementById('sg_day').value, time:document.getElementById('sg_time').value.trim(),
+      location:document.getElementById('sg_location').value.trim(),
+      category:document.getElementById('sg_category').value, notes:document.getElementById('sg_notes').value.trim() };
+    showSaving(id?'Updating group…':'Creating group…');
+    try {
+      let r;
+      if (id) {
+        r = await API.editSmallGroup(id, data);
+        if (r?.success) { const g=this._groups.find(g=>g.id===id); if(g) Object.assign(g,data); }
+      } else {
+        r = await API.addSmallGroup(data);
+        if (r?.success) this._groups.unshift({ ...data, id:r.id, members:[] });
+      }
+      if (r?.success) {
+        closeModal('sgGroupModal');
+        this._filtered = [...this._groups];
+        this.updateStats();
+        this.render(this._filtered);
+        toast(id?'✅ Group updated':'✅ Group created!','ok');
+      } else toast('⚠️ '+(r?.error||'Failed'),'err');
+    } catch(e) { toast('⚠️ Connection error','err'); }
+    hideSaving();
+  },
+
+  async deleteGroup(id, name) {
+    if (!confirm(`Delete "${name}" and all its members? This cannot be undone.`)) return;
+    showSaving('Deleting…');
+    try {
+      await API.deleteSmallGroup(id);
+      this._groups = this._groups.filter(g=>g.id!==id);
+      this._filtered = this._filtered.filter(g=>g.id!==id);
+      this.updateStats(); this.render(this._filtered);
+      toast('🗑️ Group deleted','ok');
+    } catch(e) { toast('⚠️ Delete failed','err'); }
+    hideSaving();
+  },
+
+  /* ── MEMBERS ── */
+  addMemberToGroup(groupId, groupName) {
+    document.getElementById('sgm_group_id').value = groupId;
+    document.getElementById('sgm_member_id').value = '';
+    document.getElementById('sgMemberGroupBadge').textContent = `Group: ${groupName}`;
+    document.getElementById('sgMemberModalTitle').textContent = '➕ Add Member';
+    ['sgm_first','sgm_last','sgm_phone','sgm_email'].forEach(id=>{ document.getElementById(id).value=''; });
+    document.getElementById('sgm_role').value = 'Member';
+    openModal('sgMemberModal');
+  },
+
+  editMember(memberId, groupId) {
+    const group = this._groups.find(g=>g.id===groupId);
+    const m = group?.members.find(m=>m.id===memberId);
+    if (!m) return;
+    document.getElementById('sgm_group_id').value = groupId;
+    document.getElementById('sgm_member_id').value = memberId;
+    document.getElementById('sgMemberGroupBadge').textContent = `Group: ${group.name}`;
+    document.getElementById('sgMemberModalTitle').textContent = '✏️ Edit Member';
+    document.getElementById('sgm_first').value = m.firstName;
+    document.getElementById('sgm_last').value  = m.lastName;
+    document.getElementById('sgm_phone').value = m.phone;
+    document.getElementById('sgm_email').value = m.email;
+    document.getElementById('sgm_role').value  = m.role;
+    openModal('sgMemberModal');
+  },
+
+  async saveMember() {
+    const gid  = document.getElementById('sgm_group_id').value;
+    const mid  = document.getElementById('sgm_member_id').value;
+    const first = document.getElementById('sgm_first').value.trim();
+    if (!first) { toast('⚠️ First name required','err'); return; }
+    const group = this._groups.find(g=>g.id===gid);
+    const data = { groupId:gid, groupName:group?.name||'',
+      firstName:first, lastName:document.getElementById('sgm_last').value.trim(),
+      phone:document.getElementById('sgm_phone').value.trim(),
+      email:document.getElementById('sgm_email').value.trim(),
+      role:document.getElementById('sgm_role').value };
+    showSaving(mid?'Updating…':'Adding member…');
+    try {
+      let r;
+      if (mid) {
+        r = await API.editSGMember(mid, data);
+        if (r?.success && group) {
+          const m = group.members.find(m=>m.id===mid);
+          if (m) { Object.assign(m, { firstName:data.firstName, lastName:data.lastName,
+            name:(data.firstName+' '+data.lastName).trim(), phone:data.phone,
+            email:data.email, role:data.role }); }
+        }
+      } else {
+        r = await API.addSGMember(data);
+        if (r?.success && group) group.members.push({ id:r.id, groupId:gid,
+          firstName:data.firstName, lastName:data.lastName,
+          name:(data.firstName+' '+data.lastName).trim(),
+          phone:data.phone, email:data.email, role:data.role });
+      }
+      if (r?.success) {
+        closeModal('sgMemberModal');
+        this.updateStats(); this.render(this._filtered);
+        setTimeout(()=>{ const b=document.getElementById(`sgBody_${gid}`); if(b) b.style.display='block';
+          const a=document.getElementById(`sgArrow_${gid}`); if(a) a.textContent='⌄'; }, 50);
+        toast(mid?'✅ Member updated':'✅ Member added!','ok');
+      } else toast('⚠️ '+(r?.error||'Failed'),'err');
+    } catch(e) { toast('⚠️ Connection error','err'); }
+    hideSaving();
+  },
+
+  async deleteMember(memberId, name) {
+    if (!confirm(`Remove ${name}?`)) return;
+    showSaving('Removing…');
+    try {
+      await API.deleteSGMember(memberId);
+      this._groups.forEach(g=>{ g.members=g.members.filter(m=>m.id!==memberId); });
+      this.updateStats(); this.render(this._filtered);
+      toast('🗑️ Member removed','ok');
+    } catch(e) { toast('⚠️ Delete failed','err'); }
+    hideSaving();
   }
 };
 
-// Add Volunteers option to home card and update API
+/* ── Route Small Groups from event picker ── */
+function showSmallGroups() { showView('vSmallGroups'); SG.open(); }
+
+// Young Adult Ministry — update banner and actions
+const _origBannerConfig = {
+  'Young Adult Ministry': { bg:'rgba(139,92,246,0.1)', border:'rgba(139,92,246,0.35)', color:'#c4b5fd', title:'Young Adult Ministry', desc:'Ages 18–35 — check in, register new members & guests', icon:'🔥' }
+};
+
+/* ════════════════════════════════════════════════════
+   SINGLE UNIFIED confirmEvent — handles all 4 events
+════════════════════════════════════════════════════ */
+;(function() {
+  const _orig = KIOSK.confirmEvent.bind(KIOSK);
+
+  KIOSK.confirmEvent = function() {
+    const name = _selectedEvent?.name;
+
+    // ── Small Groups → go to SG view ──
+    if (name === 'Small Groups') {
+      if (!_kLeader) { toast('⚠️ Select your name first','err'); return; }
+      _kEvent = 'Small Groups';
+      document.getElementById('eventPicker').classList.remove('open');
+      document.getElementById('leaderLogin').classList.add('gone');
+      SG.open();
+      API.checkIn({type:'leader',leader:_kLeader},{leader:_kLeader,event:'Small Groups',type:'leader'}).catch(()=>{});
+      toast('👥 Small Groups session started','ok');
+      return;
+    }
+
+    // ── All other events → standard kiosk flow ──
+    _orig();
+  };
+})();
+
+/* ════════════════════════════════════════════════════
+   SMALL GROUPS MODULE
+════════════════════════════════════════════════════ */
+/* ── Generic API.call helper ── */
+if(!API.call) API.call = (fn,...args) => gasRun(fn,...args);
+
+/* ── Volunteer home card helpers ── */
+function openVolDeptModal() { openModal('volDeptModal'); }
+function openVolDept(dept, icon) {
+  closeModal('volDeptModal');
+  setTimeout(() => VOL.open(dept, icon), 200);
+}
+
+/* ── Small Groups home card helper ── */
+function showSmallGroups() { SG.open(); }

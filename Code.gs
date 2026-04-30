@@ -207,10 +207,13 @@ function doPost(e){
     const allowed=['authLoginAPI','authRegisterAPI','authLogoutAPI','authValidateTokenAPI',
       'authForgotPasswordAPI','authResetPasswordAPI','searchStudentsAPI','getAllStudentsAPI',
       'addNewStudentAPI','editStudentAPI','deleteStudentAPI','uploadPhotoAPI','checkInAPI',
-      'batchCheckInAPI','getCheckInsTodayAPI','getDashboardData','getWeeklyCheckInsAPI',
+      'batchCheckInAPI','getCheckInsTodayAPI','getDashboardData','getWeeklyCheckInsAPI','getWeeklyReportForPWA',
       'getLeaders','addLeaderAPI','getAnalyticsData','getAtRiskStudents','getStudentAttendanceHistory',
       'getFamiliesAPI','searchFamiliesAPI','addFamilyAPI','addChildAPI','editFamilyAPI',
-      'editChildAPI','deleteFamilyAPI','deleteChildAPI','checkInFamilyAPI'];
+      'editChildAPI','deleteFamilyAPI','deleteChildAPI','checkInFamilyAPI',
+      'getVolunteersAPI','addVolunteerAPI','editVolunteerAPI','deleteVolunteerAPI',
+      'checkInVolunteerAPI','getVolunteerCheckInsAPI','getDepartmentsAPI',
+      'addDepartmentAPI','deleteDepartmentAPI','getVolunteerDashboardAPI'];
     if(!allowed.includes(fn)) return cors({error:'Not allowed'});
     const result=this[fn](...args);
     return cors(result);
@@ -224,7 +227,26 @@ function cors(data){
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-function getDashboardData(){return{checkIns:getTodaysCheckIns(),birthdays:getUpcomingBirthdays(45)};}
+function getDashboardData(){
+  try{
+    const checkins=getTodaysCheckIns();
+    const students=checkins.filter(c=>c.role!=='leader'&&c.type!=='leader');
+    const leaders=checkins.filter(c=>c.role==='leader'||c.type==='leader');
+    const isNew=(c)=>c.firstTime||c.isNew||c.neverSeenBefore;
+    const allStudents=getAllStudentsAPI();
+    let atRiskCount=0;
+    try{const ar=getAtRiskStudents();atRiskCount=(ar.twoWeeks||[]).filter(s=>s.fullName&&s.fullName.trim()).length;}catch(e){}
+    return{
+      checkins,
+      totalToday:students.length,
+      totalStudents:allStudents.length,
+      totalLeaders:leaders.length,
+      newToday:students.filter(isNew).length,
+      atRisk:atRiskCount,
+      birthdays:getUpcomingBirthdays(14)
+    };
+  }catch(err){Logger.log('getDashboardData ERROR: '+err);return{checkins:[],totalToday:0,totalStudents:0,totalLeaders:0,newToday:0,atRisk:0,birthdays:[]};}
+}
 
 /********** UTILS **********/
 function jsonResponse(obj){const out=ContentService.createTextOutput(JSON.stringify(obj));out.setMimeType(ContentService.MimeType.JSON);return out;}
@@ -254,7 +276,18 @@ function uploadPhotoAPI(base64DataUrl,studentName){
 /********** PUBLIC API **********/
 function searchStudentsAPI(query){return searchStudents(query)||[];}
 function checkInAPI(student,meta){return writeCheckIn(student,meta);}
-function getCheckInsTodayAPI(){return getTodaysCheckIns();}
+function getCheckInsTodayAPI(){
+  try{
+    const raw=getTodaysCheckIns();
+    return raw.map(r=>({
+      ...r,
+      name:r.fullName||(r.firstName||'')+' '+(r.lastName||''),
+      type:r.role==='leader'?'leader':'student',
+      time:r.timestamp||r.time||'',
+      isNew:r.firstTime||r.isNew||false,
+    }));
+  }catch(e){return[];}
+}
 function batchCheckInAPI(students,meta){
   const results=[];
   (students||[]).forEach(student=>{try{results.push({id:student.id,result:writeCheckIn(student,meta)});}catch(e){results.push({id:student.id,result:{status:'error',message:String(e)}});}});
@@ -419,6 +452,43 @@ function getTodaysCheckIns(){
 }
 
 /********** WEEKLY CHECK-INS **********/
+
+/* PWA-friendly weekly report — returns {days:[], weekLabel, totalStudents, topStudents} */
+function getWeeklyReportForPWA(offsetWeeks){
+  try{
+    offsetWeeks=offsetWeeks||0;
+    const raw=getWeeklyCheckInsAPI(offsetWeeks);
+    const records=raw.records||[];
+    // Build day-by-day counts
+    const monday=new Date(raw.weekStart);
+    const dayNames=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const days=dayNames.map((name,i)=>{
+      const date=new Date(monday);date.setDate(monday.getDate()+i);
+      const dateStr=date.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+      const count=records.filter(r=>{
+        const d=new Date(r.timestamp);
+        return d.getDate()===date.getDate()&&d.getMonth()===date.getMonth()&&
+               r.role!=='leader'&&r.type!=='leader';
+      }).length;
+      return{label:name+' '+dateStr,date:dateStr,count};
+    });
+    // Top students (by name frequency)
+    const freq={};
+    records.filter(r=>r.role!=='leader'&&r.type!=='leader').forEach(r=>{
+      const n=r.fullName||'';if(!n)return;
+      freq[n]=(freq[n]||{name:n,grade:r.grade,count:0});freq[n].count++;
+    });
+    const topStudents=Object.values(freq).sort((a,b)=>b.count-a.count).slice(0,10);
+    // Week label
+    const ws=new Date(raw.weekStart),we=new Date(raw.weekEnd);
+    const now=new Date();const diffWeeks=Math.round((now-ws)/604800000);
+    const weekLabel=diffWeeks===0?'This Week':diffWeeks===1?'Last Week':
+      ws.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' – '+
+      we.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    return{days,weekLabel,totalStudents:records.filter(r=>r.role!=='leader').length,topStudents};
+  }catch(err){Logger.log('getWeeklyReportForPWA ERROR: '+err);return{days:[],weekLabel:'This Week',totalStudents:0,topStudents:[]};}
+}
+
 function getWeeklyCheckInsAPI(offsetWeeks){
   offsetWeeks=offsetWeeks||0;const cacheKey='checkins_week_'+offsetWeeks;const ttl=offsetWeeks===0?30:300;
   const cached=cacheGet_(cacheKey);if(cached)return cached;
@@ -564,7 +634,7 @@ function getAtRiskStudents(){
       if(!s.firstName&&!s.lastName)return;const name=(s.firstName+' '+s.lastName).trim();
       const rec=lastSeenMap[String(s.id||'').trim().toLowerCase()]||lastSeenMap[name.toLowerCase()]||lastSeenMap[(s.firstName+'|'+s.lastName).toLowerCase()]||null;
       const daysSince=rec?Math.floor((now-rec)/86400000):null;
-      const entry={studentId:s.id,fullName:name,grade:s.grade,photoUrl:s.photoUrl,lastSeen:rec?rec.toISOString():null,daysSince,neverSeen:!rec};
+      const entry={studentId:s.id,name:name,fullName:name,grade:s.grade,photoUrl:s.photoUrl,lastSeen:rec?rec.toISOString():null,daysSince,neverSeen:!rec,attendanceRate:0,rate:0};
       if(!rec||rec<twoWeeksAgo)atRisk2w.push(entry);if(!rec||rec<oneMonthAgo)atRisk1m.push(entry);
     });
     const sortFn=(a,b)=>{if(a.neverSeen!==b.neverSeen)return a.neverSeen?-1:1;return(b.daysSince||0)-(a.daysSince||0);};
@@ -850,3 +920,568 @@ function checkInFamilyAPI(familyId, meta) {
 
 /* ── REGISTER IN doPost WHITELIST ── */
 // (make sure these are added to the allowed list in doPost)
+
+/* ═══════════════════════════════════════════════════════════
+   VOLUNTEER MANAGEMENT
+   Sheets: Volunteers, Departments, VolunteerCheckIns
+═══════════════════════════════════════════════════════════ */
+
+const VOL_SHEET   = 'Volunteers';
+const DEPT_SHEET  = 'Departments';
+const VCHK_SHEET  = 'VolunteerCheckIns';
+
+function ensureVolSheets_() {
+  const ss = ss_();
+  if (!ss.getSheetByName(VOL_SHEET)) {
+    const sh = ss.insertSheet(VOL_SHEET);
+    sh.appendRow(['VolID','FirstName','LastName','Phone','Email','Department','Role','Notes','Active','CreatedAt']);
+    sh.setFrozenRows(1);
+  }
+  if (!ss.getSheetByName(DEPT_SHEET)) {
+    const sh = ss.insertSheet(DEPT_SHEET);
+    sh.appendRow(['DeptID','Name','Icon','Color','CreatedAt']);
+    sh.setFrozenRows(1);
+    // Seed defaults
+    const defaults = [
+      ['D1','Worship Team','🎵','#ec4899'],
+      ['D2','Ushers & Greeters','🤝','#0891b2'],
+      ['D3','Security','🛡️','#dc2626'],
+      ['D4','Media & Tech','📽️','#7c3aed'],
+      ['D5','Parking & Traffic','🚗','#d97706'],
+      ['D6','Prayer Team','🙌','#10b981'],
+      ['D7','Hospitality','☕','#78716c'],
+      ['D8','Children\'s Ministry','🧒','#10b981'],
+      ['D9','Youth Ministry','⚡','#06b6d4'],
+    ];
+    defaults.forEach(d => sh.appendRow([...d, new Date().toISOString()]));
+  }
+  if (!ss.getSheetByName(VCHK_SHEET)) {
+    const sh = ss.insertSheet(VCHK_SHEET);
+    sh.appendRow(['CheckInID','VolID','VolName','Department','Role','Event','CheckInTime','LeaderName']);
+    sh.setFrozenRows(1);
+  }
+}
+
+/* ── GET DEPARTMENTS ── */
+function getDepartmentsAPI() {
+  try {
+    ensureVolSheets_();
+    const ss = ss_();
+    const sh = ss.getSheetByName(DEPT_SHEET);
+    if (!sh || sh.getLastRow() < 2) return { departments: [] };
+    const rows = sh.getRange(2,1,sh.getLastRow()-1,5).getValues();
+    return { departments: rows.filter(r=>r[0]).map(r=>({
+      id:String(r[0]), name:String(r[1]), icon:String(r[2]||'🏷️'), color:String(r[3]||'#6b7280')
+    }))};
+  } catch(e) { return { departments:[], error:String(e) }; }
+}
+
+/* ── ADD DEPARTMENT ── */
+function addDepartmentAPI(name, icon, color) {
+  try {
+    ensureVolSheets_();
+    const ss = ss_();
+    const sh = ss.getSheetByName(DEPT_SHEET);
+    const id = 'D' + Date.now();
+    sh.appendRow([id, name||'New Department', icon||'🏷️', color||'#6b7280', new Date().toISOString()]);
+    return { success:true, id };
+  } catch(e) { return { success:false, error:String(e) }; }
+}
+
+/* ── DELETE DEPARTMENT ── */
+function deleteDepartmentAPI(deptId) {
+  try {
+    const ss = ss_();
+    const sh = ss.getSheetByName(DEPT_SHEET);
+    if (!sh || sh.getLastRow() < 2) return { success:false };
+    const rows = sh.getRange(2,1,sh.getLastRow()-1,1).getValues();
+    for (let i = rows.length-1; i >= 0; i--) {
+      if (String(rows[i][0]) === String(deptId)) { sh.deleteRow(i+2); break; }
+    }
+    return { success:true };
+  } catch(e) { return { success:false, error:String(e) }; }
+}
+
+/* ── GET VOLUNTEERS ── */
+function getVolunteersAPI(department) {
+  try {
+    ensureVolSheets_();
+    const ss = ss_();
+    const sh = ss.getSheetByName(VOL_SHEET);
+    if (!sh || sh.getLastRow() < 2) return { volunteers: [] };
+    const rows = sh.getRange(2,1,sh.getLastRow()-1,10).getValues();
+    let vols = rows.filter(r=>r[0]).map(r=>({
+      id:String(r[0]), firstName:String(r[1]||''), lastName:String(r[2]||''),
+      name:(String(r[1]||'')+' '+String(r[2]||'')).trim(),
+      phone:String(r[3]||''), email:String(r[4]||''),
+      department:String(r[5]||''), role:String(r[6]||''),
+      notes:String(r[7]||''), active:r[8]!==false
+    }));
+    if (department && department !== 'all') {
+      vols = vols.filter(v => v.department === department);
+    }
+    return { volunteers: vols.filter(v=>v.active!==false) };
+  } catch(e) { return { volunteers:[], error:String(e) }; }
+}
+
+/* ── ADD VOLUNTEER ── */
+function addVolunteerAPI(vol) {
+  try {
+    ensureVolSheets_();
+    const ss = ss_();
+    const sh = ss.getSheetByName(VOL_SHEET);
+    const id = 'V' + Date.now();
+    sh.appendRow([id, vol.firstName||'', vol.lastName||'', vol.phone||'',
+      vol.email||'', vol.department||'', vol.role||'', vol.notes||'', true,
+      new Date().toISOString()]);
+    return { success:true, id };
+  } catch(e) { return { success:false, error:String(e) }; }
+}
+
+/* ── EDIT VOLUNTEER ── */
+function editVolunteerAPI(volId, updates) {
+  try {
+    const ss = ss_();
+    const sh = ss.getSheetByName(VOL_SHEET);
+    if (!sh || sh.getLastRow() < 2) return { success:false };
+    const rows = sh.getRange(2,1,sh.getLastRow()-1,10).getValues();
+    const idx = rows.findIndex(r=>String(r[0])===String(volId));
+    if (idx === -1) return { success:false, error:'Volunteer not found' };
+    const row = rows[idx];
+    if (updates.firstName  !== undefined) row[1] = updates.firstName;
+    if (updates.lastName   !== undefined) row[2] = updates.lastName;
+    if (updates.phone      !== undefined) row[3] = updates.phone;
+    if (updates.email      !== undefined) row[4] = updates.email;
+    if (updates.department !== undefined) row[5] = updates.department;
+    if (updates.role       !== undefined) row[6] = updates.role;
+    if (updates.notes      !== undefined) row[7] = updates.notes;
+    if (updates.active     !== undefined) row[8] = updates.active;
+    sh.getRange(idx+2,1,1,10).setValues([row]);
+    return { success:true };
+  } catch(e) { return { success:false, error:String(e) }; }
+}
+
+/* ── DELETE VOLUNTEER ── */
+function deleteVolunteerAPI(volId) {
+  try {
+    const ss = ss_();
+    const sh = ss.getSheetByName(VOL_SHEET);
+    if (!sh || sh.getLastRow() < 2) return { success:false };
+    const rows = sh.getRange(2,1,sh.getLastRow()-1,1).getValues();
+    for (let i = rows.length-1; i >= 0; i--) {
+      if (String(rows[i][0])===String(volId)) { sh.deleteRow(i+2); break; }
+    }
+    return { success:true };
+  } catch(e) { return { success:false, error:String(e) }; }
+}
+
+/* ── CHECK IN VOLUNTEER ── */
+function checkInVolunteerAPI(volId, meta) {
+  try {
+    ensureVolSheets_();
+    const ss = ss_();
+    const volSh = ss.getSheetByName(VOL_SHEET);
+    const chkSh = ss.getSheetByName(VCHK_SHEET);
+    // Find volunteer
+    let volName = '', dept = '', role = '';
+    if (volSh && volSh.getLastRow() > 1) {
+      const rows = volSh.getRange(2,1,volSh.getLastRow()-1,7).getValues();
+      const v = rows.find(r=>String(r[0])===String(volId));
+      if (v) { volName=(String(v[1]||'')+' '+String(v[2]||'')).trim(); dept=String(v[5]||''); role=String(v[6]||''); }
+    }
+    const id = 'VC' + Date.now();
+    chkSh.appendRow([id, volId, volName, dept, role,
+      meta?.event||'', new Date().toISOString(), meta?.leader||'']);
+    return { success:true, id, volName, department:dept };
+  } catch(e) { return { success:false, error:String(e) }; }
+}
+
+/* ── GET TODAY'S VOLUNTEER CHECK-INS ── */
+function getVolunteerCheckInsAPI(department) {
+  try {
+    ensureVolSheets_();
+    const ss = ss_();
+    const sh = ss.getSheetByName(VCHK_SHEET);
+    if (!sh || sh.getLastRow() < 2) return { checkins:[] };
+    const today = new Date(); today.setHours(0,0,0,0);
+    const rows = sh.getRange(2,1,sh.getLastRow()-1,8).getValues();
+    let checkins = rows.filter(r=>{
+      if (!r[0]) return false;
+      const d = new Date(r[6]); d.setHours(0,0,0,0);
+      return d.getTime()===today.getTime();
+    }).map(r=>({ id:String(r[0]), volId:String(r[1]), name:String(r[2]),
+      department:String(r[3]), role:String(r[4]), event:String(r[5]),
+      time:String(r[6]), leader:String(r[7]) }));
+    if (department && department !== 'all') {
+      checkins = checkins.filter(c=>c.department===department);
+    }
+    return { checkins };
+  } catch(e) { return { checkins:[], error:String(e) }; }
+}
+
+/* ── VOLUNTEER DASHBOARD ── */
+function getVolunteerDashboardAPI() {
+  try {
+    const allVols = getVolunteersAPI('all').volunteers || [];
+    const todayCI = getVolunteerCheckInsAPI('all').checkins || [];
+    // Group by department
+    const deptMap = {};
+    allVols.forEach(v => {
+      const d = v.department || 'Unassigned';
+      if (!deptMap[d]) deptMap[d] = { total:0, checkedIn:0 };
+      deptMap[d].total++;
+    });
+    todayCI.forEach(c => {
+      const d = c.department || 'Unassigned';
+      if (!deptMap[d]) deptMap[d] = { total:0, checkedIn:0 };
+      deptMap[d].checkedIn++;
+    });
+    return {
+      totalVolunteers: allVols.length,
+      checkedInToday: todayCI.length,
+      departments: Object.entries(deptMap).map(([name,v])=>({name,...v})),
+      recentCheckins: todayCI.slice(-10).reverse()
+    };
+  } catch(e) { return { totalVolunteers:0, checkedInToday:0, departments:[], recentCheckins:[] }; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SMALL GROUPS
+   Sheets: SmallGroups, SGMembers
+═══════════════════════════════════════════════════════════ */
+
+const SG_SHEET  = 'SmallGroups';
+const SGM_SHEET = 'SGMembers';
+
+function ensureSGSheets_() {
+  const ss = ss_();
+  if (!ss.getSheetByName(SG_SHEET)) {
+    const sh = ss.insertSheet(SG_SHEET);
+    sh.appendRow(['GroupID','Name','Leader','LeaderPhone','Day','Time','Location','Category','Notes','CreatedAt']);
+    sh.setFrozenRows(1);
+  }
+  if (!ss.getSheetByName(SGM_SHEET)) {
+    const sh = ss.insertSheet(SGM_SHEET);
+    sh.appendRow(['MemberID','GroupID','GroupName','FirstName','LastName','Phone','Email','Role','JoinedAt']);
+    sh.setFrozenRows(1);
+  }
+}
+
+function getSmallGroupsAPI() {
+  try {
+    ensureSGSheets_();
+    const ss = ss_();
+    const gSh = ss.getSheetByName(SG_SHEET);
+    const mSh = ss.getSheetByName(SGM_SHEET);
+    if (!gSh || gSh.getLastRow() < 2) return { groups: [] };
+    const gRows = gSh.getRange(2,1,gSh.getLastRow()-1,10).getValues();
+    const groups = gRows.filter(r=>r[0]).map(r=>({
+      id:String(r[0]), name:String(r[1]||''), leader:String(r[2]||''),
+      leaderPhone:String(r[3]||''), day:String(r[4]||''), time:String(r[5]||''),
+      location:String(r[6]||''), category:String(r[7]||''), notes:String(r[8]||''),
+      members:[]
+    }));
+    if (mSh && mSh.getLastRow() > 1) {
+      const mRows = mSh.getRange(2,1,mSh.getLastRow()-1,9).getValues();
+      mRows.filter(r=>r[0]).forEach(r=>{
+        const g = groups.find(g=>g.id===String(r[1]));
+        if (g) g.members.push({ id:String(r[0]), groupId:String(r[1]),
+          firstName:String(r[3]||''), lastName:String(r[4]||''),
+          name:(String(r[3]||'')+' '+String(r[4]||'')).trim(),
+          phone:String(r[5]||''), email:String(r[6]||''), role:String(r[7]||'Member') });
+      });
+    }
+    return { groups };
+  } catch(e) { return { groups:[], error:String(e) }; }
+}
+
+function addSmallGroupAPI(group) {
+  try {
+    ensureSGSheets_();
+    const id = 'SG' + Date.now();
+    ss_().getSheetByName(SG_SHEET).appendRow([
+      id, group.name||'', group.leader||'', group.leaderPhone||'',
+      group.day||'', group.time||'', group.location||'',
+      group.category||'', group.notes||'', new Date().toISOString()
+    ]);
+    return { success:true, id };
+  } catch(e) { return { success:false, error:String(e) }; }
+}
+
+function editSmallGroupAPI(groupId, updates) {
+  try {
+    const sh = ss_().getSheetByName(SG_SHEET);
+    if (!sh || sh.getLastRow() < 2) return { success:false };
+    const rows = sh.getRange(2,1,sh.getLastRow()-1,10).getValues();
+    const idx = rows.findIndex(r=>String(r[0])===String(groupId));
+    if (idx===-1) return { success:false, error:'Group not found' };
+    const row = rows[idx];
+    const fields = ['','name','leader','leaderPhone','day','time','location','category','notes'];
+    fields.forEach((f,i)=>{ if(f && updates[f]!==undefined) row[i]=updates[f]; });
+    sh.getRange(idx+2,1,1,10).setValues([row]);
+    return { success:true };
+  } catch(e) { return { success:false, error:String(e) }; }
+}
+
+function deleteSmallGroupAPI(groupId) {
+  try {
+    const ss = ss_();
+    const gSh = ss.getSheetByName(SG_SHEET);
+    const mSh = ss.getSheetByName(SGM_SHEET);
+    if (gSh && gSh.getLastRow() > 1) {
+      const rows = gSh.getRange(2,1,gSh.getLastRow()-1,1).getValues();
+      for (let i=rows.length-1;i>=0;i--) if(String(rows[i][0])===String(groupId)) gSh.deleteRow(i+2);
+    }
+    if (mSh && mSh.getLastRow() > 1) {
+      const rows = mSh.getRange(2,1,mSh.getLastRow()-1,2).getValues();
+      for (let i=rows.length-1;i>=0;i--) if(String(rows[i][1])===String(groupId)) mSh.deleteRow(i+2);
+    }
+    return { success:true };
+  } catch(e) { return { success:false, error:String(e) }; }
+}
+
+function addSGMemberAPI(member) {
+  try {
+    ensureSGSheets_();
+    const id = 'SGM' + Date.now();
+    ss_().getSheetByName(SGM_SHEET).appendRow([
+      id, member.groupId||'', member.groupName||'',
+      member.firstName||'', member.lastName||'',
+      member.phone||'', member.email||'',
+      member.role||'Member', new Date().toISOString()
+    ]);
+    return { success:true, id };
+  } catch(e) { return { success:false, error:String(e) }; }
+}
+
+function editSGMemberAPI(memberId, updates) {
+  try {
+    const sh = ss_().getSheetByName(SGM_SHEET);
+    if (!sh || sh.getLastRow() < 2) return { success:false };
+    const rows = sh.getRange(2,1,sh.getLastRow()-1,9).getValues();
+    const idx = rows.findIndex(r=>String(r[0])===String(memberId));
+    if (idx===-1) return { success:false };
+    const row = rows[idx];
+    if (updates.firstName!==undefined) row[3]=updates.firstName;
+    if (updates.lastName !==undefined) row[4]=updates.lastName;
+    if (updates.phone    !==undefined) row[5]=updates.phone;
+    if (updates.email    !==undefined) row[6]=updates.email;
+    if (updates.role     !==undefined) row[7]=updates.role;
+    sh.getRange(idx+2,1,1,9).setValues([row]);
+    return { success:true };
+  } catch(e) { return { success:false, error:String(e) }; }
+}
+
+function deleteSGMemberAPI(memberId) {
+  try {
+    const sh = ss_().getSheetByName(SGM_SHEET);
+    if (!sh || sh.getLastRow() < 2) return { success:false };
+    const rows = sh.getRange(2,1,sh.getLastRow()-1,1).getValues();
+    for (let i=rows.length-1;i>=0;i--) if(String(rows[i][0])===String(memberId)) sh.deleteRow(i+2);
+    return { success:true };
+  } catch(e) { return { success:false, error:String(e) }; }
+}
+
+function checkInSGGroupAPI(groupId, meta) {
+  try {
+    const { groups } = getSmallGroupsAPI();
+    const group = groups.find(g=>g.id===String(groupId));
+    if (!group) return { success:false, error:'Group not found' };
+    const results = group.members.map(m =>
+      writeCheckIn({ id:m.id, firstName:m.firstName, lastName:m.lastName,
+        fullName:m.name, type:'small-group', groupId, groupName:group.name, role:m.role },
+        { ...meta, event:meta?.event||'Small Groups' })
+    );
+    return { success:true, count:results.length };
+  } catch(e) { return { success:false, error:String(e) }; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SMALL GROUPS MANAGEMENT
+   Sheets: SmallGroups, SGMembers, SGCheckIns
+═══════════════════════════════════════════════════════════ */
+
+const SG_SHEET  = 'SmallGroups';
+const SGM_SHEET = 'SGMembers';
+const SGC_SHEET = 'SGCheckIns';
+
+function ensureSGSheets_() {
+  const ss = ss_();
+  if (!ss.getSheetByName(SG_SHEET)) {
+    const sh = ss.insertSheet(SG_SHEET);
+    sh.appendRow(['GroupID','Name','LeaderName','LeaderPhone','Day','Time','Location','Category','Notes','CreatedAt']);
+    sh.setFrozenRows(1);
+  }
+  if (!ss.getSheetByName(SGM_SHEET)) {
+    const sh = ss.insertSheet(SGM_SHEET);
+    sh.appendRow(['MemberID','GroupID','FirstName','LastName','Phone','Email','Role','JoinedAt']);
+    sh.setFrozenRows(1);
+  }
+  if (!ss.getSheetByName(SGC_SHEET)) {
+    const sh = ss.insertSheet(SGC_SHEET);
+    sh.appendRow(['CheckInID','GroupID','MemberID','MemberName','GroupName','Role','Event','CheckInTime','LeaderName']);
+    sh.setFrozenRows(1);
+  }
+}
+
+function getSmallGroupsAPI() {
+  try {
+    ensureSGSheets_();
+    const ss = ss_();
+    const gSh = ss.getSheetByName(SG_SHEET);
+    const mSh = ss.getSheetByName(SGM_SHEET);
+    const cSh = ss.getSheetByName(SGC_SHEET);
+
+    const groups = gSh && gSh.getLastRow() > 1
+      ? gSh.getRange(2,1,gSh.getLastRow()-1,10).getValues().filter(r=>r[0]).map(r=>({
+          id:String(r[0]), name:String(r[1]||''), leaderName:String(r[2]||''),
+          leaderPhone:String(r[3]||''), day:String(r[4]||''), time:String(r[5]||''),
+          location:String(r[6]||''), category:String(r[7]||''), notes:String(r[8]||''),
+          members:[]
+        })) : [];
+
+    const members = mSh && mSh.getLastRow() > 1
+      ? mSh.getRange(2,1,mSh.getLastRow()-1,8).getValues().filter(r=>r[0]).map(r=>({
+          id:String(r[0]), groupId:String(r[1]), firstName:String(r[2]||''),
+          lastName:String(r[3]||''), name:(String(r[2]||'')+' '+String(r[3]||'')).trim(),
+          phone:String(r[4]||''), email:String(r[5]||''), role:String(r[6]||'Member')
+        })) : [];
+
+    // Get today's check-ins
+    const today = new Date(); today.setHours(0,0,0,0);
+    const checkins = new Set(cSh && cSh.getLastRow() > 1
+      ? cSh.getRange(2,1,cSh.getLastRow()-1,9).getValues().filter(r=>{
+          if(!r[0]) return false;
+          const d=new Date(r[7]); d.setHours(0,0,0,0);
+          return d.getTime()===today.getTime();
+        }).map(r=>String(r[2])) : []);
+
+    // Attach members to groups
+    groups.forEach(g => {
+      g.members = members.filter(m => m.groupId === g.id);
+      g.checkedInCount = g.members.filter(m => checkins.has(m.id)).length;
+    });
+
+    return { groups, checkedInIds: [...checkins] };
+  } catch(e) { return { groups:[], checkedInIds:[], error:String(e) }; }
+}
+
+function addSmallGroupAPI(data) {
+  try {
+    ensureSGSheets_();
+    const id = 'SG' + Date.now();
+    ss_().getSheetByName(SG_SHEET).appendRow([
+      id, data.name||'', data.leaderName||'', data.leaderPhone||'',
+      data.day||'', data.time||'', data.location||'', data.category||'',
+      data.notes||'', new Date().toISOString()
+    ]);
+    return { success:true, id };
+  } catch(e) { return { success:false, error:String(e) }; }
+}
+
+function editSmallGroupAPI(groupId, data) {
+  try {
+    const sh = ss_().getSheetByName(SG_SHEET);
+    if(!sh||sh.getLastRow()<2) return {success:false};
+    const rows = sh.getRange(2,1,sh.getLastRow()-1,10).getValues();
+    const idx = rows.findIndex(r=>String(r[0])===String(groupId));
+    if(idx===-1) return {success:false,error:'Not found'};
+    const r = rows[idx];
+    if(data.name!==undefined) r[1]=data.name;
+    if(data.leaderName!==undefined) r[2]=data.leaderName;
+    if(data.leaderPhone!==undefined) r[3]=data.leaderPhone;
+    if(data.day!==undefined) r[4]=data.day;
+    if(data.time!==undefined) r[5]=data.time;
+    if(data.location!==undefined) r[6]=data.location;
+    if(data.category!==undefined) r[7]=data.category;
+    if(data.notes!==undefined) r[8]=data.notes;
+    sh.getRange(idx+2,1,1,10).setValues([r]);
+    return {success:true};
+  } catch(e) { return {success:false,error:String(e)}; }
+}
+
+function deleteSmallGroupAPI(groupId) {
+  try {
+    const ss = ss_();
+    // Delete group
+    const gSh = ss.getSheetByName(SG_SHEET);
+    if(gSh&&gSh.getLastRow()>1){
+      const rows=gSh.getRange(2,1,gSh.getLastRow()-1,1).getValues();
+      for(let i=rows.length-1;i>=0;i--){if(String(rows[i][0])===String(groupId)){gSh.deleteRow(i+2);break;}}
+    }
+    // Delete all members of group
+    const mSh = ss.getSheetByName(SGM_SHEET);
+    if(mSh&&mSh.getLastRow()>1){
+      const rows=mSh.getRange(2,1,mSh.getLastRow()-1,2).getValues();
+      for(let i=rows.length-1;i>=0;i--){if(String(rows[i][1])===String(groupId)){mSh.deleteRow(i+2);}}
+    }
+    return {success:true};
+  } catch(e) { return {success:false,error:String(e)}; }
+}
+
+function addSGMemberAPI(data) {
+  try {
+    ensureSGSheets_();
+    const id = 'SGM' + Date.now();
+    ss_().getSheetByName(SGM_SHEET).appendRow([
+      id, data.groupId||'', data.firstName||'', data.lastName||'',
+      data.phone||'', data.email||'', data.role||'Member', new Date().toISOString()
+    ]);
+    return {success:true, id};
+  } catch(e) { return {success:false,error:String(e)}; }
+}
+
+function editSGMemberAPI(memberId, data) {
+  try {
+    const sh = ss_().getSheetByName(SGM_SHEET);
+    if(!sh||sh.getLastRow()<2) return {success:false};
+    const rows = sh.getRange(2,1,sh.getLastRow()-1,8).getValues();
+    const idx = rows.findIndex(r=>String(r[0])===String(memberId));
+    if(idx===-1) return {success:false,error:'Not found'};
+    const r = rows[idx];
+    if(data.firstName!==undefined) r[2]=data.firstName;
+    if(data.lastName!==undefined) r[3]=data.lastName;
+    if(data.phone!==undefined) r[4]=data.phone;
+    if(data.email!==undefined) r[5]=data.email;
+    if(data.role!==undefined) r[6]=data.role;
+    sh.getRange(idx+2,1,1,8).setValues([r]);
+    return {success:true};
+  } catch(e) { return {success:false,error:String(e)}; }
+}
+
+function deleteSGMemberAPI(memberId) {
+  try {
+    const sh = ss_().getSheetByName(SGM_SHEET);
+    if(!sh||sh.getLastRow()<2) return {success:false};
+    const rows = sh.getRange(2,1,sh.getLastRow()-1,1).getValues();
+    for(let i=rows.length-1;i>=0;i--){if(String(rows[i][0])===String(memberId)){sh.deleteRow(i+2);break;}}
+    return {success:true};
+  } catch(e) { return {success:false,error:String(e)}; }
+}
+
+function checkInSGGroupAPI(groupId, memberIds, meta) {
+  try {
+    ensureSGSheets_();
+    const ss = ss_();
+    const cSh = ss.getSheetByName(SGC_SHEET);
+    const gSh = ss.getSheetByName(SG_SHEET);
+    const mSh = ss.getSheetByName(SGM_SHEET);
+
+    const gRows = gSh&&gSh.getLastRow()>1?gSh.getRange(2,1,gSh.getLastRow()-1,3).getValues():[];
+    const group = gRows.find(r=>String(r[0])===String(groupId));
+    const groupName = group?String(group[1]):'';
+
+    const mRows = mSh&&mSh.getLastRow()>1?mSh.getRange(2,1,mSh.getLastRow()-1,8).getValues():[];
+    let checkedIn = 0;
+    const now = new Date().toISOString();
+    for(const mid of memberIds){
+      const m = mRows.find(r=>String(r[0])===String(mid));
+      if(!m) continue;
+      const name=(String(m[2]||'')+' '+String(m[3]||'')).trim();
+      cSh.appendRow(['SGC'+Date.now()+'_'+checkedIn, groupId, mid, name, groupName,
+        String(m[6]||'Member'), meta?.event||'Small Groups', now, meta?.leader||'']);
+      checkedIn++;
+    }
+    return {success:true, checkedIn};
+  } catch(e) { return {success:false,error:String(e)}; }
+}
