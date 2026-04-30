@@ -805,3 +805,8 @@ body.offline .offline-badge { display: block; }
 .ep-section-lbl:first-child{margin-top:0}
 /* Compact ep-opt-icon */
 .ep-opt-icon{width:36px;height:36px;border-radius:9px;background:var(--soft);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+
+/* Ministry event filter pills */
+.dash-evt-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border-radius:100px;border:1.5px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.7);font-family:var(--body);font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .2s ease;-webkit-tap-highlight-color:transparent}
+.dash-evt-btn.active,.dash-evt-btn:hover{opacity:1!important;font-weight:800!important;border-width:2px!important}
+.dash-evt-btn.active{background:rgba(255,255,255,0.12);color:#fff}

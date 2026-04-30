@@ -972,14 +972,48 @@ const DASH = {
   /* ── Ministry switcher ── */
   switchMinistry(key, btn) {
     this._ministry = key;
-    // Update active button styling
+    this._analyticsLoaded = false; // force analytics reload on next tab visit
+
+    // Update button styles
     document.querySelectorAll('.dash-evt-btn').forEach(b => {
       b.style.opacity = '0.5';
       b.style.borderWidth = '1.5px';
+      b.style.fontWeight = '700';
     });
-    if(btn) { btn.style.opacity = '1'; btn.style.borderWidth = '2px'; }
-    this.applyFilters();
+    if(btn) { btn.style.opacity = '1'; btn.style.borderWidth = '2.5px'; btn.style.fontWeight = '900'; }
+
+    // Update stat labels and refilter live feed
     this.updateStatLabels(key);
+    this.applyFilters();
+
+    // Reload analytics immediately if analytics tab is active
+    const analyticsTab = document.getElementById('dtAnalytics');
+    if(analyticsTab && analyticsTab.classList.contains('active')) {
+      this.loadAnalytics();
+    }
+
+    // Show ministry context banner under the switcher
+    const bannerMap = {
+      all:        { label:'All Ministry Events',    color:'rgba(255,255,255,0.08)',  border:'rgba(255,255,255,0.12)', text:'#fff' },
+      sunday:     { label:'Sunday Service',         color:'rgba(245,158,11,0.08)',   border:'rgba(245,158,11,0.3)',   text:'#fcd34d' },
+      youth:      { label:'Youth Night',            color:'rgba(6,182,212,0.08)',    border:'rgba(6,182,212,0.3)',    text:'#67e8f9' },
+      youngadult: { label:'Young Adult Ministry',   color:'rgba(139,92,246,0.08)',   border:'rgba(139,92,246,0.3)',   text:'#c4b5fd' },
+      smallgroups:{ label:'Small Groups',           color:'rgba(16,185,129,0.08)',   border:'rgba(16,185,129,0.3)',   text:'#6ee7b7' },
+      children:   { label:"Children's Ministry",   color:'rgba(16,185,129,0.08)',   border:'rgba(16,185,129,0.3)',   text:'#6ee7b7' },
+      volunteers: { label:'Volunteer Departments',  color:'rgba(236,72,153,0.08)',   border:'rgba(236,72,153,0.3)',   text:'#f9a8d4' },
+    };
+    const bm = bannerMap[key] || bannerMap.all;
+    let banner = document.getElementById('ministryBanner');
+    if(!banner) {
+      banner = document.createElement('div');
+      banner.id = 'ministryBanner';
+      const nav = document.querySelector('.dash-nav');
+      if(nav) nav.parentNode.insertBefore(banner, nav);
+    }
+    banner.style.cssText = `padding:6px 18px;font-size:11px;font-weight:800;letter-spacing:1px;`
+      + `background:${bm.color};border-bottom:1px solid ${bm.border};color:${bm.text};`
+      + `text-align:center;transition:all .2s;flex-shrink:0`;
+    banner.textContent = key === 'all' ? '' : '▶ Showing: ' + bm.label;
   },
 
   filterByDate(val) {
@@ -1269,11 +1303,19 @@ DASH._weekOffset = 0;
 DASH._analyticsLoaded = false;
 
 DASH.loadAnalytics = async function() {
-  if (DASH._analyticsLoaded) return;
   DASH._analyticsLoaded = true;
   DASH.loadWeek(0);
   DASH.loadTrend();
   DASH.loadGrades();
+  // Show ministry filter context in analytics header
+  const ministry = DASH._ministry || 'all';
+  const labelMap = {
+    all:'All Events', sunday:'Sunday Service', youth:'Youth Night',
+    youngadult:'Young Adult Ministry', smallgroups:'Small Groups',
+    children:"Children's Ministry", volunteers:'Volunteers'
+  };
+  const weekHead = document.getElementById('analyticsWeekTitle');
+  if(weekHead) weekHead.textContent = '📅 This Week — ' + (labelMap[ministry]||'All Events');
 };
 
 DASH.loadWeek = async function(offset) {
@@ -1287,16 +1329,61 @@ DASH.loadWeek = async function(offset) {
       el.innerHTML = '<div class="empty-state"><p class="empty-txt">No data for this week</p></div>';
       return;
     }
-    const max = Math.max(...days.map(d => +(d.count||d.total||0)), 1);
+    // Apply ministry filter to daily counts using raw check-ins
+    const ministry = DASH._ministry || 'all';
+    const ministryKeys = {
+      sunday:['sunday service'], youth:['youth night','youth'],
+      youngadult:['young adult'], smallgroups:['small groups'],
+      children:["children's ministry","children"], volunteers:['worship team','ushers','security','media','parking','prayer','hospitality'],
+    };
+    const filterKeys = ministry !== 'all' ? (ministryKeys[ministry]||[]) : null;
+
+    const max = Math.max(...days.map(d => {
+      let count = d.count||d.total||0;
+      if(filterKeys) {
+        // Re-count from raw checkins for this day's date
+        const dayDate = d.date||d.day||d.label||'';
+        const dayCheckins = (DASH._rawCheckins||[]).filter(ci => {
+          const ciDate = (ci.time||ci.date||'').substring(0,10);
+          const ev = (ci.event||ci.type||'').toLowerCase();
+          return (dayDate && (ciDate === dayDate || (d.label||'').includes(ciDate.slice(5))))
+            && filterKeys.some(k => ev.includes(k));
+        });
+        count = dayCheckins.length;
+      }
+      return count;
+    }), 1);
+
+    const colorMap = {
+      all:'linear-gradient(90deg,var(--green),var(--teal))',
+      sunday:'linear-gradient(90deg,#f59e0b,#fcd34d)',
+      youth:'linear-gradient(90deg,#0891b2,#06b6d4)',
+      youngadult:'linear-gradient(90deg,#7c3aed,#8b5cf6)',
+      smallgroups:'linear-gradient(90deg,#059669,#10b981)',
+      children:'linear-gradient(90deg,#10b981,#34d399)',
+      volunteers:'linear-gradient(90deg,#be185d,#ec4899)',
+    };
+    const barColor = colorMap[ministry] || colorMap.all;
+
     el.innerHTML = `<div style="padding:14px 12px;display:flex;flex-direction:column;gap:11px">${
       days.map(d => {
-        const count = d.count||d.total||0;
+        let count = d.count||d.total||0;
+        if(filterKeys) {
+          const dayDate = d.date||d.day||d.label||'';
+          const dayCheckins = (DASH._rawCheckins||[]).filter(ci => {
+            const ciDate = (ci.time||ci.date||'').substring(0,10);
+            const ev = (ci.event||ci.type||'').toLowerCase();
+            return (dayDate && (ciDate === dayDate || (d.label||'').includes(ciDate.slice(5))))
+              && filterKeys.some(k => ev.includes(k));
+          });
+          count = dayCheckins.length;
+        }
         const label = d.label||d.date||d.day||'';
         const pct = (count/max*100).toFixed(1);
         return `<div style="display:flex;align-items:center;gap:10px">
           <div style="font-size:10px;font-weight:700;color:var(--muted);width:80px;flex-shrink:0;text-align:right">${label}</div>
           <div style="flex:1;height:10px;background:var(--surface);border-radius:5px;overflow:hidden">
-            <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--green),var(--teal));border-radius:5px;transition:width .6s .1s ease"></div>
+            <div style="height:100%;width:${pct}%;background:${barColor};border-radius:5px;transition:width .6s .1s ease"></div>
           </div>
           <div style="font-family:var(--font);font-size:14px;font-weight:800;color:#67e8f9;min-width:28px;text-align:right">${count}</div>
         </div>`;

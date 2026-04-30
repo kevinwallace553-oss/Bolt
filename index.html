@@ -306,16 +306,21 @@
   </div>
 
   <!-- Ministry Event Switcher -->
-  <div style="display:flex;gap:8px;padding:10px 16px 0;overflow-x:auto;-webkit-overflow-scrolling:touch;flex-shrink:0;background:var(--ink1);border-bottom:1px solid var(--rim)">
-    <button class="dash-evt-btn active" onclick="DASH.switchMinistry('all',this)" style="display:flex;align-items:center;gap:6px;padding:7px 16px;border-radius:100px;border:1.5px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;font-family:var(--body);font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .2s">📊 All Events</button>
-    <button class="dash-evt-btn" onclick="DASH.switchMinistry('sunday',this)" style="display:flex;align-items:center;gap:6px;padding:7px 16px;border-radius:100px;border:1.5px solid rgba(245,158,11,0.2);background:rgba(245,158,11,0.06);color:#fcd34d;font-family:var(--body);font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .2s">🙏 Sunday Service</button>
-    <button class="dash-evt-btn" onclick="DASH.switchMinistry('youth',this)" style="display:flex;align-items:center;gap:6px;padding:7px 16px;border-radius:100px;border:1.5px solid rgba(6,182,212,0.2);background:rgba(6,182,212,0.06);color:#67e8f9;font-family:var(--body);font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .2s">⚡ Youth Night</button>
-    <button class="dash-evt-btn" onclick="DASH.switchMinistry('youngadult',this)" style="display:flex;align-items:center;gap:6px;padding:7px 16px;border-radius:100px;border:1.5px solid rgba(139,92,246,0.2);background:rgba(139,92,246,0.06);color:#c4b5fd;font-family:var(--body);font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .2s">🔥 Young Adults</button>
-    <button class="dash-evt-btn" onclick="DASH.switchMinistry('smallgroups',this)" style="display:flex;align-items:center;gap:6px;padding:7px 16px;border-radius:100px;border:1.5px solid rgba(16,185,129,0.2);background:rgba(16,185,129,0.06);color:#6ee7b7;font-family:var(--body);font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .2s">👥 Small Groups</button>
-    <button class="dash-evt-btn" onclick="DASH.switchMinistry('children',this)" style="display:flex;align-items:center;gap:6px;padding:7px 16px;border-radius:100px;border:1.5px solid rgba(16,185,129,0.2);background:rgba(16,185,129,0.06);color:#6ee7b7;font-family:var(--body);font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .2s">🧒 Children</button>
-    <button class="dash-evt-btn" onclick="DASH.switchMinistry('volunteers',this)" style="display:flex;align-items:center;gap:6px;padding:7px 16px;border-radius:100px;border:1.5px solid rgba(236,72,153,0.2);background:rgba(236,72,153,0.06);color:#f9a8d4;font-family:var(--body);font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .2s">🛡️ Volunteers</button>
-    <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);display:flex;align-items:center;padding:0 6px;flex-shrink:0">Date:</div>
-    <input type="date" id="dashDateFilter" onchange="DASH.filterByDate(this.value)" style="background:var(--ink2);border:1px solid var(--rim);border-radius:8px;color:var(--text);font-family:var(--body);font-size:11px;padding:5px 10px;cursor:pointer;flex-shrink:0">
+  <!-- Ministry filter row -->
+  <div style="flex-shrink:0;background:var(--ink1);border-bottom:1px solid var(--rim)">
+    <div style="display:flex;gap:6px;padding:10px 16px 10px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none">
+      <button class="dash-evt-btn active" onclick="DASH.switchMinistry('all',this)">📊 All</button>
+      <button class="dash-evt-btn" onclick="DASH.switchMinistry('sunday',this)" style="color:#fcd34d;border-color:rgba(245,158,11,0.3);background:rgba(245,158,11,0.07)">🙏 Sunday</button>
+      <button class="dash-evt-btn" onclick="DASH.switchMinistry('youth',this)" style="color:#67e8f9;border-color:rgba(6,182,212,0.3);background:rgba(6,182,212,0.07)">⚡ Youth</button>
+      <button class="dash-evt-btn" onclick="DASH.switchMinistry('youngadult',this)" style="color:#c4b5fd;border-color:rgba(139,92,246,0.3);background:rgba(139,92,246,0.07)">🔥 Young Adults</button>
+      <button class="dash-evt-btn" onclick="DASH.switchMinistry('smallgroups',this)" style="color:#6ee7b7;border-color:rgba(16,185,129,0.3);background:rgba(16,185,129,0.07)">👥 Small Groups</button>
+      <button class="dash-evt-btn" onclick="DASH.switchMinistry('children',this)" style="color:#6ee7b7;border-color:rgba(16,185,129,0.3);background:rgba(16,185,129,0.07)">🧒 Children</button>
+      <button class="dash-evt-btn" onclick="DASH.switchMinistry('volunteers',this)" style="color:#f9a8d4;border-color:rgba(236,72,153,0.3);background:rgba(236,72,153,0.07)">🛡️ Volunteers</button>
+      <div style="display:flex;align-items:center;gap:6px;margin-left:8px;padding-left:10px;border-left:1px solid var(--rim);flex-shrink:0">
+        <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted)">Date</span>
+        <input type="date" id="dashDateFilter" onchange="DASH.filterByDate(this.value)" style="background:var(--ink2);border:1px solid var(--rim);border-radius:8px;color:var(--text);font-family:var(--body);font-size:11px;padding:4px 8px;cursor:pointer">
+      </div>
+    </div>
   </div>
 
   <!-- Dash Nav Tabs -->
@@ -361,29 +366,24 @@
   <div class="dash-tab" id="dtAnalytics">
     <div class="dash-body">
       <div class="panel" style="min-height:200px">
-        <div class="panel-head"><div class="panel-title">📅 This Week</div><button class="d-btn" onclick="DASH.loadWeek(0)" style="font-size:10px">Current</button></div>
+        <div class="panel-head">
+          <div class="panel-title" id="analyticsWeekTitle">📅 This Week</div>
+          <div style="display:flex;gap:6px">
+            <button class="d-btn" onclick="DASH.loadWeek((DASH._weekOffset||0)+1)">← Prev</button>
+            <button class="d-btn" onclick="DASH.loadWeek(0)">Current</button>
+            <button class="d-btn" onclick="DASH.loadWeek(Math.max(0,(DASH._weekOffset||0)-1))">Next →</button>
+          </div>
+        </div>
         <div class="panel-body" id="weekPanel"><div class="empty-state"><p class="empty-txt">Loading…</p></div></div>
-    <!-- At-Risk Panel -->
-    <div class="panel" style="min-height:160px">
-      <div class="panel-head">
-        <div class="panel-title">⚠️ At-Risk Students</div>
-        <div class="panel-count" id="atRiskCount">—</div>
-      </div>
-      <div class="panel-body" id="atRiskPanel"><div class="empty-state"><p class="empty-txt">Loading…</p></div></div>
-    </div>
       </div>
       <div class="panel" style="min-height:200px">
         <div class="panel-head">
           <div class="panel-title">📈 12-Week Trend</div>
-          <div class="dash-week-nav">
-            <button class="d-btn" onclick="DASH.loadWeek(DASH._weekOffset+1)">← Prev</button>
-            <button class="d-btn" onclick="DASH.loadWeek(Math.max(0,DASH._weekOffset-1))">Next →</button>
-          </div>
         </div>
         <div class="panel-body" id="trendPanel"><div class="empty-state"><p class="empty-txt">Loading…</p></div></div>
       </div>
       <div class="panel" style="min-height:160px">
-        <div class="panel-head"><div class="panel-title">🎓 Grade Breakdown</div></div>
+        <div class="panel-head"><div class="panel-title" id="analyticsGradeTitle">🎓 Breakdown</div></div>
         <div class="panel-body" id="gradePanel"><div class="empty-state"><p class="empty-txt">Loading…</p></div></div>
       </div>
     </div>
