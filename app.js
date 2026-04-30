@@ -1964,7 +1964,8 @@ const CM = {
         time:   time
       }));
       // QR points to a paging page — opens in browser and shows parent info
-      const qrURL = 'https://kevinwallace553-oss.github.io/bolt/page.html?d=' + parentInfo;
+      // QR links to the same index.html using a hash route — no separate file needed
+      const qrURL = 'https://kevinwallace553-oss.github.io/bolt/#page?d=' + parentInfo;
 
       return (
         // ── PAGE: CHILD TAG (horizontal/landscape) left | right ──
@@ -2814,3 +2815,63 @@ function openVolDept(dept, icon) {
 
 /* ── Small Groups home card helper ── */
 function showSmallGroups() { SG.open(); }
+
+/* ════════════════════════════════════════════════════
+   PARENT PAGING — Hash router for QR code scans
+   URL: /bolt/#page?d={encoded JSON}
+════════════════════════════════════════════════════ */
+(function() {
+  function parsePage() {
+    const hash = window.location.hash; // e.g. #page?d=%7B...%7D
+    if (!hash.startsWith('#page')) return;
+
+    // Show the parent page overlay immediately
+    document.getElementById('vParentPage').style.display = 'block';
+
+    // Parse ?d= from the hash
+    const qIdx = hash.indexOf('?d=');
+    if (qIdx === -1) { showPageError('No data in QR code'); return; }
+
+    let data;
+    try {
+      data = JSON.parse(decodeURIComponent(hash.slice(qIdx + 3)));
+    } catch(e) {
+      showPageError('Could not read QR data');
+      return;
+    }
+
+    const { child, room, grade, parent, phone, code, date, time } = data;
+
+    // Populate fields
+    const set = (id, val) => { const el=document.getElementById(id); if(el) el.textContent = val||'—'; };
+    set('ppChildName',   child);
+    set('ppParentName',  '👤 ' + (parent||'—'));
+    set('ppParentPhone', phone||'—');
+    set('ppCode',        code||'—');
+    set('ppTimestamp',   (date||'') + (time ? ' at ' + time : ''));
+
+    // Badges
+    const badgeEl = document.getElementById('ppBadges');
+    if (badgeEl) {
+      badgeEl.innerHTML = [
+        room  ? `<span style="font-size:11px;font-weight:700;padding:3px 12px;border-radius:100px;background:rgba(16,185,129,0.15);border:1.5px solid rgba(16,185,129,0.4);color:#6ee7b7">${room}</span>` : '',
+        grade ? `<span style="font-size:11px;font-weight:700;padding:3px 12px;border-radius:100px;background:rgba(59,130,246,0.15);border:1.5px solid rgba(59,130,246,0.4);color:#93c5fd">Grade ${grade}</span>` : ''
+      ].join('');
+    }
+
+    // Call button
+    const callBtn = document.getElementById('ppCallBtn');
+    if (callBtn && phone) {
+      callBtn.href = 'tel:' + phone.replace(/\D/g,'');
+    }
+  }
+
+  function showPageError(msg) {
+    const el = document.getElementById('ppChildName');
+    if (el) el.textContent = '⚠️ ' + msg;
+  }
+
+  // Run on load and on hash change
+  window.addEventListener('load', parsePage);
+  window.addEventListener('hashchange', parsePage);
+})();
