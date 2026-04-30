@@ -1950,46 +1950,12 @@ const CM = {
       const grade      = child.grade ? 'Grade ' + child.grade : '';
       const qrId       = 'qr_' + ci;
 
-      // QR encodes a URL-style payload that shows a parent paging screen
-      // Using a data URI so the QR renders a local HTML page in the browser
-      const childName  = (child.firstName + ' ' + child.lastName).trim();
-      const parentInfo = encodeURIComponent(JSON.stringify({
-        child: childName,
-        room:  child.room  || '',
-        grade: child.grade || '',
-        parent: family.parentName,
-        phone:  family.phone,
-        code:   secCode,
-        date:   today,
-        time:   time
-      }));
-      // QR points to a paging page — opens in browser and shows parent info
-      // QR encodes a self-contained data: URI — works with zero internet, no server needed
-      const tel = family.phone.replace(/\D/g,'');
-      const roomGrade = [child.room, child.grade ? 'Gr '+child.grade : ''].filter(Boolean).join(' · ');
-      const miniHTML = '<!DOCTYPE html><html><head><meta charset=utf-8>'
-        + '<meta name=viewport content="width=device-width,initial-scale=1">'
-        + '<style>'
-        + 'body{font-family:sans-serif;background:#0a1628;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:16px}'
-        + '.c{background:#111f35;border-radius:18px;padding:24px;max-width:360px;width:100%}'
-        + 'h1{font-size:30px;margin:0 0 4px}p{margin:4px 0;font-size:13px;color:#aaa}'
-        + '.pb{background:rgba(16,185,129,.1);border-radius:12px;padding:12px;margin:16px 0}'
-        + '.pn{font-size:17px;font-weight:700;color:#6ee7b7}.pp{font-size:20px;font-weight:800;margin:4px 0 12px}'
-        + 'a{display:block;background:#10b981;color:#fff;padding:12px;border-radius:10px;text-align:center;font-weight:800;font-size:15px;text-decoration:none}'
-        + '.code{font-size:36px;font-weight:900;color:#6ee7b7;letter-spacing:8px;text-align:center;margin:16px 0 4px}'
-        + '.cl{font-size:9px;text-align:center;color:#555;text-transform:uppercase;letter-spacing:2px}'
-        + '</style></head><body><div class=c>'
-        + '<h1>' + childName + '</h1>'
-        + '<p>' + roomGrade + '</p>'
-        + '<div class=pb>'
-        + '<div class=pn>&#128100; ' + family.parentName + '</div>'
-        + '<div class=pp>' + family.phone + '</div>'
-        + '<a href=tel:' + tel + '>&#128222; Call Parent Now</a>'
-        + '</div>'
-        + '<div class=cl>Pickup Code</div>'
-        + '<div class=code>' + secCode + '</div>'
-        + '</div></body></html>';
-      const qrURL = 'data:text/html,' + encodeURIComponent(miniHTML);
+      // QR encodes a tel: link — most reliable, works on ALL phone cameras instantly
+      // When scanned: iPhone/Android opens phone dialer pre-filled with parent number
+      const childName = (child.firstName + ' ' + child.lastName).trim();
+      const tel = (family.phone || '').replace(/\D/g, '');
+      // tel: URI is the most universally supported QR target on all cameras
+      const qrURL = 'tel:' + tel;
 
       return (
         // ── PAGE: CHILD TAG (horizontal/landscape) left | right ──
@@ -2058,7 +2024,7 @@ const CM = {
       + 'text:' + JSON.stringify(q.url) + ','
       + 'width:88,height:88,'
       + 'colorDark:"#000000",colorLight:"#ffffff",'
-      + 'correctLevel:QRCode.CorrectLevel.L'
+      + 'correctLevel:QRCode.CorrectLevel.H'
       + '});'
     ).join('');
 
@@ -2171,7 +2137,7 @@ const CM = {
             height: 88,
             colorDark: '#000000',
             colorLight: '#ffffff',
-            correctLevel: win.QRCode.CorrectLevel.L
+            correctLevel: win.QRCode.CorrectLevel.H
           });
         });
         win.setTimeout(function() { win.print(); }, 900);
