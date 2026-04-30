@@ -2099,18 +2099,18 @@ const CM = {
       const childName = (child.firstName + ' ' + child.lastName).trim();
       const tel = (family.phone || '').replace(/\D/g, '');
       const allergyNote = (child.allergies && child.allergies.toLowerCase() !== 'none' && child.allergies.trim())
-        ? ' ⚠️ Allergy alert: ' + child.allergies.trim() + '.' : '';
+        ? ' ALLERGY: ' + child.allergies.trim() + '.' : '';
       const gradeNote = child.grade ? ' (Grade ' + child.grade + ')' : '';
       const roomNote  = child.room  ? ' from ' + child.room : '';
 
-      // SMS URI — opens Messages app with a pre-written pickup text ready to send
-      // Supported natively on iOS (sms:number&body=msg) and Android (sms:number?body=msg)
-      const smsBody = 'Hi ' + family.parentName + '! This is Children\u2019s Ministry. '
-        + 'Please come pick up ' + childName + roomNote + gradeNote + '. '
-        + 'Your pickup code is ' + secCode + '.' + allergyNote
-        + ' Thank you! \uD83D\uDE4F';
+      // SMS URI — pre-filled text message, opens native Messages app on iOS & Android
+      // Keep body ASCII-only to ensure QR encoding works on all devices
+      const smsBody = 'Hi ' + family.parentName + '! Childrens Ministry here. '
+        + 'Please pick up ' + childName + roomNote + gradeNote + '. '
+        + 'Pickup code: ' + secCode + '.'
+        + allergyNote
+        + ' Thank you!';
 
-      // Use ?body= for Android; iOS also accepts ?body= in modern versions
       const qrURL = 'sms:' + tel + '?body=' + encodeURIComponent(smsBody);
 
       return (
@@ -2180,7 +2180,7 @@ const CM = {
       + 'text:' + JSON.stringify(q.url) + ','
       + 'width:88,height:88,'
       + 'colorDark:"#000000",colorLight:"#ffffff",'
-      + 'correctLevel:QRCode.CorrectLevel.H'
+      + 'correctLevel:QRCode.CorrectLevel.M'
       + '});'
     ).join('');
 
@@ -2289,11 +2289,11 @@ const CM = {
           el.innerHTML = '';
           new win.QRCode(el, {
             text: q.url,
-            width: 88,
-            height: 88,
+            width: 96,
+            height: 96,
             colorDark: '#000000',
             colorLight: '#ffffff',
-            correctLevel: win.QRCode.CorrectLevel.H
+            correctLevel: win.QRCode.CorrectLevel.M
           });
         });
         win.setTimeout(function() { win.print(); }, 900);
