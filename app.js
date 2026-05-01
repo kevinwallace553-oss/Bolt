@@ -3288,7 +3288,13 @@ const SCHED = {
 
     const evMap = {};
     this._events.forEach(e => {
-      const k = String(e.date).slice(0, 10);
+      // Normalize date — could be "2026-05-03" or a Date object string
+      const raw = e.date || '';
+      // If it looks like a full Date string, parse it
+      let k = String(raw).slice(0, 10);
+      if (k.length < 10 || k.includes('GMT') || k.includes('T')) {
+        try { const d = new Date(raw); k = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); } catch(ex) {}
+      }
       if (!evMap[k]) evMap[k] = [];
       evMap[k].push(e);
     });
@@ -3372,7 +3378,12 @@ const SCHED = {
 
     const d = new Date(dateStr + 'T12:00:00');
     const dayLabel = d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
-    const dayEvents = this._events.filter(e => String(e.date).slice(0,10) === dateStr);
+    const dayEvents = this._events.filter(e => {
+      const raw = String(e.date||'');
+      let k = raw.slice(0,10);
+      if(raw.includes('GMT')||raw.includes('T')){try{const d=new Date(raw);k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}catch(ex){}}
+      return k === dateStr;
+    });
 
     if (title) title.textContent = dayLabel;
     if (sub) sub.textContent = dayEvents.length + ' event' + (dayEvents.length !== 1 ? 's' : '') + ' scheduled';
