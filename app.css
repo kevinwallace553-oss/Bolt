@@ -993,3 +993,35 @@ body.offline .offline-badge { display: block; }
   /* Hide sidebar home/theme/signout buttons on mobile — use bottom nav instead */
   .k-side-btns .k-side-btn:not(.danger) { display: none !important; }
 }
+
+/* ── Ministry Event Dropdown Selector ── */
+.devt-opt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.devt-opt:hover, .devt-opt:active { background: var(--surface2); }
+.devt-ico {
+  width: 36px; height: 36px; border-radius: 9px;
+  background: var(--ink3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; flex-shrink: 0;
+}
+.devt-name { font-size: 13px; font-weight: 800; color: var(--text); margin-bottom: 1px; }
+.devt-sub  { font-size: 10px; color: var(--muted); }
+
+/* Dropdown open state */
+#dashEvtDropdown.open { display: block !important; }
+#dashEvtArrow.open { transform: rotate(180deg); }
+
+@media (max-width: 600px) {
+  #dashEvtBtn { min-width: 0; font-size: 12px; padding: 7px 12px; }
+  #dashEvtDropdown { left: 8px; right: 8px; min-width: 0; }
+  .devt-name { font-size: 12px; }
+  .devt-sub { font-size: 9px; }
+}

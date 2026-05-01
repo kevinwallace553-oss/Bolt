@@ -978,50 +978,104 @@ const DASH = {
   },
 
   /* ── Ministry switcher ── */
-  switchMinistry(key, btn) {
+  /* ── Ministry dropdown picker ── */
+  toggleEventPicker() {
+    const dd = document.getElementById('dashEvtDropdown');
+    const arrow = document.getElementById('dashEvtArrow');
+    if(!dd) return;
+    const isOpen = dd.classList.contains('open');
+    if(isOpen) {
+      dd.classList.remove('open');
+      if(arrow) arrow.classList.remove('open');
+    } else {
+      dd.classList.add('open');
+      if(arrow) arrow.classList.add('open');
+      // Close on outside click
+      setTimeout(() => {
+        const close = (e) => {
+          if(!dd.contains(e.target) && e.target.id !== 'dashEvtBtn') {
+            dd.classList.remove('open');
+            if(arrow) arrow.classList.remove('open');
+            document.removeEventListener('click', close);
+          }
+        };
+        document.addEventListener('click', close);
+      }, 10);
+    }
+  },
+
+  pickMinistry(key, icon, label, color, borderColor) {
+    // Close dropdown
+    const dd = document.getElementById('dashEvtDropdown');
+    const arrow = document.getElementById('dashEvtArrow');
+    if(dd) dd.classList.remove('open');
+    if(arrow) arrow.classList.remove('open');
+
     this._ministry = key;
-    this._analyticsLoaded = false; // force analytics reload on next tab visit
+    this._analyticsLoaded = false;
 
-    // Update button styles
-    document.querySelectorAll('.dash-evt-btn').forEach(b => {
-      b.style.opacity = '0.5';
-      b.style.borderWidth = '1.5px';
-      b.style.fontWeight = '700';
-    });
-    if(btn) { btn.style.opacity = '1'; btn.style.borderWidth = '2.5px'; btn.style.fontWeight = '900'; }
+    // Update dropdown button label
+    const btn = document.getElementById('dashEvtBtn');
+    const lbl = document.getElementById('dashEvtLabel');
+    if(lbl) lbl.innerHTML = icon + ' <span>' + label + '</span>';
+    if(btn) {
+      btn.style.borderColor = key === 'all' ? 'var(--teal)' : borderColor;
+      btn.style.background  = key === 'all' ? 'rgba(13,148,136,0.12)' : borderColor.replace('0.4)', '0.1)');
+      btn.style.color       = color;
+    }
 
-    // Update stat labels and refilter live feed
+    // Update At-Risk tab title
+    const atRiskTitleMap = {
+      all:        { title:'⚠️ At-Risk — All Events',       sub:'Attendees with below 50% attendance in the last 8 weeks' },
+      sunday:     { title:'⚠️ At-Risk — Sunday Service',   sub:'Members & guests with low Sunday attendance' },
+      youth:      { title:'⚠️ At-Risk — Youth Night',      sub:'Students with below 50% youth event attendance' },
+      youngadult: { title:'⚠️ At-Risk — Young Adults',     sub:'Young adults with low attendance in the last 8 weeks' },
+      smallgroups:{ title:'⚠️ At-Risk — Small Groups',     sub:'Members missing small group meetings regularly' },
+      children:   { title:'⚠️ At-Risk — Children',         sub:'Children with low check-in frequency' },
+      volunteers: { title:'⚠️ At-Risk — Volunteers',       sub:'Volunteers with infrequent department attendance' },
+    };
+    const atRisk = atRiskTitleMap[key] || atRiskTitleMap.all;
+    const arTitle = document.getElementById('atRiskTitle');
+    const arSub   = document.getElementById('atRiskSubtitle');
+    if(arTitle) arTitle.textContent = atRisk.title;
+    if(arSub)   arSub.textContent   = atRisk.sub;
+
+    // Update analytics week title
+    const labelMap = { all:'All Events', sunday:'Sunday Service', youth:'Youth Night',
+      youngadult:'Young Adult Ministry', smallgroups:'Small Groups',
+      children:"Children's Ministry", volunteers:'Volunteers' };
+    const weekHead = document.getElementById('analyticsWeekTitle');
+    if(weekHead) weekHead.textContent = '📅 This Week — ' + (labelMap[key]||'All Events');
+
+    // Update stat labels
     this.updateStatLabels(key);
+
+    // Reload data with new filter
     this.applyFilters();
 
-    // Reload analytics immediately if analytics tab is active
-    const analyticsTab = document.getElementById('dtAnalytics');
-    if(analyticsTab && analyticsTab.classList.contains('active')) {
-      this.loadAnalytics();
-    }
+    // If at-risk tab is active, reload it
+    const arTab = document.getElementById('dtAtrisk');
+    if(arTab && arTab.classList.contains('active')) this.loadAtRisk();
 
-    // Show ministry context banner under the switcher
-    const bannerMap = {
-      all:        { label:'All Ministry Events',    color:'rgba(255,255,255,0.08)',  border:'rgba(255,255,255,0.12)', text:'#fff' },
-      sunday:     { label:'Sunday Service',         color:'rgba(245,158,11,0.08)',   border:'rgba(245,158,11,0.3)',   text:'#fcd34d' },
-      youth:      { label:'Youth Night',            color:'rgba(6,182,212,0.08)',    border:'rgba(6,182,212,0.3)',    text:'#67e8f9' },
-      youngadult: { label:'Young Adult Ministry',   color:'rgba(139,92,246,0.08)',   border:'rgba(139,92,246,0.3)',   text:'#c4b5fd' },
-      smallgroups:{ label:'Small Groups',           color:'rgba(16,185,129,0.08)',   border:'rgba(16,185,129,0.3)',   text:'#6ee7b7' },
-      children:   { label:"Children's Ministry",   color:'rgba(16,185,129,0.08)',   border:'rgba(16,185,129,0.3)',   text:'#6ee7b7' },
-      volunteers: { label:'Volunteer Departments',  color:'rgba(236,72,153,0.08)',   border:'rgba(236,72,153,0.3)',   text:'#f9a8d4' },
-    };
-    const bm = bannerMap[key] || bannerMap.all;
-    let banner = document.getElementById('ministryBanner');
-    if(!banner) {
-      banner = document.createElement('div');
-      banner.id = 'ministryBanner';
-      const nav = document.querySelector('.dash-nav');
-      if(nav) nav.parentNode.insertBefore(banner, nav);
+    // If analytics tab active, reload
+    const anTab = document.getElementById('dtAnalytics');
+    if(anTab && anTab.classList.contains('active')) this.loadAnalytics();
+
+    // If volunteers tab active, reload
+    if(key === 'volunteers') {
+      const vTab = document.getElementById('dtVolunteers');
+      if(vTab && vTab.classList.contains('active')) this.loadVolunteerDash();
     }
-    banner.style.cssText = `padding:6px 18px;font-size:11px;font-weight:800;letter-spacing:1px;`
-      + `background:${bm.color};border-bottom:1px solid ${bm.border};color:${bm.text};`
-      + `text-align:center;transition:all .2s;flex-shrink:0`;
-    banner.textContent = key === 'all' ? '' : '▶ Showing: ' + bm.label;
+  },
+
+  // Keep switchMinistry as alias for backward compat
+  switchMinistry(key, btn) { this.pickMinistry(key,'📊','All Ministry Events','#fff','var(--rim)'); },
+
+  clearDateFilter() {
+    const inp = document.getElementById('dashDateFilter');
+    if(inp) inp.value = '';
+    this._dateFilter = '';
+    this.applyFilters();
   },
 
   filterByDate(val) {
@@ -1300,7 +1354,7 @@ DASH.navTab = function(tab, btn) {
 
   // Load data for the tab being opened
   if (tab === 'analytics')  DASH.loadAnalytics();
-  if (tab === 'atrisk')     DASH.loadAtRisk();
+  if (tab === 'atrisk')     { DASH._atRiskLoaded = false; DASH.loadAtRisk(); }
   if (tab === 'lookup')     { /* ready on demand */ }
   if (tab === 'report')     DASH.loadReport(0);
   if (tab === 'volunteers') DASH.loadVolunteerDash();
@@ -1467,12 +1521,36 @@ DASH.loadGrades = async function() {
 DASH.loadAtRisk = async function() {
   const el = document.getElementById('atRiskList');
   if (!el) return;
-  el.innerHTML = '<div class="empty-state" style="padding:40px"><div class="empty-icon">⏳</div><p class="empty-txt">Loading at-risk students…</p></div>';
+  el.innerHTML = '<div class="empty-state" style="padding:40px"><div class="empty-icon">⏳</div><p class="empty-txt">Loading…</p></div>';
   try {
     const r = await API.getAtRisk();
-    const students = r?.twoWeeks || r?.atRisk || (Array.isArray(r) ? r : []);
+    let students = r?.twoWeeks || r?.atRisk || (Array.isArray(r) ? r : []);
+
+    // Filter by selected ministry
+    const ministry = DASH._ministry || 'all';
+    const ministryKeys = {
+      sunday:['sunday service'], youth:['youth night','youth'],
+      youngadult:['young adult'], smallgroups:['small groups'],
+      children:["children's ministry","children"],
+      volunteers:['worship team','ushers','security','media','parking','prayer','hospitality'],
+    };
+    if(ministry !== 'all' && ministryKeys[ministry]) {
+      const keys = ministryKeys[ministry];
+      students = students.filter(s => {
+        const ev = (s.lastEvent||s.event||s.type||'').toLowerCase();
+        return keys.some(k => ev.includes(k));
+      });
+    }
+
+    const ministryLabels = { all:'', sunday:' Sunday Service', youth:' Youth Night',
+      youngadult:' Young Adults', smallgroups:' Small Groups',
+      children:" Children's Ministry", volunteers:' Volunteers' };
+    const mLabel = ministryLabels[ministry] || '';
+
     if (!students.length) {
-      el.innerHTML = '<div class="empty-state" style="padding:40px"><div class="empty-icon">✅</div><p class="empty-txt">No at-risk students — great attendance!</p></div>';
+      el.innerHTML = '<div class="empty-state" style="padding:40px"><div class="empty-icon">✅</div>'
+        + '<p class="empty-txt">No at-risk attendees for' + mLabel + '</p>'
+        + '<p style="font-size:12px;color:var(--muted2);margin-top:6px">Everyone is attending regularly!</p></div>';
       return;
     }
     el.innerHTML = `<div style="padding:16px;display:flex;flex-direction:column;gap:8px">${

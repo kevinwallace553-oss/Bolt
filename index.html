@@ -307,20 +307,48 @@
     </div>
   </div>
 
-  <!-- Ministry Event Switcher -->
-  <!-- Ministry filter row -->
-  <div style="flex-shrink:0;background:var(--ink1);border-bottom:1px solid var(--rim)">
-    <div style="display:flex;gap:6px;padding:10px 16px 10px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none">
-      <button class="dash-evt-btn active" onclick="DASH.switchMinistry('all',this)">📊 All</button>
-      <button class="dash-evt-btn" onclick="DASH.switchMinistry('sunday',this)" style="color:#fcd34d;border-color:rgba(245,158,11,0.3);background:rgba(245,158,11,0.07)">🙏 Sunday</button>
-      <button class="dash-evt-btn" onclick="DASH.switchMinistry('youth',this)" style="color:#67e8f9;border-color:rgba(6,182,212,0.3);background:rgba(6,182,212,0.07)">⚡ Youth</button>
-      <button class="dash-evt-btn" onclick="DASH.switchMinistry('youngadult',this)" style="color:#c4b5fd;border-color:rgba(139,92,246,0.3);background:rgba(139,92,246,0.07)">🔥 Young Adults</button>
-      <button class="dash-evt-btn" onclick="DASH.switchMinistry('smallgroups',this)" style="color:#6ee7b7;border-color:rgba(16,185,129,0.3);background:rgba(16,185,129,0.07)">👥 Small Groups</button>
-      <button class="dash-evt-btn" onclick="DASH.switchMinistry('children',this)" style="color:#6ee7b7;border-color:rgba(16,185,129,0.3);background:rgba(16,185,129,0.07)">🧒 Children</button>
-      <button class="dash-evt-btn" onclick="DASH.switchMinistry('volunteers',this)" style="color:#f9a8d4;border-color:rgba(236,72,153,0.3);background:rgba(236,72,153,0.07)">🛡️ Volunteers</button>
-      <div style="display:flex;align-items:center;gap:6px;margin-left:8px;padding-left:10px;border-left:1px solid var(--rim);flex-shrink:0">
-        <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted)">Date</span>
-        <input type="date" id="dashDateFilter" onchange="DASH.filterByDate(this.value)" style="background:var(--ink2);border:1px solid var(--rim);border-radius:8px;color:var(--text);font-family:var(--body);font-size:11px;padding:4px 8px;cursor:pointer">
+  <!-- Ministry Selector Bar -->
+  <div style="flex-shrink:0;background:var(--ink1);border-bottom:1px solid var(--rim);padding:10px 16px;display:flex;align-items:center;gap:10px;position:relative">
+
+    <!-- Dropdown trigger button -->
+    <button onclick="DASH.toggleEventPicker()" id="dashEvtBtn" style="display:flex;align-items:center;gap:8px;padding:8px 16px;border-radius:12px;border:2px solid var(--teal);background:rgba(13,148,136,0.12);color:#fff;font-family:var(--body);font-size:13px;font-weight:800;cursor:pointer;min-width:200px;justify-content:space-between;-webkit-tap-highlight-color:transparent">
+      <span id="dashEvtLabel" style="display:flex;align-items:center;gap:7px">📊 <span>All Ministry Events</span></span>
+      <span id="dashEvtArrow" style="font-size:10px;transition:transform .2s;display:inline-block">▼</span>
+    </button>
+
+    <!-- Date filter -->
+    <div style="display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0">
+      <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted)">Date</span>
+      <input type="date" id="dashDateFilter" onchange="DASH.filterByDate(this.value)" style="background:var(--ink2);border:1px solid var(--rim);border-radius:8px;color:var(--text);font-family:var(--body);font-size:11px;padding:5px 8px;cursor:pointer">
+      <button onclick="DASH.clearDateFilter()" title="Clear date" style="width:26px;height:26px;border-radius:6px;background:var(--surface2);border:1px solid var(--rim);color:var(--muted);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+
+    <!-- Active ministry badge -->
+    <div id="ministryBadge" style="display:none;padding:4px 12px;border-radius:100px;font-size:10px;font-weight:800;background:rgba(13,148,136,0.15);border:1px solid rgba(13,148,136,0.4);color:var(--teal)"></div>
+
+    <!-- Dropdown panel -->
+    <div id="dashEvtDropdown" style="display:none;position:absolute;top:calc(100% + 4px);left:16px;z-index:100;background:var(--ink2);border:1px solid var(--rim2);border-radius:16px;padding:8px;min-width:260px;box-shadow:0 16px 40px rgba(0,0,0,0.4);animation:fadeUp .15s ease">
+      <div style="font-size:9px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:4px 8px 6px">Choose Ministry</div>
+      <div class="devt-opt" onclick="DASH.pickMinistry('all','📊','All Ministry Events','#fff','var(--rim)')">
+        <span class="devt-ico">📊</span><div><div class="devt-name">All Events</div><div class="devt-sub">Combined attendance across all ministries</div></div>
+      </div>
+      <div class="devt-opt" onclick="DASH.pickMinistry('sunday','🙏','Sunday Service','#fcd34d','rgba(245,158,11,0.4)')">
+        <span class="devt-ico" style="background:rgba(245,158,11,0.15)">🙏</span><div><div class="devt-name" style="color:#fcd34d">Sunday Service</div><div class="devt-sub">Members, guests & first timers</div></div>
+      </div>
+      <div class="devt-opt" onclick="DASH.pickMinistry('youth','⚡','Youth Night','#67e8f9','rgba(6,182,212,0.4)')">
+        <span class="devt-ico" style="background:rgba(6,182,212,0.15)">⚡</span><div><div class="devt-name" style="color:#67e8f9">Youth Night</div><div class="devt-sub">Student attendance & at-risk tracking</div></div>
+      </div>
+      <div class="devt-opt" onclick="DASH.pickMinistry('youngadult','🔥','Young Adult Ministry','#c4b5fd','rgba(139,92,246,0.4)')">
+        <span class="devt-ico" style="background:rgba(139,92,246,0.15)">🔥</span><div><div class="devt-name" style="color:#c4b5fd">Young Adult Ministry</div><div class="devt-sub">Ages 18–35 gathering attendance</div></div>
+      </div>
+      <div class="devt-opt" onclick="DASH.pickMinistry('smallgroups','👥','Small Groups','#6ee7b7','rgba(16,185,129,0.4)')">
+        <span class="devt-ico" style="background:rgba(16,185,129,0.15)">👥</span><div><div class="devt-name" style="color:#6ee7b7">Small Groups</div><div class="devt-sub">Group & member check-in data</div></div>
+      </div>
+      <div class="devt-opt" onclick="DASH.pickMinistry('children','🧒','Children's Ministry','#6ee7b7','rgba(16,185,129,0.4)')">
+        <span class="devt-ico" style="background:rgba(16,185,129,0.15)">🧒</span><div><div class="devt-name" style="color:#6ee7b7">Children's Ministry</div><div class="devt-sub">Family check-ins & attendance</div></div>
+      </div>
+      <div class="devt-opt" onclick="DASH.pickMinistry('volunteers','🛡️','Volunteer Departments','#f9a8d4','rgba(236,72,153,0.4)')">
+        <span class="devt-ico" style="background:rgba(236,72,153,0.15)">🛡️</span><div><div class="devt-name" style="color:#f9a8d4">Volunteer Departments</div><div class="devt-sub">Department check-ins & roster</div></div>
       </div>
     </div>
   </div>
@@ -395,10 +423,10 @@
   <div class="dash-tab" id="dtAtrisk">
     <div class="dash-body">
       <div class="atrisk-header">
-        <div class="atrisk-title">⚠️ At-Risk Students</div>
-        <div class="atrisk-sub">Students with attendance below 50% in the last 8 weeks</div>
+        <div class="atrisk-title" id="atRiskTitle">⚠️ At-Risk Attendees</div>
+        <div class="atrisk-sub" id="atRiskSubtitle">Attendees with below 50% attendance in the last 8 weeks</div>
       </div>
-      <div id="atRiskList"><div class="empty-state" style="padding:40px"><div class="empty-icon">⚠️</div><p class="empty-txt">Loading at-risk students…</p></div></div>
+      <div id="atRiskList"><div class="empty-state" style="padding:40px"><div class="empty-icon">⚠️</div><p class="empty-txt">Loading…</p></div></div>
     </div>
   </div>
 
