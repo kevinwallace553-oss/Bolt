@@ -3211,6 +3211,22 @@ function showSmallGroups() { SG.open(); }
 /* ════════════════════════════════════════════════════
    VOLUNTEER SCHEDULING MODULE
 ════════════════════════════════════════════════════ */
+// Normalize a time value from the backend (could be "09:00" or a full Date string)
+function fmtSchedTime_(v) {
+  if (!v || v === 'undefined') return '';
+  const s = String(v);
+  // Already HH:MM
+  if (/^\d{1,2}:\d{2}$/.test(s)) return s;
+  // Full date string - extract local time
+  if (s.length > 10) {
+    try {
+      const d = new Date(s);
+      if (!isNaN(d)) return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+    } catch(e) {}
+  }
+  return s.slice(0,5);
+}
+
 const SCHED = {
   _events: [],
   _volunteers: [],
@@ -3415,7 +3431,7 @@ const SCHED = {
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
             <div>
               <div style="font-family:var(--font);font-size:14px;font-weight:800;color:${col}">${ev.name}</div>
-              <div style="font-size:11px;color:var(--muted);margin-top:2px">${[ev.startTime,ev.endTime].filter(Boolean).join(' – ')}${ev.location ? ' · '+ev.location : ''}</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px">${[fmtSchedTime_(ev.startTime),fmtSchedTime_(ev.endTime)].filter(Boolean).join(' – ')}${ev.location ? ' · '+ev.location : ''}</div>
             </div>
             <div style="display:flex;gap:5px">
               <button onclick="SCHED.openEditEvent('${ev.id}')" style="width:28px;height:28px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--muted);cursor:pointer;font-size:11px">✏️</button>
@@ -3657,7 +3673,7 @@ const SCHED = {
         <div class="sched-event-header">
           <div>
             <div class="sched-event-name">${ev.name}</div>
-            <div class="sched-event-meta">${dateLabel} · ${[ev.startTime,ev.endTime].filter(Boolean).join(' – ')}${ev.location ? ' · '+ev.location : ''}</div>
+            <div class="sched-event-meta">${dateLabel} · ${[fmtSchedTime_(ev.startTime),fmtSchedTime_(ev.endTime)].filter(Boolean).join(' – ')}${ev.location ? ' · '+ev.location : ''}</div>
           </div>
           <div class="sched-event-badge" style="background:${color}20;color:${color}">${ev.type}</div>
         </div>
