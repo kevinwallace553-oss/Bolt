@@ -85,3 +85,9 @@ API.addSGMember      = (data)       => gasRun('addSGMemberAPI', data);
 API.editSGMember     = (id, data)   => gasRun('editSGMemberAPI', id, data);
 API.deleteSGMember   = (id)         => gasRun('deleteSGMemberAPI', id);
 API.checkInSGGroup   = (id, meta)   => gasRun('checkInSGGroupAPI', id, meta);
+// Volunteer Scheduling
+API.getScheduledEvents = (y,m) => gasRun('getScheduledEventsAPI', y, m);
+API.addScheduledEvent  = (d)   => gasRun('addScheduledEventAPI', d);
+API.editScheduledEvent = (id,d)=> gasRun('editScheduledEventAPI', id, d);
+API.deleteScheduledEvent=(id)  => gasRun('deleteScheduledEventAPI', id);
+API.rsvpResponse       = (id,r)=> gasRun('rsvpResponseAPI', id, r);

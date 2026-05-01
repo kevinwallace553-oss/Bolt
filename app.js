@@ -3207,3 +3207,514 @@ function openVolDept(dept, icon) {
 function showSmallGroups() { SG.open(); }
 
 /* Parent paging handled via data URI in QR — no hash router needed */
+
+/* ════════════════════════════════════════════════════
+   VOLUNTEER SCHEDULING MODULE
+════════════════════════════════════════════════════ */
+const SCHED = {
+  _events: [],
+  _volunteers: [],
+  _year: new Date().getFullYear(),
+  _month: new Date().getMonth() + 1,
+  _assignments: [],   // current event being built
+
+  async open() {
+    showView('vSchedule');
+    await this.load();
+  },
+
+  async load() {
+    const [evRes, volRes] = await Promise.all([
+      gasRun('getScheduledEventsAPI', this._year, this._month),
+      gasRun('getVolunteersAPI', 'all')
+    ]);
+    this._events = evRes?.events || [];
+    this._volunteers = volRes?.volunteers || [];
+    this.renderCalendar();
+    this.updateHeader();
+  },
+
+  updateHeader() {
+    const months = ['January','February','March','April','May','June',
+      'July','August','September','October','November','December'];
+    const el = document.getElementById('schedMonthTitle');
+    if (el) el.textContent = months[this._month-1] + ' ' + this._year;
+    const sub = document.getElementById('schedEventCount');
+    if (sub) sub.textContent = this._events.length + ' event' + (this._events.length !== 1 ? 's' : '') + ' this month';
+  },
+
+  prevMonth() {
+    this._month--;
+    if (this._month < 1) { this._month = 12; this._year--; }
+    this.load();
+  },
+
+  nextMonth() {
+    this._month++;
+    if (this._month > 12) { this._month = 1; this._year++; }
+    this.load();
+  },
+
+  renderCalendar() {
+    const grid = document.getElementById('schedCalGrid');
+    if (!grid) return;
+
+    const firstDay = new Date(this._year, this._month-1, 1).getDay();
+    const daysInMonth = new Date(this._year, this._month, 0).getDate();
+    const today = new Date();
+    const todayStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+
+    // Build event map by date
+    const evMap = {};
+    this._events.forEach(e => {
+      const d = String(e.date).slice(0,10);
+      if (!evMap[d]) evMap[d] = [];
+      evMap[d].push(e);
+    });
+
+    const typeColors = {
+      'Sunday Service':'#f59e0b', 'Youth Night':'#06b6d4',
+      'Young Adult Ministry':'#8b5cf6', 'Small Groups':'#10b981',
+      'Special Event':'#ec4899', 'Other':'#6b7280'
+    };
+
+    let html = '';
+    // Empty cells before first day
+    for (let i = 0; i < firstDay; i++) {
+      html += '<div style="min-height:64px;border-radius:10px;background:rgba(255,255,255,0.02)"></div>';
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = this._year + '-' + String(this._month).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+      const isToday = dateStr === todayStr;
+      const dayEvents = evMap[dateStr] || [];
+      const hasEvents = dayEvents.length > 0;
+
+      const dots = dayEvents.slice(0,3).map(e =>
+        `<div style="width:6px;height:6px;border-radius:50%;background:${typeColors[e.type]||'#8b5cf6'};flex-shrink:0"></div>`
+      ).join('');
+
+      html += `<div onclick="SCHED.showDay('${dateStr}')" style="min-height:64px;border-radius:10px;padding:6px;cursor:pointer;transition:all .15s;background:${isToday ? 'rgba(139,92,246,0.15)' : hasEvents ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.02)'};border:1.5px solid ${isToday ? 'rgba(139,92,246,0.6)' : hasEvents ? 'rgba(255,255,255,0.08)' : 'transparent'};-webkit-tap-highlight-color:transparent" onmouseover="this.style.background='rgba(139,92,246,0.1)'" onmouseout="this.style.background='${isToday ? 'rgba(139,92,246,0.15)' : hasEvents ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.02)'}'">
+        <div style="font-size:12px;font-weight:${isToday ? '900' : '600'};color:${isToday ? '#c4b5fd' : 'd < today.getDate() && this._month === today.getMonth()+1 && this._year === today.getFullYear() ? "#475569" : "var(--text)"'};margin-bottom:4px">${d}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:3px">${dots}</div>
+        ${dayEvents.length > 0 ? `<div style="font-size:8px;color:var(--muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${dayEvents[0].name.split('—')[0].trim()}</div>` : ''}
+      </div>`;
+    }
+    grid.innerHTML = html;
+  },
+
+  showDay(dateStr) {
+    const detail = document.getElementById('schedDayDetail');
+    const title = document.getElementById('schedDayTitle');
+    const sub = document.getElementById('schedDaySub');
+    const evEl = document.getElementById('schedDayEvents');
+    if (!detail) return;
+
+    const d = new Date(dateStr + 'T12:00:00');
+    const dayLabel = d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+    const dayEvents = this._events.filter(e => String(e.date).slice(0,10) === dateStr);
+
+    if (title) title.textContent = dayLabel;
+    if (sub) sub.textContent = dayEvents.length + ' event' + (dayEvents.length !== 1 ? 's' : '') + ' scheduled';
+
+    const typeColors = {
+      'Sunday Service':['rgba(245,158,11,0.15)','#fcd34d'],
+      'Youth Night':['rgba(6,182,212,0.15)','#67e8f9'],
+      'Young Adult Ministry':['rgba(139,92,246,0.15)','#c4b5fd'],
+      'Small Groups':['rgba(16,185,129,0.15)','#6ee7b7'],
+      'Special Event':['rgba(236,72,153,0.15)','#f9a8d4'],
+      'Other':['rgba(107,114,128,0.15)','#9ca3af']
+    };
+
+    const statusIcon = { accepted:'✅', declined:'❌', pending:'⏳' };
+    const statusColor = { accepted:'#6ee7b7', declined:'#fca5a5', pending:'#fcd34d' };
+
+    if (!dayEvents.length) {
+      evEl.innerHTML = `<div style="padding:20px;text-align:center">
+        <div style="font-size:32px;margin-bottom:10px">📅</div>
+        <div style="font-size:13px;color:var(--muted)">No events scheduled</div>
+        <button onclick="SCHED.openNewEventOnDate('${dateStr}')" style="margin-top:12px;padding:8px 18px;border-radius:100px;background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.4);color:#c4b5fd;font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer">+ Schedule Event</button>
+      </div>`;
+    } else {
+      evEl.innerHTML = dayEvents.map(ev => {
+        const [bg, col] = typeColors[ev.type] || typeColors['Other'];
+        const accepted = ev.assignments.filter(a=>a.status==='accepted').length;
+        const total = ev.assignments.length;
+        return `<div style="background:${bg};border:1px solid ${col}30;border-radius:14px;padding:14px 16px;margin-bottom:10px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div>
+              <div style="font-family:var(--font);font-size:14px;font-weight:800;color:${col}">${ev.name}</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px">${[ev.startTime,ev.endTime].filter(Boolean).join(' – ')}${ev.location ? ' · '+ev.location : ''}</div>
+            </div>
+            <div style="display:flex;gap:5px">
+              <button onclick="SCHED.openEditEvent('${ev.id}')" style="width:28px;height:28px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--muted);cursor:pointer;font-size:11px">✏️</button>
+              <button onclick="SCHED.deleteEvent('${ev.id}','${ev.name.replace(/'/,"\\'")}'); " style="width:28px;height:28px;border-radius:8px;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.2);color:#fca5a5;cursor:pointer;font-size:11px">🗑️</button>
+            </div>
+          </div>
+          ${ev.notes ? `<div style="font-size:11px;color:var(--muted);font-style:italic;margin-bottom:10px;padding:8px 10px;background:rgba(0,0,0,0.2);border-radius:8px">${ev.notes}</div>` : ''}
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted2);margin-bottom:8px">Volunteers (${accepted}/${total} confirmed)</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            ${ev.assignments.length === 0
+              ? '<div style="font-size:12px;color:var(--muted);font-style:italic">No volunteers assigned</div>'
+              : ev.assignments.map(a => `<div style="display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.2);border-radius:10px;padding:8px 10px">
+                  <div style="width:28px;height:28px;border-radius:50%;background:${gradientForName(a.volName)};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;flex-shrink:0">${initials(a.volName)}</div>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:12px;font-weight:700;color:var(--text)">${a.volName}</div>
+                    <div style="font-size:10px;color:var(--muted)">${a.role}${a.department ? ' · '+a.department : ''}</div>
+                  </div>
+                  <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:100px;background:rgba(0,0,0,0.3);color:${statusColor[a.status]||'#9ca3af'}">${statusIcon[a.status]||'⏳'} ${(a.status||'pending').charAt(0).toUpperCase()+(a.status||'pending').slice(1)}</span>
+                </div>`).join('')}
+          </div>
+          <button onclick="SCHED.addVolToEvent('${ev.id}')" style="width:100%;margin-top:8px;padding:7px;border-radius:10px;background:rgba(139,92,246,0.08);border:1px dashed rgba(139,92,246,0.3);color:#c4b5fd;font-family:var(--body);font-size:11px;font-weight:700;cursor:pointer">+ Add Volunteer</button>
+        </div>`;
+      }).join('');
+    }
+
+    detail.style.display = 'block';
+    detail.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  },
+
+  /* ── MODALS ── */
+  openNewEvent() {
+    this._editId = null;
+    this._assignments = [];
+    document.getElementById('se_id').value = '';
+    ['se_name','se_location','se_notes'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('se_type').value = 'Sunday Service';
+    document.getElementById('se_start').value = '09:00';
+    document.getElementById('se_end').value = '12:00';
+    // Set date to today
+    const today = new Date().toISOString().slice(0,10);
+    document.getElementById('se_date').value = today;
+    document.getElementById('schedEventModalTitle').textContent = '📅 Schedule Event';
+    this.renderVolAssignList();
+    openModal('schedEventModal');
+  },
+
+  openNewEventOnDate(dateStr) {
+    this.openNewEvent();
+    document.getElementById('se_date').value = dateStr;
+  },
+
+  openEditEvent(eventId) {
+    const ev = this._events.find(e => e.id === eventId);
+    if (!ev) return;
+    this._editId = eventId;
+    this._assignments = ev.assignments.map(a => ({...a, _existing: true}));
+    document.getElementById('se_id').value = eventId;
+    document.getElementById('se_name').value = ev.name || '';
+    document.getElementById('se_type').value = ev.type || 'Sunday Service';
+    document.getElementById('se_date').value = String(ev.date).slice(0,10) || '';
+    document.getElementById('se_start').value = ev.startTime || '09:00';
+    document.getElementById('se_end').value = ev.endTime || '12:00';
+    document.getElementById('se_location').value = ev.location || '';
+    document.getElementById('se_notes').value = ev.notes || '';
+    document.getElementById('schedEventModalTitle').textContent = '✏️ Edit Event';
+    this.renderVolAssignList();
+    openModal('schedEventModal');
+  },
+
+  renderVolAssignList() {
+    const el = document.getElementById('seVolList');
+    if (!el) return;
+    if (!this._assignments.length) {
+      el.innerHTML = '<div style="text-align:center;padding:16px;font-size:12px;color:var(--muted)">No volunteers assigned yet — tap <strong>+ Add Volunteer Assignment</strong> below</div>';
+      return;
+    }
+    const statusIcon = { accepted:'✅', declined:'❌', pending:'⏳' };
+    el.innerHTML = this._assignments.map((a, i) => `
+      <div style="display:flex;align-items:center;gap:10px;background:var(--ink3);border:1px solid var(--rim);border-radius:12px;padding:10px 12px">
+        <div style="width:32px;height:32px;border-radius:50%;background:${gradientForName(a.volName||'?')};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0">${initials(a.volName||'?')}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:700;color:var(--text)">${a.volName||'—'}</div>
+          <div style="font-size:11px;color:var(--muted)">${a.role||'Volunteer'}${a.department ? ' · '+a.department : ''}${a.volEmail ? ' · '+a.volEmail : ''}</div>
+          ${a._existing ? `<div style="font-size:10px;color:var(--muted2)">${statusIcon[a.status]||'⏳'} ${a.status||'pending'}</div>` : '<div style="font-size:10px;color:#c4b5fd">📧 Invitation will be sent</div>'}
+        </div>
+        ${!a._existing ? `<button onclick="SCHED._removeAssign(${i})" style="width:26px;height:26px;border-radius:8px;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.2);color:#fca5a5;cursor:pointer;font-size:11px">✕</button>` : ''}
+      </div>`).join('');
+  },
+
+  _removeAssign(idx) {
+    this._assignments.splice(idx, 1);
+    this.renderVolAssignList();
+  },
+
+  addVolAssignment() {
+    // Show a quick volunteer picker
+    const vols = this._volunteers;
+    if (!vols.length) { toast('⚠️ No volunteers registered yet','err'); return; }
+
+    // Build a simple selection modal inline
+    const picker = document.createElement('div');
+    picker.style.cssText = 'position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.7);display:flex;align-items:flex-end;justify-content:center';
+    picker.innerHTML = `<div style="background:var(--ink2);border-radius:20px 20px 0 0;padding:20px 16px 32px;width:100%;max-width:480px;max-height:70vh;overflow-y:auto">
+      <div style="font-family:var(--font);font-size:14px;font-weight:800;color:#fff;margin-bottom:14px">Select Volunteer</div>
+      ${vols.map(v => `<div onclick="SCHED._pickVol('${v.id}','${v.name.replace(/'/,"\\'")}','${(v.email||'').replace(/'/,"\\'")}','${(v.role||'Volunteer').replace(/'/,"\\'")}','${(v.department||'').replace(/'/,"\\'")}',this.parentElement.parentElement)" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;cursor:pointer;margin-bottom:6px;background:var(--ink3);border:1px solid var(--rim)">
+        <div style="width:34px;height:34px;border-radius:50%;background:${gradientForName(v.name)};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0">${initials(v.name)}</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700;color:var(--text)">${v.name}</div>
+          <div style="font-size:11px;color:var(--muted)">${v.role||''}${v.department ? ' · '+v.department : ''}${v.email ? ' · 📧' : ' · ⚠️ no email'}</div>
+        </div>
+      </div>`).join('')}
+      <button onclick="this.parentElement.parentElement.remove()" style="width:100%;margin-top:8px;padding:12px;border-radius:12px;background:var(--surface2);border:1px solid var(--rim);color:var(--muted);font-family:var(--body);font-size:13px;font-weight:700;cursor:pointer">Cancel</button>
+    </div>`;
+    document.body.appendChild(picker);
+  },
+
+  _pickVol(volId, volName, volEmail, role, dept, overlay) {
+    this._assignments.push({ volId, volName, volEmail, role, department: dept, status: 'pending' });
+    overlay.remove();
+    this.renderVolAssignList();
+  },
+
+  addVolToEvent(eventId) {
+    this._editId = eventId;
+    const ev = this._events.find(e => e.id === eventId);
+    this._assignments = ev ? [...ev.assignments.map(a=>({...a,_existing:true}))] : [];
+    this.addVolAssignment();
+    // On pick, save directly
+    const origPick = this._pickVol.bind(this);
+    this._pickVol = async (volId, volName, volEmail, role, dept, overlay) => {
+      overlay.remove();
+      showSaving('Adding volunteer…');
+      try {
+        const newAssign = [{ volId, volName, volEmail, role, department: dept }];
+        const ev2 = this._events.find(e => e.id === eventId);
+        const r = await gasRun('editScheduledEventAPI', eventId, {
+          name: ev2?.name, type: ev2?.type, date: ev2?.date,
+          startTime: ev2?.startTime, endTime: ev2?.endTime,
+          location: ev2?.location, notes: ev2?.notes,
+          newAssignments: newAssign
+        });
+        if (r?.success) { await this.load(); toast(volEmail ? '✅ Volunteer added & invitation sent!' : '✅ Volunteer added (no email on file)','ok'); }
+        else toast('⚠️ '+(r?.error||'Failed'),'err');
+      } catch(e) { toast('⚠️ Error','err'); }
+      hideSaving();
+      this._pickVol = origPick;
+    };
+  },
+
+  async saveEvent() {
+    const id = document.getElementById('se_id').value;
+    const name = document.getElementById('se_name').value.trim();
+    const date = document.getElementById('se_date').value;
+    if (!name || !date) { toast('⚠️ Event name and date are required','err'); return; }
+    const data = {
+      name, type: document.getElementById('se_type').value,
+      date, startTime: document.getElementById('se_start').value,
+      endTime: document.getElementById('se_end').value,
+      location: document.getElementById('se_location').value.trim(),
+      notes: document.getElementById('se_notes').value.trim(),
+      assignments: this._assignments.filter(a => !a._existing),
+      newAssignments: this._assignments.filter(a => !a._existing),
+      createdBy: SESSION.name || 'Admin'
+    };
+    showSaving(id ? 'Updating event…' : 'Creating event & sending invitations…');
+    try {
+      const r = id
+        ? await gasRun('editScheduledEventAPI', id, data)
+        : await gasRun('addScheduledEventAPI', data);
+      if (r?.success) {
+        closeModal('schedEventModal');
+        await this.load();
+        const sent = r.emailsSent?.length || 0;
+        toast(id ? '✅ Event updated' : `✅ Event created! ${sent} invitation${sent!==1?'s':''} sent`,'ok');
+      } else toast('⚠️ '+(r?.error||'Failed'),'err');
+    } catch(e) { toast('⚠️ Error','err'); }
+    hideSaving();
+  },
+
+  async deleteEvent(id, name) {
+    if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+    showSaving('Deleting…');
+    try {
+      const r = await gasRun('deleteScheduledEventAPI', id);
+      if (r?.success) { document.getElementById('schedDayDetail').style.display = 'none'; await this.load(); toast('🗑️ Event deleted','ok'); }
+    } catch(e) { toast('⚠️ Error','err'); }
+    hideSaving();
+  },
+
+  /* ── PRINT CALENDAR ── */
+  printCalendar() {
+    const months = ['January','February','March','April','May','June',
+      'July','August','September','October','November','December'];
+    const monthName = months[this._month-1] + ' ' + this._year;
+    const firstDay = new Date(this._year, this._month-1, 1).getDay();
+    const daysInMonth = new Date(this._year, this._month, 0).getDate();
+
+    const typeColors = {
+      'Sunday Service':'#d97706','Youth Night':'#0891b2',
+      'Young Adult Ministry':'#7c3aed','Small Groups':'#059669',
+      'Special Event':'#be185d','Other':'#6b7280'
+    };
+
+    const evMap = {};
+    this._events.forEach(e => {
+      const d = String(e.date).slice(0,10);
+      if (!evMap[d]) evMap[d] = [];
+      evMap[d].push(e);
+    });
+
+    const statusBg = { accepted:'#d1fae5', declined:'#fee2e2', pending:'#fef3c7' };
+    const statusColor = { accepted:'#065f46', declined:'#991b1b', pending:'#92400e' };
+
+    let calHTML = '';
+    for (let i = 0; i < firstDay; i++) calHTML += '<div class="cal-cell empty"></div>';
+    for (let d = 1; d <= daysInMonth; d++) {
+      const ds = this._year+'-'+String(this._month).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+      const dayEvs = evMap[ds] || [];
+      calHTML += `<div class="cal-cell${dayEvs.length?' has-events':''}">
+        <div class="day-num">${d}</div>
+        ${dayEvs.map(e => `<div class="ev-pill" style="background:${typeColors[e.type]||'#6b7280'}">
+          <div class="ev-pill-name">${e.name}</div>
+          ${e.startTime ? `<div class="ev-pill-time">${e.startTime}</div>` : ''}
+        </div>`).join('')}
+      </div>`;
+    }
+
+    // Build schedule list for events this month
+    const sortedEvents = [...this._events].sort((a,b) => String(a.date).localeCompare(String(b.date)));
+    const schedHTML = sortedEvents.map(ev => {
+      const dateLabel = new Date(String(ev.date)+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+      const color = typeColors[ev.type] || '#6b7280';
+      const cols = {
+        accepted: ev.assignments.filter(a=>a.status==='accepted').length,
+        declined: ev.assignments.filter(a=>a.status==='declined').length,
+        pending: ev.assignments.filter(a=>!a.status||a.status==='pending').length,
+      };
+      return `<div class="sched-event" style="border-left-color:${color}">
+        <div class="sched-event-header">
+          <div>
+            <div class="sched-event-name">${ev.name}</div>
+            <div class="sched-event-meta">${dateLabel} · ${[ev.startTime,ev.endTime].filter(Boolean).join(' – ')}${ev.location ? ' · '+ev.location : ''}</div>
+          </div>
+          <div class="sched-event-badge" style="background:${color}20;color:${color}">${ev.type}</div>
+        </div>
+        ${ev.notes ? `<div class="sched-event-notes">${ev.notes}</div>` : ''}
+        ${ev.assignments.length ? `
+          <div class="sched-stats">
+            <span class="stat-chip accepted">✅ ${cols.accepted} Confirmed</span>
+            <span class="stat-chip pending">⏳ ${cols.pending} Pending</span>
+            ${cols.declined ? `<span class="stat-chip declined">❌ ${cols.declined} Declined</span>` : ''}
+          </div>
+          <table class="vol-table">
+            <thead><tr><th>Volunteer</th><th>Role</th><th>Department</th><th>Status</th></tr></thead>
+            <tbody>${ev.assignments.map(a=>`<tr>
+              <td>${a.volName}</td>
+              <td>${a.role||'—'}</td>
+              <td>${a.department||'—'}</td>
+              <td><span class="status-badge" style="background:${statusBg[a.status]||'#fef3c7'};color:${statusColor[a.status]||'#92400e'}">${a.status||'pending'}</span></td>
+            </tr>`).join('')}</tbody>
+          </table>` : '<div class="no-vol">No volunteers assigned</div>'}
+      </div>`;
+    }).join('');
+
+    const css = `
+      *{box-sizing:border-box;margin:0;padding:0}
+      body{font-family:Arial,Helvetica,sans-serif;background:#fff;color:#111;padding:32px}
+      h1{font-size:28px;font-weight:900;color:#1e1b4b;margin-bottom:4px}
+      .subtitle{font-size:13px;color:#6b7280;margin-bottom:28px}
+      /* Calendar */
+      .cal-header{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px}
+      .cal-header div{text-align:center;font-size:10px;font-weight:800;color:#6b7280;letter-spacing:1px;padding:6px 0}
+      .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:36px}
+      .cal-cell{min-height:72px;border:1px solid #e5e7eb;border-radius:8px;padding:6px;background:#fff}
+      .cal-cell.empty{background:#f9fafb;border-color:#f3f4f6}
+      .cal-cell.has-events{border-color:#c4b5fd}
+      .day-num{font-size:13px;font-weight:700;color:#374151;margin-bottom:4px}
+      .ev-pill{border-radius:4px;padding:2px 5px;margin-bottom:2px}
+      .ev-pill-name{font-size:8px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .ev-pill-time{font-size:7px;color:rgba(255,255,255,0.8)}
+      /* Schedule list */
+      h2{font-size:18px;font-weight:800;color:#1e1b4b;margin-bottom:16px;padding-top:4px;border-top:3px solid #8b5cf6}
+      .sched-event{border-left:4px solid #8b5cf6;border-radius:0 12px 12px 0;padding:14px 16px;margin-bottom:16px;background:#fafafa;border:1px solid #e5e7eb;border-left-width:4px}
+      .sched-event-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+      .sched-event-name{font-size:15px;font-weight:800;color:#1e1b4b;margin-bottom:3px}
+      .sched-event-meta{font-size:11px;color:#6b7280}
+      .sched-event-badge{font-size:10px;font-weight:700;padding:3px 10px;border-radius:100px;flex-shrink:0}
+      .sched-event-notes{font-size:11px;color:#6b7280;font-style:italic;margin-bottom:10px;padding:8px;background:#f3f4f6;border-radius:6px}
+      .sched-stats{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+      .stat-chip{font-size:10px;font-weight:700;padding:3px 10px;border-radius:100px}
+      .stat-chip.accepted{background:#d1fae5;color:#065f46}
+      .stat-chip.pending{background:#fef3c7;color:#92400e}
+      .stat-chip.declined{background:#fee2e2;color:#991b1b}
+      .vol-table{width:100%;border-collapse:collapse;font-size:11px}
+      .vol-table th{text-align:left;padding:6px 8px;background:#f3f4f6;font-weight:700;color:#374151;border-bottom:2px solid #e5e7eb}
+      .vol-table td{padding:6px 8px;border-bottom:1px solid #f3f4f6;color:#374151}
+      .vol-table tr:last-child td{border-bottom:none}
+      .status-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:100px;text-transform:capitalize}
+      .no-vol{font-size:11px;color:#9ca3af;font-style:italic;margin-top:4px}
+      .print-footer{margin-top:32px;padding-top:16px;border-top:1px solid #e5e7eb;font-size:10px;color:#9ca3af;text-align:center}
+      @media print{body{padding:16px}.sched-event{break-inside:avoid}}`;
+
+    const win = window.open('','_blank','width=1000,height=800');
+    if (!win) { toast('⚠️ Allow pop-ups to print','err'); return; }
+    win.document.open();
+    win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Volunteer Schedule — ${monthName}</title><style>${css}</style></head>
+<body>
+  <h1>📅 Volunteer Schedule</h1>
+  <p class="subtitle">${monthName} · Generated ${new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</p>
+  <div class="cal-header"><div>SUN</div><div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div></div>
+  <div class="cal-grid">${calHTML}</div>
+  <h2>Event Details & Volunteer Assignments</h2>
+  ${schedHTML || '<p style="color:#9ca3af;font-style:italic">No events scheduled this month.</p>'}
+  <div class="print-footer">Bolt Kiosk · Ministry Check-In System · Volunteer Schedule · ${monthName}</div>
+  <script>window.addEventListener('load',function(){window.print()});<\/script>
+</body></html>`);
+    win.document.close();
+  },
+
+  /* ── RSVP HANDLER (called from URL params) ── */
+  async handleRsvp(assignId, response) {
+    const el = document.getElementById('rsvpContent');
+    const overlay = document.getElementById('vRsvp');
+    if (overlay) overlay.style.display = 'flex';
+    if (!el) return;
+    el.innerHTML = '<div style="text-align:center;padding:30px 0"><div style="font-size:32px;margin-bottom:12px">⏳</div><div style="color:#94a3b8">Recording your response…</div></div>';
+    try {
+      const r = await gasRun('rsvpResponseAPI', assignId, response);
+      if (r?.success) {
+        const isAccepted = response === 'accepted';
+        el.innerHTML = `<div style="text-align:center">
+          <div style="font-size:56px;margin-bottom:16px">${isAccepted ? '✅' : '❌'}</div>
+          <div style="font-size:20px;font-weight:800;color:#fff;margin-bottom:8px">
+            ${isAccepted ? 'You\'re confirmed!' : 'Response recorded'}
+          </div>
+          <div style="font-size:14px;color:#94a3b8;margin-bottom:24px;line-height:1.6">
+            ${isAccepted
+              ? `Great! We'll see you at <strong style="color:#c4b5fd">${r.eventName}</strong>. Thank you for serving!`
+              : `We've noted that you can't make it to <strong style="color:#c4b5fd">${r.eventName}</strong>. Thank you for letting us know.`}
+          </div>
+          <div style="background:${isAccepted ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)'};border:1px solid ${isAccepted ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'};border-radius:12px;padding:14px 16px;margin-bottom:20px">
+            <div style="font-size:13px;font-weight:700;color:${isAccepted ? '#6ee7b7' : '#fca5a5'}">
+              ${r.volName} · ${response.charAt(0).toUpperCase()+response.slice(1)}
+            </div>
+            <div style="font-size:11px;color:#64748b;margin-top:4px">${r.eventName}</div>
+          </div>
+          <button onclick="document.getElementById('vRsvp').style.display='none';showView('vHome')" style="padding:12px 24px;border-radius:12px;background:rgba(139,92,246,0.2);border:1px solid rgba(139,92,246,0.4);color:#c4b5fd;font-family:sans-serif;font-size:14px;font-weight:700;cursor:pointer">Go to Bolt Kiosk</button>
+        </div>`;
+      } else {
+        el.innerHTML = '<div style="text-align:center;padding:20px"><div style="font-size:40px;margin-bottom:12px">⚠️</div><div style="color:#fca5a5">Could not record response. The link may have expired.</div></div>';
+      }
+    } catch(e) {
+      el.innerHTML = '<div style="text-align:center;padding:20px"><div style="font-size:40px;margin-bottom:12px">⚠️</div><div style="color:#fca5a5">Connection error. Please try again.</div></div>';
+    }
+  }
+};
+
+/* ── Home card → Schedule ── */
+function showSchedule() { SCHED.open(); }
+
+/* ── Handle RSVP links on page load ── */
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const rsvp = params.get('rsvp');
+  const r = params.get('r');
+  if (rsvp && r) {
+    window.addEventListener('load', function() {
+      setTimeout(() => SCHED.handleRsvp(rsvp, r), 800);
+    });
+  }
+})();
+
+/* ── Add to API ── */
