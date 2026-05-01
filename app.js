@@ -935,8 +935,14 @@ const KIOSK = {
 /* ── KIOSK NAV ── */
 function showKiosk() {
   showView('vKiosk');
+  // Open event picker immediately — no standalone kiosk state
   const ep = document.getElementById('eventPicker');
   if(ep) ep.classList.add('open');
+  // Reset stale state from previous session
+  const banner = document.getElementById('kEventBanner');
+  if(banner) banner.style.display = 'none';
+  const lbox = document.getElementById('kLeaderBox');
+  if(lbox) lbox.classList.remove('show');
 }
 function showDash() { showView('vDash'); }
 
