@@ -116,88 +116,84 @@
     </div>
 
     <!-- Cards grid -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto;gap:20px;width:100%">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;width:100%">
 
-      <!-- Kiosk -->
-      <div onclick="showKiosk()" style="background:var(--ink2);border:1px solid var(--rim);border-radius:24px;padding:32px 30px;cursor:pointer;transition:all .22s cubic-bezier(0.22,0.68,0,1.2);position:relative;overflow:hidden;-webkit-tap-highlight-color:transparent" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 20px 50px rgba(0,0,0,0.15)';this.style.borderColor='var(--rim2)'" onmouseout="this.style.transform='';this.style.boxShadow='';this.style.borderColor='var(--rim)'">
+      <!-- Ministry Events -->
+      <div onclick="showKiosk()" class="home-card" style="border-color:var(--rim)">
         <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--green),var(--teal))"></div>
-        <div style="width:52px;height:52px;border-radius:14px;background:var(--soft);display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:18px;border:1px solid var(--rim2)">⚡</div>
-        <div style="font-family:var(--font);font-size:20px;font-weight:800;color:var(--text);margin-bottom:6px;letter-spacing:.3px">Ministry Events</div>
-        <div style="font-size:13px;color:var(--muted);font-weight:500;line-height:1.6;margin-bottom:18px">Search and check in students and leaders for today's session</div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <span style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:100px;background:var(--soft);color:var(--green);border:1px solid var(--rim2)">Search</span>
-          <span style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:100px;background:var(--soft);color:var(--green);border:1px solid var(--rim2)">Batch</span>
-          <span style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:100px;background:var(--soft);color:var(--green);border:1px solid var(--rim2)">Leaders</span>
+        <div class="hc-icon" style="background:var(--soft);border-color:var(--rim2)">⚡</div>
+        <div class="hc-title">Ministry Events</div>
+        <div class="hc-desc">Sunday Service, Youth Night, Young Adults and more — search and check in attendees</div>
+        <div class="hc-tags">
+          <span class="hc-tag" style="background:var(--soft);color:var(--green);border-color:var(--rim2)">Search</span>
+          <span class="hc-tag" style="background:var(--soft);color:var(--green);border-color:var(--rim2)">Batch</span>
+          <span class="hc-tag" style="background:var(--soft);color:var(--green);border-color:var(--rim2)">Leaders</span>
         </div>
       </div>
 
       <!-- Dashboard -->
-      <div onclick="showDash()" style="background:var(--ink2);border:1px solid var(--rim);border-radius:24px;padding:32px 30px;cursor:pointer;transition:all .22s cubic-bezier(0.22,0.68,0,1.2);position:relative;overflow:hidden;-webkit-tap-highlight-color:transparent" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 20px 50px rgba(0,0,0,0.15)';this.style.borderColor='var(--rim2)'" onmouseout="this.style.transform='';this.style.boxShadow='';this.style.borderColor='var(--rim)'">
+      <div onclick="showDash()" class="home-card" style="border-color:var(--rim)">
         <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--teal),#7c3aed)"></div>
-        <div style="width:52px;height:52px;border-radius:14px;background:var(--teal-soft);display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:18px;border:1px solid var(--rim2)">📊</div>
-        <div style="font-family:var(--font);font-size:20px;font-weight:800;color:var(--text);margin-bottom:6px;letter-spacing:.3px">Dashboard</div>
-        <div style="font-size:13px;color:var(--muted);font-weight:500;line-height:1.6;margin-bottom:18px">Live attendance feed, analytics, weekly reports and at-risk tracking</div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <span style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:100px;background:var(--teal-soft);color:var(--teal);border:1px solid var(--rim2)">Live Feed</span>
-          <span style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:100px;background:var(--teal-soft);color:var(--teal);border:1px solid var(--rim2)">Analytics</span>
-          <span style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:100px;background:var(--teal-soft);color:var(--teal);border:1px solid var(--rim2)">Reports</span>
+        <div class="hc-icon" style="background:var(--teal-soft);border-color:var(--rim2)">📊</div>
+        <div class="hc-title">Dashboard</div>
+        <div class="hc-desc">Live attendance feed, analytics, weekly reports and at-risk tracking</div>
+        <div class="hc-tags">
+          <span class="hc-tag" style="background:var(--teal-soft);color:var(--teal);border-color:var(--rim2)">Live Feed</span>
+          <span class="hc-tag" style="background:var(--teal-soft);color:var(--teal);border-color:var(--rim2)">Analytics</span>
+          <span class="hc-tag" style="background:var(--teal-soft);color:var(--teal);border-color:var(--rim2)">Reports</span>
         </div>
       </div>
 
       <!-- Children's Ministry (full width) -->
-      <div onclick="showCM()" style="grid-column:1/-1;background:var(--ink2);border:1px solid rgba(16,185,129,0.2);border-radius:24px;padding:28px 30px;cursor:pointer;transition:all .22s cubic-bezier(0.22,0.68,0,1.2);position:relative;overflow:hidden;display:flex;align-items:center;gap:24px;-webkit-tap-highlight-color:transparent" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 16px 40px rgba(0,0,0,0.12)';this.style.borderColor='rgba(16,185,129,0.4)'" onmouseout="this.style.transform='';this.style.boxShadow='';this.style.borderColor='rgba(16,185,129,0.2)'">
+      <div onclick="showCM()" class="home-card home-card-wide" style="border-color:rgba(16,185,129,0.2);flex-direction:row;padding:22px 24px">
         <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#10b981,#06b6d4)"></div>
-        <div style="width:60px;height:60px;border-radius:16px;background:rgba(16,185,129,0.1);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;border:1px solid rgba(16,185,129,0.2)">🧒</div>
+        <div class="hc-icon-lg" style="background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.25)">🧒</div>
         <div style="flex:1;min-width:0">
-          <div style="font-family:var(--font);font-size:20px;font-weight:800;color:var(--text);margin-bottom:5px;letter-spacing:.3px">Children's Ministry</div>
-          <div style="font-size:13px;color:var(--muted);font-weight:500;line-height:1.5">Register families, check in children by family, and print security name tags with parent pickup codes</div>
-        </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
-          <div style="display:flex;gap:6px">
-            <span style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:100px;background:rgba(16,185,129,0.1);color:#10b981;border:1px solid rgba(16,185,129,0.25)">Family Registry</span>
-            <span style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:100px;background:rgba(16,185,129,0.1);color:#10b981;border:1px solid rgba(16,185,129,0.25)">Name Tags</span>
+          <div class="hc-title">Children's Ministry</div>
+          <div class="hc-desc">Register families, check in children, print security name tags with parent pickup codes and QR</div>
+          <div class="hc-tags" style="margin-top:10px">
+            <span class="hc-tag" style="background:rgba(16,185,129,0.1);color:#10b981;border-color:rgba(16,185,129,0.3)">Family Registry</span>
+            <span class="hc-tag" style="background:rgba(16,185,129,0.1);color:#10b981;border-color:rgba(16,185,129,0.3)">Name Tags</span>
+            <span class="hc-tag" style="background:rgba(16,185,129,0.1);color:#10b981;border-color:rgba(16,185,129,0.3)">QR Check-out</span>
           </div>
-          <div style="font-size:22px;color:rgba(16,185,129,0.4)">›</div>
         </div>
+        <div style="font-size:22px;color:rgba(16,185,129,0.35);flex-shrink:0;align-self:center">›</div>
       </div>
 
-      <!-- Volunteers card -->
-      <div onclick="openVolDeptModal()" style="grid-column:1/-1;background:var(--ink2);border:1px solid rgba(236,72,153,0.2);border-radius:24px;padding:28px 30px;cursor:pointer;transition:all .22s cubic-bezier(0.22,0.68,0,1.2);position:relative;overflow:hidden;display:flex;align-items:center;gap:24px;-webkit-tap-highlight-color:transparent" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 16px 40px rgba(0,0,0,0.12)';this.style.borderColor='rgba(236,72,153,0.4)'" onmouseout="this.style.transform='';this.style.boxShadow='';this.style.borderColor='rgba(236,72,153,0.2)'">
+      <!-- Volunteer Departments -->
+      <div onclick="openVolDeptModal()" class="home-card home-card-wide" style="border-color:rgba(236,72,153,0.2);flex-direction:row;padding:22px 24px">
         <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#ec4899,#8b5cf6)"></div>
-        <div style="width:60px;height:60px;border-radius:16px;background:rgba(236,72,153,0.1);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;border:1px solid rgba(236,72,153,0.2)">🛡️</div>
+        <div class="hc-icon-lg" style="background:rgba(236,72,153,0.1);border-color:rgba(236,72,153,0.25)">🛡️</div>
         <div style="flex:1;min-width:0">
-          <div style="font-family:var(--font);font-size:20px;font-weight:800;color:var(--text);margin-bottom:5px;letter-spacing:.3px">Volunteer Departments</div>
-          <div style="font-size:13px;color:var(--muted);font-weight:500;line-height:1.5">Check in Worship Team, Ushers, Security, Media, Parking, Prayer, Hospitality and more — via Ministry Events</div>
-        </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
-          <div style="display:flex;gap:6px">
-            <span style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:100px;background:rgba(236,72,153,0.1);color:#f9a8d4;border:1px solid rgba(236,72,153,0.25)">Departments</span>
-            <span style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:100px;background:rgba(236,72,153,0.1);color:#f9a8d4;border:1px solid rgba(236,72,153,0.25)">Attendance</span>
+          <div class="hc-title">Volunteer Departments</div>
+          <div class="hc-desc">Check in Worship Team, Ushers, Security, Media, Parking, Prayer, Hospitality and more</div>
+          <div class="hc-tags" style="margin-top:10px">
+            <span class="hc-tag" style="background:rgba(236,72,153,0.1);color:#f9a8d4;border-color:rgba(236,72,153,0.3)">Departments</span>
+            <span class="hc-tag" style="background:rgba(236,72,153,0.1);color:#f9a8d4;border-color:rgba(236,72,153,0.3)">Check-In</span>
+            <span class="hc-tag" style="background:rgba(236,72,153,0.1);color:#f9a8d4;border-color:rgba(236,72,153,0.3)">Attendance</span>
           </div>
-          <div style="font-size:22px;color:rgba(236,72,153,0.4)">›</div>
         </div>
+        <div style="font-size:22px;color:rgba(236,72,153,0.35);flex-shrink:0;align-self:center">›</div>
+      </div>
 
-      <!-- Volunteer Schedule card -->
-      <div onclick="showSchedule()" style="grid-column:1/-1;background:var(--ink2);border:1px solid rgba(139,92,246,0.2);border-radius:24px;padding:28px 30px;cursor:pointer;transition:all .22s cubic-bezier(0.22,0.68,0,1.2);position:relative;overflow:hidden;display:flex;align-items:center;gap:24px;-webkit-tap-highlight-color:transparent" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 16px 40px rgba(0,0,0,0.12)';this.style.borderColor='rgba(139,92,246,0.5)'" onmouseout="this.style.transform='';this.style.boxShadow='';this.style.borderColor='rgba(139,92,246,0.2)'">
+      <!-- Volunteer Schedule -->
+      <div onclick="showSchedule()" class="home-card home-card-wide" style="border-color:rgba(139,92,246,0.2);flex-direction:row;padding:22px 24px">
         <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#8b5cf6,#ec4899)"></div>
-        <div style="width:60px;height:60px;border-radius:16px;background:rgba(139,92,246,0.1);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;border:1px solid rgba(139,92,246,0.2)">📅</div>
+        <div class="hc-icon-lg" style="background:rgba(139,92,246,0.1);border-color:rgba(139,92,246,0.25)">📅</div>
         <div style="flex:1;min-width:0">
-          <div style="font-family:var(--font);font-size:20px;font-weight:800;color:var(--text);margin-bottom:5px;letter-spacing:.3px">Volunteer Schedule</div>
-          <div style="font-size:13px;color:var(--muted);font-weight:500;line-height:1.5">Schedule volunteers for upcoming events, send email invitations, and track RSVP responses in real time</div>
-        </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
-          <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
-            <span style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:100px;background:rgba(139,92,246,0.1);color:#c4b5fd;border:1px solid rgba(139,92,246,0.25)">📅 Calendar</span>
-            <span style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:100px;background:rgba(139,92,246,0.1);color:#c4b5fd;border:1px solid rgba(139,92,246,0.25)">📧 Invites</span>
-            <span style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:100px;background:rgba(139,92,246,0.1);color:#c4b5fd;border:1px solid rgba(139,92,246,0.25)">✅ RSVP</span>
+          <div class="hc-title">Volunteer Schedule</div>
+          <div class="hc-desc">Schedule volunteers for upcoming events, send email invitations, track RSVP responses in real time</div>
+          <div class="hc-tags" style="margin-top:10px">
+            <span class="hc-tag" style="background:rgba(139,92,246,0.1);color:#c4b5fd;border-color:rgba(139,92,246,0.3)">📅 Calendar</span>
+            <span class="hc-tag" style="background:rgba(139,92,246,0.1);color:#c4b5fd;border-color:rgba(139,92,246,0.3)">📧 Invitations</span>
+            <span class="hc-tag" style="background:rgba(139,92,246,0.1);color:#c4b5fd;border-color:rgba(139,92,246,0.3)">✅ RSVP</span>
           </div>
-          <div style="font-size:22px;color:rgba(139,92,246,0.4)">›</div>
         </div>
+        <div style="font-size:22px;color:rgba(139,92,246,0.35);flex-shrink:0;align-self:center">›</div>
       </div>
 
     </div>
   </div>
-</div>
 
 <!-- ══ KIOSK ══ -->
 <div class="view" id="vKiosk">

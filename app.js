@@ -3259,48 +3259,88 @@ const SCHED = {
     const grid = document.getElementById('schedCalGrid');
     if (!grid) return;
 
-    const firstDay = new Date(this._year, this._month-1, 1).getDay();
+    const firstDay  = new Date(this._year, this._month - 1, 1).getDay();
     const daysInMonth = new Date(this._year, this._month, 0).getDate();
-    const today = new Date();
-    const todayStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+    const now = new Date();
+    const todayStr = now.getFullYear() + '-'
+      + String(now.getMonth() + 1).padStart(2, '0') + '-'
+      + String(now.getDate()).padStart(2, '0');
 
-    // Build event map by date
     const evMap = {};
     this._events.forEach(e => {
-      const d = String(e.date).slice(0,10);
-      if (!evMap[d]) evMap[d] = [];
-      evMap[d].push(e);
+      const k = String(e.date).slice(0, 10);
+      if (!evMap[k]) evMap[k] = [];
+      evMap[k].push(e);
     });
 
     const typeColors = {
-      'Sunday Service':'#f59e0b', 'Youth Night':'#06b6d4',
-      'Young Adult Ministry':'#8b5cf6', 'Small Groups':'#10b981',
-      'Special Event':'#ec4899', 'Other':'#6b7280'
+      'Sunday Service': '#f59e0b', 'Youth Night': '#06b6d4',
+      'Young Adult Ministry': '#8b5cf6', 'Small Groups': '#10b981',
+      'Special Event': '#ec4899', 'Other': '#6b7280'
     };
 
-    let html = '';
-    // Empty cells before first day
+    // Build grid using DOM — no innerHTML string escaping issues
+    grid.innerHTML = '';
+
+    // Empty offset cells
     for (let i = 0; i < firstDay; i++) {
-      html += '<div style="min-height:64px;border-radius:10px;background:rgba(255,255,255,0.02)"></div>';
+      const empty = document.createElement('div');
+      empty.style.cssText = 'min-height:64px;border-radius:10px;background:rgba(255,255,255,0.015)';
+      grid.appendChild(empty);
     }
 
     for (let d = 1; d <= daysInMonth; d++) {
-      const dateStr = this._year + '-' + String(this._month).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-      const isToday = dateStr === todayStr;
-      const dayEvents = evMap[dateStr] || [];
-      const hasEvents = dayEvents.length > 0;
+      const ds = this._year + '-'
+        + String(this._month).padStart(2, '0') + '-'
+        + String(d).padStart(2, '0');
+      const isToday   = ds === todayStr;
+      const dayEvs    = evMap[ds] || [];
+      const hasEvents = dayEvs.length > 0;
 
-      const dots = dayEvents.slice(0,3).map(e =>
-        `<div style="width:6px;height:6px;border-radius:50%;background:${typeColors[e.type]||'#8b5cf6'};flex-shrink:0"></div>`
-      ).join('');
+      const cellBg = isToday
+        ? 'rgba(139,92,246,0.15)'
+        : hasEvents ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.015)';
+      const cellBorder = isToday
+        ? '1.5px solid rgba(139,92,246,0.6)'
+        : hasEvents ? '1px solid rgba(255,255,255,0.08)' : '1px solid transparent';
 
-      html += `<div onclick="SCHED.showDay('${dateStr}')" style="min-height:64px;border-radius:10px;padding:6px;cursor:pointer;transition:all .15s;background:${isToday ? 'rgba(139,92,246,0.15)' : hasEvents ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.02)'};border:1.5px solid ${isToday ? 'rgba(139,92,246,0.6)' : hasEvents ? 'rgba(255,255,255,0.08)' : 'transparent'};-webkit-tap-highlight-color:transparent" onmouseover="this.style.background='rgba(139,92,246,0.1)'" onmouseout="this.style.background='${isToday ? 'rgba(139,92,246,0.15)' : hasEvents ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.02)'}'">
-        <div style="font-size:12px;font-weight:${isToday ? '900' : '600'};color:${isToday ? '#c4b5fd' : 'd < today.getDate() && this._month === today.getMonth()+1 && this._year === today.getFullYear() ? "#475569" : "var(--text)"'};margin-bottom:4px">${d}</div>
-        <div style="display:flex;flex-wrap:wrap;gap:3px">${dots}</div>
-        ${dayEvents.length > 0 ? `<div style="font-size:8px;color:var(--muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${dayEvents[0].name.split('—')[0].trim()}</div>` : ''}
-      </div>`;
+      const cell = document.createElement('div');
+      cell.style.cssText = 'min-height:64px;border-radius:10px;padding:6px;cursor:pointer;'
+        + 'background:' + cellBg + ';border:' + cellBorder + ';transition:background .15s;-webkit-tap-highlight-color:transparent';
+
+      // Day number
+      const dayNum = document.createElement('div');
+      dayNum.style.cssText = 'font-size:12px;font-weight:' + (isToday ? '900' : '600')
+        + ';color:' + (isToday ? '#c4b5fd' : 'var(--text)') + ';margin-bottom:4px';
+      dayNum.textContent = String(d);
+      cell.appendChild(dayNum);
+
+      // Event dots
+      if (dayEvs.length) {
+        const dotsRow = document.createElement('div');
+        dotsRow.style.cssText = 'display:flex;flex-wrap:wrap;gap:3px;margin-bottom:3px';
+        dayEvs.slice(0, 3).forEach(e => {
+          const dot = document.createElement('div');
+          dot.style.cssText = 'width:7px;height:7px;border-radius:50%;background:'
+            + (typeColors[e.type] || '#8b5cf6') + ';flex-shrink:0';
+          dotsRow.appendChild(dot);
+        });
+        cell.appendChild(dotsRow);
+
+        // First event label
+        const lbl = document.createElement('div');
+        lbl.style.cssText = 'font-size:8px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+        lbl.textContent = dayEvs[0].name.split('—')[0].trim();
+        cell.appendChild(lbl);
+      }
+
+      // Hover + click
+      cell.addEventListener('mouseover', function() { this.style.background = 'rgba(139,92,246,0.1)'; });
+      cell.addEventListener('mouseout',  function() { this.style.background = cellBg; });
+      cell.addEventListener('click', (function(date) { return function() { SCHED.showDay(date); }; })(ds));
+
+      grid.appendChild(cell);
     }
-    grid.innerHTML = html;
   },
 
   showDay(dateStr) {
