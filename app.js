@@ -3219,17 +3219,37 @@ const SCHED = {
   _assignments: [],   // current event being built
 
   async open() {
-    showView('vSchedule');
-    await this.load();
+    showSchedule();
   },
 
   async load() {
-    const [evRes, volRes] = await Promise.all([
-      gasRun('getScheduledEventsAPI', this._year, this._month),
-      gasRun('getVolunteersAPI', 'all')
-    ]);
-    this._events = evRes?.events || [];
-    this._volunteers = volRes?.volunteers || [];
+    // Show loading state immediately
+    const grid = document.getElementById('schedCalGrid');
+    const titleEl = document.getElementById('schedMonthTitle');
+    const months = ['January','February','March','April','May','June',
+      'July','August','September','October','November','December'];
+    if(titleEl) titleEl.textContent = months[this._month-1] + ' ' + this._year;
+    if(grid) {
+      grid.innerHTML = '';
+      // Show skeleton loading cells
+      for(let i=0;i<35;i++){
+        const sk = document.createElement('div');
+        sk.style.cssText = 'min-height:64px;border-radius:10px;background:rgba(255,255,255,0.04);animation:pulse 1.5s ease infinite;animation-delay:'+(i*0.03)+'s';
+        grid.appendChild(sk);
+      }
+    }
+    try {
+      const [evRes, volRes] = await Promise.all([
+        gasRun('getScheduledEventsAPI', this._year, this._month),
+        gasRun('getVolunteersAPI', 'all')
+      ]);
+      this._events = evRes?.events || [];
+      this._volunteers = volRes?.volunteers || [];
+    } catch(e) {
+      console.error('SCHED.load error:', e);
+      this._events = [];
+      this._volunteers = [];
+    }
     this.renderCalendar();
     this.updateHeader();
   },
@@ -3743,7 +3763,18 @@ const SCHED = {
 };
 
 /* ── Home card → Schedule ── */
-function showSchedule() { SCHED.open(); }
+function showSchedule() {
+  showView('vSchedule');
+  // Update header immediately with current month before API loads
+  const months = ['January','February','March','April','May','June',
+    'July','August','September','October','November','December'];
+  const titleEl = document.getElementById('schedMonthTitle');
+  const subEl   = document.getElementById('schedEventCount');
+  if(titleEl) titleEl.textContent = months[SCHED._month-1] + ' ' + SCHED._year;
+  if(subEl)   subEl.textContent   = 'Loading events…';
+  // Load data async
+  SCHED.load().catch(e => console.error('Schedule load error:', e));
+}
 
 /* ── Handle RSVP links on page load ── */
 (function() {

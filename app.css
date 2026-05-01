@@ -1107,3 +1107,21 @@ body.offline .offline-badge { display: block; }
   .hc-title { font-size: 15px !important; }
   .hc-desc { font-size: 12px !important; }
 }
+
+/* ── Skeleton pulse for schedule loading ── */
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 0.8; }
+}
+
+/* ── Schedule view layout ── */
+#vSchedule.active {
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+#vSchedule > div:last-child {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
