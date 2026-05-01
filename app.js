@@ -415,65 +415,58 @@ const KIOSK = {
       const desc = document.getElementById('kBannerDesc'); if(desc) desc.textContent = bc.desc;
     }
 
-    // Swap action buttons based on event type
+    // Event-specific button labels and search placeholders
     const acts = document.getElementById('kActionsRow');
     const searchEl = document.getElementById('kSearch');
 
-    if (eventName === 'Childrens Ministry') {
-      if (acts) acts.innerHTML = `
-        <button class="k-btn teal full" onclick="showCM()" style="background:rgba(16,185,129,0.18);border-color:rgba(16,185,129,0.5);color:#6ee7b7">🧒 Open Family Registry</button>
-        <button class="k-btn" onclick="KIOSK.openNewStudent()">➕ New Student</button>
-        <button class="k-btn" onclick="KIOSK.openManage()">📋 Manage</button>`;
+    // Config per event type — defines all labels so nothing is hardcoded
+    const evtCfg = {
+      'Sunday Service':       { search:'Search members or guests…',  addBtn:'➕ New Member',    addLbl:'New Member',    manageLbl:'Update Records', batchLbl:'Batch Check-In', firstTimer:true,  firstLbl:'🌟 Register First Timer / Guest' },
+      'Youth Night':          { search:'Search students by name…',   addBtn:'➕ New Student',   addLbl:'New Student',   manageLbl:'Manage',         batchLbl:'Batch Check-In', firstTimer:false },
+      'Young Adult Ministry': { search:'Search attendees by name…',  addBtn:'➕ New Attendee',  addLbl:'New Attendee',  manageLbl:'Update Records', batchLbl:'Batch Check-In', firstTimer:true,  firstLbl:'🌟 Register First Timer' },
+      'Small Groups':         { search:'Search group members…',      addBtn:'➕ New Member',    addLbl:'New Member',    manageLbl:'Manage Groups',  batchLbl:'Batch Check-In', firstTimer:false },
+      'Special Event':        { search:'Search attendees…',          addBtn:'➕ New Attendee',  addLbl:'New Attendee',  manageLbl:'Manage',         batchLbl:'Batch Check-In', firstTimer:true,  firstLbl:'🌟 Register Guest' },
+    };
+    const cfg = evtCfg[eventName] || { search:'Search by name…', addBtn:'➕ Add Attendee', addLbl:'Add Attendee', manageLbl:'Manage', batchLbl:'Batch Check-In', firstTimer:false };
 
-    } else if (eventName === 'Sunday Service') {
-      if (searchEl) searchEl.placeholder = 'Search members or guests by name…';
-      if (acts) acts.innerHTML = `
-        <button class="k-btn amber full" onclick="KIOSK.openFirstTimerFlow()" style="background:rgba(245,158,11,0.18);border-color:rgba(245,158,11,0.5);color:#fcd34d;font-weight:800">🌟 Register First Timer / Guest</button>
-        <button class="k-btn" onclick="KIOSK.openBatch()" style="background:rgba(245,158,11,0.08);border-color:rgba(245,158,11,0.25);color:#fcd34d">👥 Batch Check-In</button>
-        <button class="k-btn" onclick="KIOSK.openNewStudent()">➕ New Member</button>
-        <button class="k-btn" onclick="KIOSK.openManage()">📋 Update Records</button>`;
-      // Also update search empty state
+    // Store cfg for use in batch modal and other places
+    window._kEventCfg = cfg;
+    window._kEventName = eventName;
+
+    // Update search placeholder
+    if (searchEl) searchEl.placeholder = cfg.search;
+
+    // Build action buttons
+    if (acts) {
+      if (cfg.firstTimer) {
+        acts.innerHTML = `
+          <button class="k-btn amber full" onclick="KIOSK.openFirstTimerFlow()" style="background:rgba(245,158,11,0.18);border-color:rgba(245,158,11,0.5);color:#fcd34d;font-weight:800">\${cfg.firstLbl}</button>
+          <button class="k-btn" onclick="KIOSK.openBatch()">\${cfg.batchLbl ? '👥 ' + cfg.batchLbl : '👥 Batch Check-In'}</button>
+          <button class="k-btn" onclick="KIOSK.openNewStudent()">\${cfg.addBtn}</button>
+          <button class="k-btn" onclick="KIOSK.openManage()">📋 \${cfg.manageLbl}</button>`;
+      } else {
+        acts.innerHTML = `
+          <button class="k-btn teal full" onclick="KIOSK.openBatch()">👥 \${cfg.batchLbl || 'Batch Check-In'}</button>
+          <button class="k-btn" onclick="KIOSK.openNewStudent()">\${cfg.addBtn}</button>
+          <button class="k-btn" onclick="KIOSK.openManage()">📋 \${cfg.manageLbl}</button>`;
+      }
+    }
+
+    // Sunday Service welcome state on empty results
+    if (eventName === 'Sunday Service') {
       const results = document.getElementById('kResults');
       if (results) results.innerHTML = `
         <div style="padding:30px 20px;text-align:center">
           <div style="font-size:48px;margin-bottom:14px">🙏</div>
           <div style="font-family:var(--font);font-size:17px;font-weight:800;color:var(--text);margin-bottom:6px">Welcome to Sunday Service</div>
-          <div style="font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.6">Search for a member or guest above,<br>or register a first-time visitor below</div>
+          <div style="font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.6">Search for a member or guest above,<br>or use the quick actions below</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:400px;margin:0 auto">
-            <button onclick="KIOSK.openFirstTimerFlow()" style="padding:14px 10px;border-radius:14px;background:rgba(245,158,11,0.12);border:1.5px solid rgba(245,158,11,0.4);color:#fcd34d;font-family:var(--body);font-size:12px;font-weight:800;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px">
-              <span style="font-size:24px">🌟</span>First Timer
-            </button>
-            <button onclick="KIOSK.openBatch()" style="padding:14px 10px;border-radius:14px;background:var(--surface2);border:1.5px solid var(--rim);color:var(--muted);font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px">
-              <span style="font-size:24px">👥</span>Batch Check-In
-            </button>
-            <button onclick="KIOSK.openNewStudent()" style="padding:14px 10px;border-radius:14px;background:var(--surface2);border:1.5px solid var(--rim);color:var(--muted);font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px">
-              <span style="font-size:24px">➕</span>New Member
-            </button>
-            <button onclick="KIOSK.openManage()" style="padding:14px 10px;border-radius:14px;background:var(--surface2);border:1.5px solid var(--rim);color:var(--muted);font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px">
-              <span style="font-size:24px">📋</span>Update Records
-            </button>
+            <button onclick="KIOSK.openFirstTimerFlow()" style="padding:14px 10px;border-radius:14px;background:rgba(245,158,11,0.12);border:1.5px solid rgba(245,158,11,0.4);color:#fcd34d;font-family:var(--body);font-size:12px;font-weight:800;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px"><span style="font-size:24px">🌟</span>First Timer</button>
+            <button onclick="KIOSK.openBatch()" style="padding:14px 10px;border-radius:14px;background:var(--surface2);border:1.5px solid var(--rim);color:var(--muted);font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px"><span style="font-size:24px">👥</span>Batch Check-In</button>
+            <button onclick="KIOSK.openNewStudent()" style="padding:14px 10px;border-radius:14px;background:var(--surface2);border:1.5px solid var(--rim);color:var(--muted);font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px"><span style="font-size:24px">➕</span>New Member</button>
+            <button onclick="KIOSK.openManage()" style="padding:14px 10px;border-radius:14px;background:var(--surface2);border:1.5px solid var(--rim);color:var(--muted);font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px"><span style="font-size:24px">📋</span>Update Records</button>
           </div>
         </div>`;
-
-    } else if (eventName === 'Special Event') {
-      if (acts) acts.innerHTML = `
-        <button class="k-btn teal full" onclick="KIOSK.openBatch()">👥 Batch Check-In</button>
-        <button class="k-btn" onclick="KIOSK.openFirstTimerFlow()">🌟 Register Guest</button>
-        <button class="k-btn" onclick="KIOSK.openNewStudent()">➕ New Attendee</button>
-        <button class="k-btn" onclick="KIOSK.openManage()">📋 Manage</button>`;
-
-    } else if (eventName === 'Youth Night') {
-      if (searchEl) searchEl.placeholder = 'Search students by name…';
-      if (acts) acts.innerHTML = `
-        <button class="k-btn teal full" onclick="KIOSK.openBatch()">👥 Batch Check-In</button>
-        <button class="k-btn" onclick="KIOSK.openNewStudent()">➕ New Student</button>
-        <button class="k-btn" onclick="KIOSK.openManage()">📋 Manage</button>`;
-
-    } else {
-      if (acts) acts.innerHTML = `
-        <button class="k-btn teal full" onclick="KIOSK.openBatch()">👥 Batch Check-In</button>
-        <button class="k-btn" onclick="KIOSK.openNewStudent()">➕ New Student</button>
-        <button class="k-btn" onclick="KIOSK.openManage()">📋 Manage</button>`;
     }
 
     API.checkIn({type:'leader',leader:_kLeader}, {leader:_kLeader,event:eventName,type:'leader'}).catch(()=>{});
@@ -846,6 +839,13 @@ const KIOSK = {
     _batchSelected.clear();
     this.updateBatchUI();
     document.getElementById('batchSearch').value = '';
+    // Update batch modal labels based on current event
+    const cfg = window._kEventCfg || {};
+    const addLbl = cfg.addLbl || 'attendee';
+    const selLbl = document.getElementById('batchSelLbl');
+    if (selLbl) selLbl.textContent = 'No ' + addLbl.toLowerCase() + 's selected';
+    const batchSrch = document.getElementById('batchSearch');
+    if (batchSrch) batchSrch.placeholder = 'Search ' + addLbl.toLowerCase() + 's…';
     openModal('batchModal');
     this.renderBatch('');
   },
@@ -1111,25 +1111,65 @@ const DASH = {
       });
     }
 
-    // Re-render with filtered data
+    // Re-render live feed with filtered data
     this.renderFeed(filtered);
 
-    // Compute today's count correctly from filtered checkins
+    // ── Compute ALL stats from filtered check-ins ──
     const today = new Date().toISOString().slice(0,10);
-    const todayCheckins = filtered.filter(ci => {
+    const todayCI = filtered.filter(ci => {
       const d = (ci.time||ci.date||ci.checkinTime||'').slice(0,10);
       return d === today;
     });
-    const todayCount = todayCheckins.length;
-    const newCount   = todayCheckins.filter(ci=>(ci.type||'').toLowerCase()==='new'||(ci.isNew===true)).length;
 
-    const el1 = document.getElementById('dStatToday');
-    const el2 = document.getElementById('dStatNew');
-    if(el1) el1.textContent = todayCount;
-    if(el2) el2.textContent = newCount;
+    // Today's check-in count (filtered by ministry)
+    const todayCount = todayCI.length;
 
-    // Keep total/leaders from raw data (they reflect the full registered roster)
-    this.renderStats(this._rawDash || {}, true);
+    // New / first-timer count today
+    const newCount = todayCI.filter(ci =>
+      (ci.type||'').toLowerCase()==='new' || ci.isNew===true || (ci.type||'').toLowerCase()==='first'
+    ).length;
+
+    // Unique attendees ever (all-time for this ministry)
+    const uniqueNames = new Set(filtered.map(ci => (ci.name||ci.student||'').trim().toLowerCase()).filter(Boolean));
+    const totalRegistered = ministry === 'all'
+      ? (this._rawDash?.totalStudents ?? uniqueNames.size)
+      : uniqueNames.size;
+
+    // Leaders/families — unique leaders in filtered check-ins
+    const uniqueLeaders = new Set(
+      filtered.filter(ci => (ci.type||ci.role||'').toLowerCase()==='leader')
+        .map(ci => (ci.name||ci.leader||'').trim().toLowerCase()).filter(Boolean)
+    );
+    const leadersCount = ministry === 'all'
+      ? (this._rawDash?.totalLeaders ?? uniqueLeaders.size)
+      : uniqueLeaders.size;
+
+    // At-risk — from raw dash (always global)
+    const atRisk = this._rawDash?.atRisk ?? '—';
+
+    // Volunteers — from volunteer dashboard if that ministry
+    const volCount = ministry === 'volunteers'
+      ? todayCI.length
+      : (this._rawDash?.totalVolunteers ?? '—');
+
+    // Set all stat cards
+    const set = (id, v) => { const el=document.getElementById(id); if(el) el.textContent = v??'—'; };
+    set('dStatToday',   todayCount);
+    set('dStatNew',     newCount);
+    set('dStatTotal',   totalRegistered || '0');
+    set('dStatLeaders', leadersCount || '0');
+    set('dStatRisk',    atRisk);
+    const vEl = document.getElementById('dStatGroups');
+    if(vEl) vEl.textContent = volCount;
+
+    // Sub-label under Today card
+    const subEl = document.getElementById('dStatTodaySub');
+    const subLabels = {
+      all:'Check-ins today', sunday:'Sunday check-ins', youth:'Youth check-ins',
+      youngadult:'YA check-ins', smallgroups:'Group check-ins',
+      children:"Children checked in", volunteers:'Volunteers on duty'
+    };
+    if(subEl) subEl.textContent = subLabels[ministry] || 'Check-ins today';
   },
 
   updateStatLabels(ministry) {
@@ -1148,6 +1188,14 @@ const DASH = {
     set('dLblLeaders', l.leaders);
     set('dLblToday',   l.lbl);
     set('dLblGroups',  l.groups);
+    // Update live feed Members tab label
+    const membersTab = document.getElementById('feedTabMembers');
+    const tabLabels = {
+      all:'Members', sunday:'Members', youth:'Students',
+      youngadult:'Adults', smallgroups:'Members',
+      children:'Children', volunteers:'Volunteers'
+    };
+    if(membersTab) membersTab.textContent = tabLabels[ministry] || 'Members';
   },
 
   renderStats(data, skipTodayNew=false) {
@@ -1225,8 +1273,29 @@ const DASH = {
   },
 
   filterFeed(q) {
-    let data = [..._feedData];
-    if(_feedTab==='students') data = data.filter(c=>c.type!=='leader'&&c.status!=='leader');
+    // Start from ministry-filtered data
+    const ministry = this._ministry || 'all';
+    const ministryKeys = {
+      sunday:['sunday service'], youth:['youth night','youth'],
+      youngadult:['young adult'], smallgroups:['small groups'],
+      children:["children's ministry","childrens ministry","children"],
+      volunteers:['worship team','ushers','security','media','parking','prayer','hospitality'],
+    };
+    let data = (this._rawCheckins || []);
+    if(ministry !== 'all' && ministryKeys[ministry]) {
+      const keys = ministryKeys[ministry];
+      data = data.filter(ci => keys.some(k=>(ci.event||ci.type||'').toLowerCase().includes(k)));
+    }
+    // Apply date filter
+    if(this._dateFilter) {
+      data = data.filter(ci => (ci.time||ci.date||ci.checkinTime||'').startsWith(this._dateFilter));
+    }
+    // Today only for the live feed by default
+    const today = new Date().toISOString().slice(0,10);
+    if(!this._dateFilter) {
+      data = data.filter(ci => (ci.time||ci.date||ci.checkinTime||'').slice(0,10) === today);
+    }
+    if(_feedTab==='students'||_feedTab==='members') data = data.filter(c=>c.type!=='leader'&&c.status!=='leader');
     else if(_feedTab==='leaders') data = data.filter(c=>c.type==='leader'||c.status==='leader');
     else if(_feedTab==='new') data = data.filter(c=>c.isNew||c.firstTime);
     if(q) data = data.filter(c=>(c.name||c.fullName||'').toLowerCase().includes(q.toLowerCase()));

@@ -647,12 +647,12 @@
     <div class="batch-row1">
       <div class="batch-title">Batch Check-In</div>
       <div class="batch-pill" id="batchPill">0</div>
-      <div class="batch-sel-lbl" id="batchSelLbl">No students selected</div>
+      <div class="batch-sel-lbl" id="batchSelLbl">No attendees selected</div>
       <button class="batch-cancel" onclick="closeModal('batchModal')">Cancel</button>
       <button class="batch-go" id="batchGo" onclick="KIOSK.submitBatch()" disabled>Check In →</button>
     </div>
     <div class="batch-row2">
-      <input class="batch-search" id="batchSearch" placeholder="Search students…" oninput="KIOSK.filterBatch(this.value)">
+      <input class="batch-search" id="batchSearch" placeholder="Search attendees…" oninput="KIOSK.filterBatch(this.value)">
     </div>
   </div>
   <div class="batch-list" id="batchList"></div>
