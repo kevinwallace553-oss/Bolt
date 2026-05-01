@@ -1025,3 +1025,19 @@ body.offline .offline-badge { display: block; }
   .devt-name { font-size: 12px; }
   .devt-sub { font-size: 9px; }
 }
+
+/* ── Dropdown performance ── */
+#dashEvtDropdown {
+  will-change: opacity, transform;
+  transform: translateZ(0);  /* force GPU layer */
+  transition: none !important;
+  animation: none !important;
+}
+#dashEvtDropdown.open {
+  display: block !important;
+}
+/* Faster option tap response */
+.devt-opt {
+  will-change: background;
+  touch-action: manipulation;
+}

@@ -981,24 +981,24 @@ const DASH = {
     const dd = document.getElementById('dashEvtDropdown');
     const arrow = document.getElementById('dashEvtArrow');
     if(!dd) return;
-    const isOpen = dd.classList.contains('open');
-    if(isOpen) {
+
+    if(dd.classList.contains('open')) {
       dd.classList.remove('open');
       if(arrow) arrow.classList.remove('open');
+      document.removeEventListener('click', DASH._ddClose);
     } else {
       dd.classList.add('open');
       if(arrow) arrow.classList.add('open');
-      // Close on outside click
-      setTimeout(() => {
-        const close = (e) => {
-          if(!dd.contains(e.target) && e.target.id !== 'dashEvtBtn') {
-            dd.classList.remove('open');
-            if(arrow) arrow.classList.remove('open');
-            document.removeEventListener('click', close);
-          }
-        };
-        document.addEventListener('click', close);
-      }, 10);
+      // One-shot close handler — no setTimeout delay
+      DASH._ddClose = (e) => {
+        if(!dd.contains(e.target) && e.target.id !== 'dashEvtBtn' && !e.target.closest('#dashEvtBtn')) {
+          dd.classList.remove('open');
+          if(arrow) arrow.classList.remove('open');
+          document.removeEventListener('click', DASH._ddClose);
+        }
+      };
+      // Use requestAnimationFrame to attach after current click bubbles
+      requestAnimationFrame(() => document.addEventListener('click', DASH._ddClose));
     }
   },
 
@@ -1051,18 +1051,14 @@ const DASH = {
     // Reload data with new filter
     this.applyFilters();
 
-    // If at-risk tab is active, reload it
-    const arTab = document.getElementById('dtAtrisk');
-    if(arTab && arTab.classList.contains('active')) this.loadAtRisk();
-
-    // If analytics tab active, reload
-    const anTab = document.getElementById('dtAnalytics');
-    if(anTab && anTab.classList.contains('active')) this.loadAnalytics();
-
-    // If volunteers tab active, reload
-    if(key === 'volunteers') {
-      const vTab = document.getElementById('dtVolunteers');
-      if(vTab && vTab.classList.contains('active')) this.loadVolunteerDash();
+    // Reload active tab with new filter
+    const activeTab = document.querySelector('.dash-tab.active');
+    if(activeTab) {
+      const id = activeTab.id;
+      if(id === 'dtAtrisk')     this.loadAtRisk();
+      if(id === 'dtAnalytics')  { this._analyticsLoaded = false; this.loadAnalytics(); }
+      if(id === 'dtVolunteers') this.loadVolunteerDash();
+      // Overview re-renders via applyFilters above — no extra call needed
     }
   },
 
