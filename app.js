@@ -3,7 +3,7 @@
 ═══════════════════════════════════════════════════ */
 
 /* ── SESSION ── */
-const SESSION = { token:'', name:'', role:'', username:'' };
+const SESSION = { token:'', name:'', role:'', username:'', orgId:'' };
 let _allStudents = [];
 let _checkedToday = new Set();   // Set of student IDs checked in today
 let _checkinsToday = [];          // Full checkin objects for dashboard
@@ -244,7 +244,7 @@ const AUTH = {
     try {
       const r = await API.login(u,p);
       if(r?.success){
-        SESSION.token=r.token; SESSION.name=r.name; SESSION.role=r.role; SESSION.username=r.username;
+        SESSION.token=r.token; SESSION.name=r.name; SESSION.role=r.role; SESSION.username=r.username; SESSION.orgId=r.orgId||'ORG_DEFAULT';
         const _first=(r.name||r.username||'').split(' ')[0];
         const _el=document.getElementById('homeName');if(_el)_el.textContent=_first?`${_first}`:'Youth Check-In System';
         const _gh=document.getElementById('homeGreeting');
@@ -308,7 +308,7 @@ document.addEventListener('keydown', e => {
 /* ── SIGN OUT ── */
 async function signOut() {
   const token = SESSION.token;
-  Object.assign(SESSION,{token:'',name:'',role:'',username:''});
+  Object.assign(SESSION,{token:'',name:'',role:'',username:'',orgId:''});
   _checkedToday.clear(); _allStudents=[]; _leaders=[];
   _kLeader=''; _kEvent=''; clearInterval(_dashTimer);
   try { if(token) await API.logout(token); } catch(e){}
