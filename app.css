@@ -1281,3 +1281,11 @@ body.offline .offline-badge { display: block; }
   .home-cards { grid-template-columns: 1fr 1fr !important; }
   .view.active { padding-bottom: 0 !important; }
 }
+
+/* ── SVG Icon styles ── */
+.bk-icon { pointer-events:none; }
+.bk-icon path, .bk-icon line, .bk-icon circle,
+.bk-icon rect, .bk-icon polyline, .bk-icon polygon,
+.bk-icon ellipse { vector-effect:non-scaling-stroke; }
+button .bk-icon, a .bk-icon { margin-right:4px; }
+.k-empty-icon .bk-icon, .empty-icon .bk-icon { opacity:0.35; }
