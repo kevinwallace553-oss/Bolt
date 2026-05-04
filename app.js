@@ -247,7 +247,7 @@ function openDrawer(student) {
       <div class="d-field"><div class="d-field-lbl">Phone</div><div class="d-field-val ${!student.phone?'empty':''}">${student.phone?`<a href="tel:${student.phone}">${student.phone}</a>`:'Not provided'}</div></div>
       <div class="d-field"><div class="d-field-lbl">Email</div><div class="d-field-val ${!student.email?'empty':''}">${student.email?`<a href="mailto:${student.email}">${student.email}</a>`:'Not provided'}</div></div>
     </div>
-    ${hasAllergy ? `<div class="d-sec ec"><div class="d-sec-lbl">⚠️ Allergies / Medical</div><div class="d-field-val">${student.allergies}</div></div>` : ''}
+    ${hasAllergy ? `<div class="d-sec ec"><div class="d-sec-lbl"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Allergies / Medical</div><div class="d-field-val">${student.allergies}</div></div>` : ''}
     <div class="d-sec">
       <div class="d-sec-lbl">Details</div>
       <div class="d-field"><div class="d-field-lbl">Date of Birth</div><div class="d-field-val ${!student.dob?'empty':''}">${student.dob||'Not set'}</div></div>
@@ -466,7 +466,7 @@ const KIOSK = {
 
   async startSession() {
     const sel = document.getElementById('leaderSelect');
-    if(!sel.value){toast('⚠️ Select your name first','err');return;}
+    if(!sel.value){toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Select your name first','err');return;}
     _kLeader = sel.value;
     document.getElementById('epGreeting').textContent = `Hey, ${_kLeader}!`;
       document.getElementById('eventPicker').classList.add('open');
@@ -480,11 +480,11 @@ const KIOSK = {
   },
 
   confirmEvent() {
-    if(!_selectedEvent){toast('⚠️ Pick an event type','err');return;}
+    if(!_selectedEvent){toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Pick an event type','err');return;}
     let eventName = _selectedEvent.name;
     if(eventName==='__other__'){
       eventName = document.getElementById('epOtherInput').value.trim();
-      if(!eventName){toast('⚠️ Enter event name','err');return;}
+      if(!eventName){toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Enter event name','err');return;}
     }
 
     // Auto-set leader from signed-in session — no leader login screen needed
@@ -523,7 +523,7 @@ const KIOSK = {
       'Special Event':       { color:'#c4b5fd', border:'rgba(139,92,246,0.3)', bg:'rgba(139,92,246,0.08)', icon:icon('star',18) },
       'Childrens Ministry':  { color:'#6ee7b7', border:'rgba(16,185,129,0.3)', bg:'rgba(16,185,129,0.08)', icon:icon('child',18) },
     };
-    const style = eventStyles[eventName] || { color:'var(--muted)', border:'var(--rim)', bg:'transparent', icon:'📅' };
+    const style = eventStyles[eventName] || { color:'var(--muted)', border:'var(--rim)', bg:'transparent', icon:'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' };
     const lbox = document.getElementById('kLeaderBox');
     if (lbox) {
       lbox.style.borderColor = style.border;
@@ -541,7 +541,7 @@ const KIOSK = {
       'Special Event':      { bg:'rgba(139,92,246,0.1)',  border:'rgba(139,92,246,0.35)',  color:'#c4b5fd', title:'Special Event',      desc:'Camp, conference, or retreat check-in',                   icon:icon('star',18) },
       'Childrens Ministry': { bg:'rgba(16,185,129,0.1)', border:'rgba(16,185,129,0.35)', color:'#6ee7b7', title:"Children's Ministry", desc:'Use the Families button for child check-in & name tags',  icon:icon('child',18) },
     };
-    const bc = bannerConfig[eventName] || { bg:'rgba(100,116,139,0.1)', border:'rgba(100,116,139,0.3)', color:'var(--muted)', title:eventName, desc:'Custom event — search to check in attendees', icon:'📅' };
+    const bc = bannerConfig[eventName] || { bg:'rgba(100,116,139,0.1)', border:'rgba(100,116,139,0.3)', color:'var(--muted)', title:eventName, desc:'Custom event — search to check in attendees', icon:'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' };
 
     const banner = document.getElementById('kEventBanner');
     if (banner) {
@@ -560,13 +560,13 @@ const KIOSK = {
 
     // Config per event type — defines all labels so nothing is hardcoded
     const evtCfg = {
-      'Sunday Service':       { search:'Search members or guests…',  addBtn:icon('plus',13)+' New Member',    addLbl:'New Member',    manageLbl:'Update Records', batchLbl:'Batch Check-In', firstTimer:true,  firstLbl:'🌟 Register First Timer / Guest' },
-      'Youth Night':          { search:'Search students by name…',   addBtn:'➕ New Student',   addLbl:'New Student',   manageLbl:'Manage',         batchLbl:'Batch Check-In', firstTimer:false },
-      'Young Adult Ministry': { search:'Search attendees by name…',  addBtn:'➕ New Attendee',  addLbl:'New Attendee',  manageLbl:'Update Records', batchLbl:'Batch Check-In', firstTimer:true,  firstLbl:'🌟 Register First Timer' },
+      'Sunday Service':       { search:'Search members or guests…',  addBtn:icon('plus',13)+' New Member',    addLbl:'New Member',    manageLbl:'Update Records', batchLbl:'Batch Check-In', firstTimer:true,  firstLbl:icon('star',13)+' Register First Timer' },
+      'Youth Night':          { search:'Search students by name…',   addBtn:'<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 5v14M5 12h14"/></svg> New Student',   addLbl:'New Student',   manageLbl:'Manage',         batchLbl:'Batch Check-In', firstTimer:false },
+      'Young Adult Ministry': { search:'Search attendees by name…',  addBtn:'<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 5v14M5 12h14"/></svg> New Attendee',  addLbl:'New Attendee',  manageLbl:'Update Records', batchLbl:'Batch Check-In', firstTimer:true,  firstLbl:'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Register First Timer' },
       'Small Groups':         { search:'Search group members…',      addBtn:icon('plus',13)+' New Member',    addLbl:'New Member',    manageLbl:'Manage Groups',  batchLbl:'Batch Check-In', firstTimer:false },
-      'Special Event':        { search:'Search attendees…',          addBtn:'➕ New Attendee',  addLbl:'New Attendee',  manageLbl:'Manage',         batchLbl:'Batch Check-In', firstTimer:true,  firstLbl:'🌟 Register Guest' },
+      'Special Event':        { search:'Search attendees…',          addBtn:'<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 5v14M5 12h14"/></svg> New Attendee',  addLbl:'New Attendee',  manageLbl:'Manage',         batchLbl:'Batch Check-In', firstTimer:true,  firstLbl:'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Register Guest' },
     };
-    const cfg = evtCfg[eventName] || { search:'Search by name…', addBtn:'➕ Add Attendee', addLbl:'Add Attendee', manageLbl:'Manage', batchLbl:'Batch Check-In', firstTimer:false };
+    const cfg = evtCfg[eventName] || { search:'Search by name…', addBtn:'<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 5v14M5 12h14"/></svg> Add Attendee', addLbl:'Add Attendee', manageLbl:'Manage', batchLbl:'Batch Check-In', firstTimer:false };
 
     // Store cfg for use in batch modal and other places
     window._kEventCfg = cfg;
@@ -580,14 +580,14 @@ const KIOSK = {
       if (cfg.firstTimer) {
         acts.innerHTML = `
           <button class="k-btn amber full" onclick="KIOSK.openFirstTimerFlow()" style="background:rgba(245,158,11,0.18);border-color:rgba(245,158,11,0.5);color:#fcd34d;font-weight:800">${cfg.firstLbl}</button>
-          <button class="k-btn" onclick="KIOSK.openBatch()">${cfg.batchLbl ? '👥 ' + cfg.batchLbl : '👥 Batch Check-In'}</button>
+          <button class="k-btn" onclick="KIOSK.openBatch()">${cfg.batchLbl ? icon('batch',13)+' '+cfg.batchLbl : icon('batch',13)+' Batch Check-In'}</button>
           <button class="k-btn" onclick="KIOSK.openNewStudent()">${cfg.addBtn}</button>
-          <button class="k-btn" onclick="KIOSK.openManage()">📋 ${cfg.manageLbl}</button>`;
+          <button class="k-btn" onclick="KIOSK.openManage()"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6" stroke-width="2.5"/><line x1="3" y1="12" x2="3.01" y2="12" stroke-width="2.5"/><line x1="3" y1="18" x2="3.01" y2="18" stroke-width="2.5"/></svg> ${cfg.manageLbl}</button>`;
       } else {
         acts.innerHTML = `
-          <button class="k-btn teal full" onclick="KIOSK.openBatch()">👥 ${cfg.batchLbl || 'Batch Check-In'}</button>
+          <button class="k-btn teal full" onclick="KIOSK.openBatch()"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg> ${cfg.batchLbl || 'Batch Check-In'}</button>
           <button class="k-btn" onclick="KIOSK.openNewStudent()">${cfg.addBtn}</button>
-          <button class="k-btn" onclick="KIOSK.openManage()">📋 ${cfg.manageLbl}</button>`;
+          <button class="k-btn" onclick="KIOSK.openManage()"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6" stroke-width="2.5"/><line x1="3" y1="12" x2="3.01" y2="12" stroke-width="2.5"/><line x1="3" y1="18" x2="3.01" y2="18" stroke-width="2.5"/></svg> ${cfg.manageLbl}</button>`;
       }
     }
 
@@ -596,14 +596,14 @@ const KIOSK = {
       const results = document.getElementById('kResults');
       if (results) results.innerHTML = `
         <div style="padding:30px 20px;text-align:center">
-          <div style="font-size:48px;margin-bottom:14px">🙏</div>
+          <div style="font-size:48px;margin-bottom:14px"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
           <div style="font-family:var(--font);font-size:17px;font-weight:800;color:var(--text);margin-bottom:6px">Welcome to Sunday Service</div>
           <div style="font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.6">Search for a member or guest above,<br>or use the quick actions below</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:400px;margin:0 auto">
-            <button onclick="KIOSK.openFirstTimerFlow()" style="padding:14px 10px;border-radius:14px;background:rgba(245,158,11,0.12);border:1.5px solid rgba(245,158,11,0.4);color:#fcd34d;font-family:var(--body);font-size:12px;font-weight:800;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px"><span style="font-size:24px">🌟</span>First Timer</button>
-            <button onclick="KIOSK.openBatch()" style="padding:14px 10px;border-radius:14px;background:var(--surface2);border:1.5px solid var(--rim);color:var(--muted);font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px"><span style="font-size:24px">👥</span>Batch Check-In</button>
-            <button onclick="KIOSK.openNewStudent()" style="padding:14px 10px;border-radius:14px;background:var(--surface2);border:1.5px solid var(--rim);color:var(--muted);font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px"><span style="font-size:24px">➕</span>New Member</button>
-            <button onclick="KIOSK.openManage()" style="padding:14px 10px;border-radius:14px;background:var(--surface2);border:1.5px solid var(--rim);color:var(--muted);font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px"><span style="font-size:24px">📋</span>Update Records</button>
+            <button onclick="KIOSK.openFirstTimerFlow()" style="padding:14px 10px;border-radius:14px;background:rgba(245,158,11,0.12);border:1.5px solid rgba(245,158,11,0.4);color:#fcd34d;font-family:var(--body);font-size:12px;font-weight:800;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px"><span style="font-size:24px"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>First Timer</button>
+            <button onclick="KIOSK.openBatch()" style="padding:14px 10px;border-radius:14px;background:var(--surface2);border:1.5px solid var(--rim);color:var(--muted);font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px"><span style="font-size:24px"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Batch Check-In</button>
+            <button onclick="KIOSK.openNewStudent()" style="padding:14px 10px;border-radius:14px;background:var(--surface2);border:1.5px solid var(--rim);color:var(--muted);font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px"><span style="font-size:24px"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 5v14M5 12h14"/></svg></span>New Member</button>
+            <button onclick="KIOSK.openManage()" style="padding:14px 10px;border-radius:14px;background:var(--surface2);border:1.5px solid var(--rim);color:var(--muted);font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px"><span style="font-size:24px"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6" stroke-width="2.5"/><line x1="3" y1="12" x2="3.01" y2="12" stroke-width="2.5"/><line x1="3" y1="18" x2="3.01" y2="18" stroke-width="2.5"/></svg></span>Update Records</button>
           </div>
         </div>`;
     }
@@ -681,8 +681,8 @@ const KIOSK = {
           <div class="s-badges">
             ${s.grade?`<span class="s-badge grade">Gr ${s.grade}</span>`:''}
             ${isBday?`<span class="s-badge bday">${icon('birthday',11)} Birthday</span>`:''}
-            ${hasAllergy?`<span class="s-badge allergy">⚠️ Allergy</span>`:''}
-            ${checked?`<span class="s-badge ec">✅ Checked In</span>`:''}
+            ${hasAllergy?`<span class="s-badge allergy"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Allergy</span>`:''}
+            ${checked?`<span class="s-badge ec"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Checked In</span>`:''}
           </div>
         </div>
         ${checked?'<div class="s-check">✓</div>':`<div class="s-arrow" onclick="event.stopPropagation();KIOSK.openDrawerById('${s.id}')">›</div>`}
@@ -691,7 +691,7 @@ const KIOSK = {
   },
 
   async checkIn(studentId, name) {
-    if(!_kLeader){toast('⚠️ Start your session first','err');return;}
+    if(!_kLeader){toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Start your session first','err');return;}
     const sid = String(studentId);
     const student = _allStudents.find(s=>String(s.id)===sid);
     if(!student) return;
@@ -712,14 +712,14 @@ const KIOSK = {
         _checkedToday.delete(sid);
         const _sc1=document.getElementById('kStatChecked');if(_sc1)_sc1.textContent=_checkedToday.size;
       const _sc2=document.getElementById('kStatCheckedSide');if(_sc2)_sc2.textContent=_checkedToday.size;
-        toast('⚠️ Check-in failed — try again','err');
+        toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Check-in failed — try again','err');
         this.search(document.getElementById('kSearch').value);
       }
     } catch(e){
       _checkedToday.delete(sid);
       const _sc1=document.getElementById('kStatChecked');if(_sc1)_sc1.textContent=_checkedToday.size;
       const _sc2=document.getElementById('kStatCheckedSide');if(_sc2)_sc2.textContent=_checkedToday.size;
-      toast('⚠️ Connection error','err');
+      toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Connection error','err');
       this.search(document.getElementById('kSearch').value);
     }
   },
@@ -728,9 +728,9 @@ const KIOSK = {
     const today = new Date();
     let isBday = false;
     if(student?.dob){ try{ const d=new Date(student.dob); isBday=d.getMonth()===today.getMonth()&&d.getDate()===today.getDate(); }catch(e){} }
-    document.getElementById('sucIcon').textContent = isBday?'🎂':'✅';
+    document.getElementById('sucIcon').textContent = isBday?'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M8 3.5c0-1 1-2 2-1.5s2 .5 2-.5 1-2 2-1.5"/></svg>':'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg>';
     document.getElementById('sucName').textContent = name;
-    document.getElementById('sucMsg').textContent = isBday?`Happy Birthday, ${name.split(' ')[0]}! 🎉`:sub;
+    document.getElementById('sucMsg').textContent = isBday?`Happy Birthday, ${name.split(' ')[0]}!`:sub;
     const wrap = document.getElementById('confettiWrap');
     const colors = ['#0d9488','#06b6d4','#67e8f9','#a5f3fc','#fff','#fcd34d'];
     wrap.innerHTML = Array.from({length:22}).map((_,i)=>
@@ -787,7 +787,7 @@ const KIOSK = {
       this.clearSearch(); this.renderManage('');
       document.getElementById('kStatTotal').textContent = _allStudents.length;
       toast('Student deleted','ok');
-    } catch(e){ toast('⚠️ Delete failed','err'); }
+    } catch(e){ toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Delete failed','err'); }
     hideSaving();
   },
 
@@ -797,7 +797,7 @@ const KIOSK = {
     });
     document.getElementById('ns_checkin').checked = true;
     const title = document.getElementById('nsModalTitle');
-    if (title) { title.textContent = '🌟 First Timer / Guest Registration'; title.style.color = '#fcd34d'; }
+    if (title) { title.textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> First Timer / Guest Registration'; title.style.color = '#fcd34d'; }
     const saveBtn = document.getElementById('nsModalSave');
     if (saveBtn) saveBtn.textContent = 'Register & Check In';
     // Always adult fields for first-timer flow
@@ -814,7 +814,7 @@ const KIOSK = {
     // Reset title in case first-timer flow changed it
     const regLbl = window._kRegLabel || {};
     const title = document.getElementById('nsModalTitle');
-    if (title) { title.textContent = '➕ ' + (regLbl.regTitle || 'Register Attendee'); title.style.color = ''; }
+    if (title) { title.textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 5v14M5 12h14"/></svg> ' + (regLbl.regTitle || 'Register Attendee'); title.style.color = ''; }
     const saveBtn = document.getElementById('nsModalSave');
     if (saveBtn) saveBtn.textContent = regLbl.saveBtn || 'Register & Save';
     // Adapt form fields for youth vs adults
@@ -838,7 +838,7 @@ const KIOSK = {
 
   async saveNewStudent() {
     const name = document.getElementById('ns_name').value.trim();
-    if(!name){toast('⚠️ Name is required','err');return;}
+    if(!name){toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Name is required','err');return;}
     const display = {
       name,
       grade: document.getElementById('ns_grade').value.trim(),
@@ -856,22 +856,22 @@ const KIOSK = {
     try {
       const r = await API.addStudent(backend, meta);
       if(r?.status==='error'||r?.success===false){
-        toast('⚠️ '+(r?.message||r?.error||'Failed to add student'),'err');
+        toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> '+(r?.message||r?.error||'Failed to add student'),'err');
       } else {
         closeModal('newStudentModal');
         await this.loadAllStudents();
         if(ci && r?.id) _checkedToday.add(String(r.id));
         this.clearSearch();
-        toast(`✅ ${name} added!`,'ok');
+        toast(`<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> ${name} added!`,'ok');
       }
-    } catch(e){ toast('⚠️ Connection error','err'); }
+    } catch(e){ toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Connection error','err'); }
     hideSaving();
   },
 
   async saveEditStudent() {
     const id = document.getElementById('es_id').value;
     const name = document.getElementById('es_name').value.trim();
-    if(!name){toast('⚠️ Name is required','err');return;}
+    if(!name){toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Name is required','err');return;}
     const display = {
       name,
       grade: document.getElementById('es_grade').value.trim(),
@@ -890,9 +890,9 @@ const KIOSK = {
         closeModal('editStudentModal');
         await this.loadAllStudents();
         this.clearSearch();
-        toast('✅ Student updated','ok');
-      } else toast('⚠️ '+(r?.error||'Failed to save'),'err');
-    } catch(e){ toast('⚠️ Connection error','err'); }
+        toast('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Student updated','ok');
+      } else toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> '+(r?.error||'Failed to save'),'err');
+    } catch(e){ toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Connection error','err'); }
     hideSaving();
   },
 
@@ -949,7 +949,7 @@ const KIOSK = {
       this.renderManage(document.getElementById('manageSearch').value||'');
       document.getElementById('kStatTotal').textContent = _allStudents.length;
       toast('Student deleted','ok');
-    } catch(e){ toast('⚠️ Delete failed','err'); }
+    } catch(e){ toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Delete failed','err'); }
     hideSaving();
   },
 
@@ -966,15 +966,15 @@ const KIOSK = {
         opt.value = name.trim(); opt.textContent = name.trim();
         sel.appendChild(opt);
         sel.value = name.trim();
-        toast('✅ Leader added','ok');
-      } else toast('⚠️ '+(r?.error||'Failed'),'err');
-    } catch(e){ toast('⚠️ Connection error','err'); }
+        toast('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Leader added','ok');
+      } else toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> '+(r?.error||'Failed'),'err');
+    } catch(e){ toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Connection error','err'); }
     hideSaving();
   },
 
   /* ── BATCH ── */
   openBatch() {
-    if(!_allStudents.length){ toast('⚠️ No students loaded yet','err'); return; }
+    if(!_allStudents.length){ toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> No students loaded yet','err'); return; }
     _batchSelected.clear();
     this.updateBatchUI();
     document.getElementById('batchSearch').value = '';
@@ -1049,7 +1049,7 @@ const KIOSK = {
 
   async submitBatch() {
     if(_batchSelected.size===0) return;
-    if(!_kLeader){toast('⚠️ Start your session first (select a leader)','err');return;}
+    if(!_kLeader){toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Start your session first (select a leader)','err');return;}
     const ids = [..._batchSelected];
     const students = ids.map(id=>_allStudents.find(s=>String(s.id)===id)).filter(Boolean);
     showSaving(`Checking in ${ids.length} students…`);
@@ -1065,8 +1065,8 @@ const KIOSK = {
       const _sc1=document.getElementById('kStatChecked');if(_sc1)_sc1.textContent=_checkedToday.size;
       const _sc2=document.getElementById('kStatCheckedSide');if(_sc2)_sc2.textContent=_checkedToday.size;
       this.search(document.getElementById('kSearch').value);
-      toast(`✅ ${ids.length} students checked in!`,'ok');
-    } catch(e){ toast('⚠️ Batch check-in failed — check connection','err'); }
+      toast(`<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> ${ids.length} students checked in!`,'ok');
+    } catch(e){ toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Batch check-in failed — check connection','err'); }
     hideSaving();
   }
 };
@@ -1116,7 +1116,7 @@ const DASH = {
       this.renderWeek(week);
       this.renderAtRisk(atRisk);
       this.loadVolunteerDash();
-    } catch(e){ if(!silent) toast('⚠️ Refresh failed','err'); console.error(e); }
+    } catch(e){ if(!silent) toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Refresh failed','err'); console.error(e); }
     if(!silent) hideSaving();
   },
 
@@ -1169,13 +1169,13 @@ const DASH = {
 
     // Update At-Risk tab title
     const atRiskTitleMap = {
-      all:        { title:'⚠️ At-Risk — All Events',       sub:'Attendees with below 50% attendance in the last 8 weeks' },
-      sunday:     { title:'⚠️ At-Risk — Sunday Service',   sub:'Members & guests with low Sunday attendance' },
-      youth:      { title:'⚠️ At-Risk — Youth Night',      sub:'Students with below 50% youth event attendance' },
-      youngadult: { title:'⚠️ At-Risk — Young Adults',     sub:'Young adults with low attendance in the last 8 weeks' },
-      smallgroups:{ title:'⚠️ At-Risk — Small Groups',     sub:'Members missing small group meetings regularly' },
-      children:   { title:'⚠️ At-Risk — Children',         sub:'Children with low check-in frequency' },
-      volunteers: { title:'⚠️ At-Risk — Volunteers',       sub:'Volunteers with infrequent department attendance' },
+      all:        { title:'<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> At-Risk — All Events',       sub:'Attendees with below 50% attendance in the last 8 weeks' },
+      sunday:     { title:'<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> At-Risk — Sunday Service',   sub:'Members & guests with low Sunday attendance' },
+      youth:      { title:'<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> At-Risk — Youth Night',      sub:'Students with below 50% youth event attendance' },
+      youngadult: { title:'<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> At-Risk — Young Adults',     sub:'Young adults with low attendance in the last 8 weeks' },
+      smallgroups:{ title:'<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> At-Risk — Small Groups',     sub:'Members missing small group meetings regularly' },
+      children:   { title:'<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> At-Risk — Children',         sub:'Children with low check-in frequency' },
+      volunteers: { title:'<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> At-Risk — Volunteers',       sub:'Volunteers with infrequent department attendance' },
     };
     const atRisk = atRiskTitleMap[key] || atRiskTitleMap.all;
     const arTitle = document.getElementById('atRiskTitle');
@@ -1188,7 +1188,7 @@ const DASH = {
       youngadult:'Young Adult Ministry', smallgroups:'Small Groups',
       children:"Children's Ministry", volunteers:'Volunteers' };
     const weekHead = document.getElementById('analyticsWeekTitle');
-    if(weekHead) weekHead.textContent = '📅 This Week — ' + (labelMap[key]||'All Events');
+    if(weekHead) weekHead.textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> This Week — ' + (labelMap[key]||'All Events');
 
     // Update stat labels
     this.updateStatLabels(key);
@@ -1208,7 +1208,7 @@ const DASH = {
   },
 
   // Keep switchMinistry as alias for backward compat
-  switchMinistry(key, btn) { this.pickMinistry(key,'📊','All Ministry Events','#fff','var(--rim)'); },
+  switchMinistry(key, btn) { this.pickMinistry(key,'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>','All Ministry Events','#fff','var(--rim)'); },
 
   clearDateFilter() {
     const inp = document.getElementById('dashDateFilter');
@@ -1447,7 +1447,7 @@ const DASH = {
 
     const el = document.getElementById('feedPanel');
     if(!data.length){
-      el.innerHTML=`<div class="empty-state"><div class="empty-icon">📋</div><p class="empty-txt">No check-ins yet for today</p></div>`;
+      el.innerHTML=`<div class="empty-state"><div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6" stroke-width="2.5"/><line x1="3" y1="12" x2="3.01" y2="12" stroke-width="2.5"/><line x1="3" y1="18" x2="3.01" y2="18" stroke-width="2.5"/></svg></div><p class="empty-txt">No check-ins yet for today</p></div>`;
       return;
     }
     el.innerHTML = data.slice().reverse().map((c,i)=>{
@@ -1476,7 +1476,7 @@ const DASH = {
     const scroll = document.getElementById('bdayScroll');
     document.getElementById('bdayCount').textContent = birthdays.length||'0';
     if(!birthdays.length){
-      scroll.innerHTML='<div class="bday-empty">No birthdays this week 🎉</div>';
+      scroll.innerHTML='<div class="bday-empty">No birthdays this week </div>';
       return;
     }
     const today = new Date();
@@ -1528,7 +1528,7 @@ const DASH = {
     if(!el) return;
     const students = data?.twoWeeks||data?.atRisk||data||[];
     if(!students.length){
-      el.innerHTML='<div class="empty-state"><div class="empty-icon">✅</div><p class="empty-txt">No at-risk students — great attendance!</p></div>';
+      el.innerHTML='<div class="empty-state"><div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg></div><p class="empty-txt">No at-risk students — great attendance!</p></div>';
       return;
     }
     document.getElementById('atRiskCount').textContent = students.length;
@@ -1542,7 +1542,7 @@ const DASH = {
           <div class="ci-name">${name}</div>
           <div class="ci-meta">Grade ${s.grade||'—'} · ${weeks} weeks absent · ${pct}% attendance</div>
         </div>
-        <div style="font-size:10px;font-weight:800;color:#fca5a5;flex-shrink:0;padding:3px 8px;background:rgba(239,68,68,.1);border-radius:100px;border:1px solid rgba(239,68,68,.25)">⚠️</div>
+        <div style="font-size:10px;font-weight:800;color:#fca5a5;flex-shrink:0;padding:3px 8px;background:rgba(239,68,68,.1);border-radius:100px;border:1px solid rgba(239,68,68,.25)"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg></div>
       </div>`;
     }).join('');
   }
@@ -1589,7 +1589,7 @@ DASH.loadAnalytics = async function() {
     children:"Children's Ministry", volunteers:'Volunteers'
   };
   const weekHead = document.getElementById('analyticsWeekTitle');
-  if(weekHead) weekHead.textContent = '📅 This Week — ' + (labelMap[ministry]||'All Events');
+  if(weekHead) weekHead.textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> This Week — ' + (labelMap[ministry]||'All Events');
 };
 
 DASH.loadWeek = async function(offset) {
@@ -1760,7 +1760,7 @@ DASH.loadAtRisk = async function() {
     const mLabel = ministryLabels[ministry] || '';
 
     if (!students.length) {
-      el.innerHTML = '<div class="empty-state" style="padding:40px"><div class="empty-icon">✅</div>'
+      el.innerHTML = '<div class="empty-state" style="padding:40px"><div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg></div>'
         + '<p class="empty-txt">No at-risk attendees for' + mLabel + '</p>'
         + '<p style="font-size:12px;color:var(--muted2);margin-top:6px">Everyone is attending regularly!</p></div>';
       return;
@@ -1805,7 +1805,7 @@ DASH.lookupSearch = async function(q) {
   const matches = _allStudents.filter(s => (s.name||'').toLowerCase().includes(ql));
   DASH._lookupResults = matches;
   if (!matches.length) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">😕</div><p class="empty-txt">No students found matching that name</p></div>';
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><p class="empty-txt">No students found matching that name</p></div>';
     return;
   }
   el.innerHTML = matches.slice(0,15).map(s =>
@@ -1852,7 +1852,7 @@ DASH.lookupOpen = async function(studentId) {
       const leader= h.leader||'';
       const fmt   = date ? new Date(date).toLocaleDateString([],{weekday:'short',month:'short',day:'numeric',year:'numeric'}) : date;
       return `<div class="ci-row" style="cursor:default">
-        <div style="width:34px;height:34px;border-radius:50%;background:var(--soft);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">✅</div>
+        <div style="width:34px;height:34px;border-radius:50%;background:var(--soft);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg></div>
         <div class="ci-info">
           <div class="ci-name">${fmt||'Unknown date'}</div>
           <div class="ci-meta">${event} ${leader?'· '+leader:''}</div>
@@ -2015,7 +2015,7 @@ DASH.downloadReport = async function() {
 
     toast('Report downloaded!', 'ok');
   } catch(e) {
-    toast('⚠️ Download failed — try again', 'err');
+    toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Download failed — try again', 'err');
     console.error(e);
   }
   hideSaving();
@@ -2046,7 +2046,7 @@ const CM = {
       this.updateStats();
       this.render(this._filtered);
     } catch(e) {
-      toast('⚠️ Failed to load families', 'err');
+      toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Failed to load families', 'err');
     }
     hideSaving();
   },
@@ -2089,7 +2089,7 @@ const CM = {
     const el = document.getElementById('cmFamilyList');
     if (!families.length) {
       el.innerHTML = `<div class="empty-state" style="padding:50px 20px">
-        <div class="empty-icon">🔍</div>
+        <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg></div>
         <div class="k-empty-title">${this._families.length ? 'No families match' : 'No families yet'}</div>
         <div class="k-empty-sub">${this._families.length ? 'Try a different search' : 'Tap "+ Family" to register your first family'}</div>
       </div>`;
@@ -2114,7 +2114,7 @@ const CM = {
             </div>
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
-            ${allChecked?'<div style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.4);border-radius:100px;padding:3px 10px;font-size:10px;font-weight:800;color:#6ee7b7">✅ All in</div>':''}
+            ${allChecked?'<div style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.4);border-radius:100px;padding:3px 10px;font-size:10px;font-weight:800;color:#6ee7b7"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> All in</div>':''}
             <div style="font-size:18px;color:var(--muted2)" id="cmArrow_${f.id}">›</div>
           </div>
         </div>
@@ -2132,28 +2132,28 @@ const CM = {
               <div style="flex:1;min-width:0">
                 <div style="font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px">
                   ${ch.name}
-                  ${cChecked?'<span style="font-size:9px;font-weight:800;background:rgba(16,185,129,.15);color:#6ee7b7;padding:2px 7px;border-radius:100px;border:1px solid rgba(16,185,129,.3)">✅ In</span>':''}
+                  ${cChecked?'<span style="font-size:9px;font-weight:800;background:rgba(16,185,129,.15);color:#6ee7b7;padding:2px 7px;border-radius:100px;border:1px solid rgba(16,185,129,.3)"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> In</span>':''}
                 </div>
                 <div style="font-size:10px;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
                   ${ch.grade?`<span>Grade ${ch.grade}</span>`:''}
                   ${ch.room?`<span style="background:rgba(6,182,212,.1);color:#67e8f9;padding:1px 7px;border-radius:100px;border:1px solid rgba(6,182,212,.2);font-weight:700">${ch.room}</span>`:''}
-                  ${hasAllergy?`<span style="background:rgba(249,115,22,.12);color:#fdba74;padding:1px 7px;border-radius:100px;border:1px solid rgba(249,115,22,.25);font-weight:700">⚠️ ${ch.allergies}</span>`:''}
+                  ${hasAllergy?`<span style="background:rgba(249,115,22,.12);color:#fdba74;padding:1px 7px;border-radius:100px;border:1px solid rgba(249,115,22,.25);font-weight:700"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> ${ch.allergies}</span>`:''}
                 </div>
               </div>
               <div style="display:flex;gap:6px;flex-shrink:0" onclick="event.stopPropagation()">
-                <button onclick="CM.editChild('${ch.id}','${f.id}')" style="width:28px;height:28px;border-radius:50%;background:var(--surface2);border:1px solid var(--rim);color:var(--muted);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center">✏️</button>
-                <button onclick="CM.deleteChildBtn('${ch.id}','${ch.name.replace(/'/,"\\'")}')" style="width:28px;height:28px;border-radius:50%;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);color:#fca5a5;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center">🗑️</button>
+                <button onclick="CM.editChild('${ch.id}','${f.id}')" style="width:28px;height:28px;border-radius:50%;background:var(--surface2);border:1px solid var(--rim);color:var(--muted);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg></button>
+                <button onclick="CM.deleteChildBtn('${ch.id}','${ch.name.replace(/'/,"\\'")}')" style="width:28px;height:28px;border-radius:50%;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);color:#fca5a5;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>
               </div>
             </div>`;
           }).join('')}
 
           <!-- Family action bar -->
           <div style="display:flex;gap:8px;padding:10px 14px;background:rgba(6,14,16,0.5)">
-            <button onclick="CM.checkInAll('${f.id}')" style="flex:1;padding:9px;border-radius:10px;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.35);color:#6ee7b7;font-family:var(--body);font-size:12px;font-weight:800;cursor:pointer">✅ Check In All</button>
-            <button onclick="CM.openPrint('${f.id}')" style="flex:1;padding:9px;border-radius:10px;background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.25);color:#67e8f9;font-family:var(--body);font-size:12px;font-weight:800;cursor:pointer">🏷️ Name Tags</button>
+            <button onclick="CM.checkInAll('${f.id}')" style="flex:1;padding:9px;border-radius:10px;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.35);color:#6ee7b7;font-family:var(--body);font-size:12px;font-weight:800;cursor:pointer"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Check In All</button>
+            <button onclick="CM.openPrint('${f.id}')" style="flex:1;padding:9px;border-radius:10px;background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.25);color:#67e8f9;font-family:var(--body);font-size:12px;font-weight:800;cursor:pointer"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7" stroke-width="2.5"/></svg> Name Tags</button>
             <button onclick="CM.addChildToFamily('${f.id}')" style="padding:9px 13px;border-radius:10px;background:var(--surface2);border:1px solid var(--rim);color:var(--muted);font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer">+ Child</button>
-            <button onclick="CM.editFamily('${f.id}')" style="padding:9px 13px;border-radius:10px;background:var(--surface2);border:1px solid var(--rim);color:var(--muted);font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer">✏️</button>
-            <button onclick="CM.deleteFamilyBtn('${f.id}','${f.parentName.replace(/'/,"\\'")}')" style="padding:9px 11px;border-radius:10px;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);color:#fca5a5;font-family:var(--body);font-size:12px;cursor:pointer">🗑️</button>
+            <button onclick="CM.editFamily('${f.id}')" style="padding:9px 13px;border-radius:10px;background:var(--surface2);border:1px solid var(--rim);color:var(--muted);font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg></button>
+            <button onclick="CM.deleteFamilyBtn('${f.id}','${f.parentName.replace(/'/,"\\'")}')" style="padding:9px 11px;border-radius:10px;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);color:#fca5a5;font-family:var(--body);font-size:12px;cursor:pointer"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>
           </div>
         </div>
       </div>`;
@@ -2173,7 +2173,7 @@ const CM = {
   /* ── CHECK IN SINGLE CHILD ── */
   async checkInChild(childId, familyId, name) {
     if (this._checkedFamilies.has(childId)) {
-      toast(`🔄 ${name} already checked in`, 'ok');
+      toast(`${name} already checked in`, 'ok');
       return;
     }
     this._checkedFamilies.add(childId);
@@ -2190,10 +2190,10 @@ const CM = {
       const el = document.getElementById('cmStatChecked');
       if (el) el.textContent = this._checkedFamilies.size;
       this.render(this._filtered);
-      toast(`✅ ${name} checked in!`, 'ok');
+      toast(`<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> ${name} checked in!`, 'ok');
     } catch(e) {
       this._checkedFamilies.delete(childId);
-      toast('⚠️ Check-in failed', 'err');
+      toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Check-in failed', 'err');
     }
   },
 
@@ -2201,7 +2201,7 @@ const CM = {
   async checkInAll(familyId) {
     const family = this._families.find(f => f.id === familyId);
     if (!family || !family.children.length) {
-      toast('⚠️ No children in this family', 'err');
+      toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> No children in this family', 'err');
       return;
     }
     showSaving('Checking in family…');
@@ -2211,9 +2211,9 @@ const CM = {
       const el = document.getElementById('cmStatChecked');
       if (el) el.textContent = this._checkedFamilies.size;
       this.render(this._filtered);
-      toast(`✅ ${family.parentName} family checked in!`, 'ok');
+      toast(`<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> ${family.parentName} family checked in!`, 'ok');
     } catch(e) {
-      toast('⚠️ Check-in failed', 'err');
+      toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Check-in failed', 'err');
     }
     hideSaving();
   },
@@ -2226,7 +2226,7 @@ const CM = {
     document.getElementById('cmf_email').value = '';
     document.getElementById('cmf_address').value = '';
     document.getElementById('cmf_notes').value = '';
-    document.getElementById('cmFamilyModalTitle').textContent = '👨‍👩‍👧 Register Family';
+    document.getElementById('cmFamilyModalTitle').textContent = 'Register Family';
     openModal('cmFamilyModal');
   },
 
@@ -2239,7 +2239,7 @@ const CM = {
     document.getElementById('cmf_email').value   = f.email;
     document.getElementById('cmf_address').value = f.address;
     document.getElementById('cmf_notes').value   = f.notes;
-    document.getElementById('cmFamilyModalTitle').textContent = '✏️ Edit Family';
+    document.getElementById('cmFamilyModalTitle').textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Edit Family';
     openModal('cmFamilyModal');
   },
 
@@ -2247,8 +2247,8 @@ const CM = {
     const id   = document.getElementById('cmf_id').value;
     const name = document.getElementById('cmf_name').value.trim();
     const phone= document.getElementById('cmf_phone').value.trim();
-    if (!name)  { toast('⚠️ Parent name is required', 'err'); return; }
-    if (!phone) { toast('⚠️ Phone number is required', 'err'); return; }
+    if (!name)  { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Parent name is required', 'err'); return; }
+    if (!phone) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Phone number is required', 'err'); return; }
     const data = { parentName:name, phone, email:document.getElementById('cmf_email').value.trim(),
       address:document.getElementById('cmf_address').value.trim(), notes:document.getElementById('cmf_notes').value.trim() };
     showSaving(id ? 'Updating family…' : 'Registering family…');
@@ -2272,9 +2272,9 @@ const CM = {
         closeModal('cmFamilyModal');
         this.updateStats();
         this.render(this._filtered);
-        toast(id ? '✅ Family updated' : '✅ Family registered!', 'ok');
-      } else toast('⚠️ '+(r?.error||'Failed'), 'err');
-    } catch(e) { toast('⚠️ Connection error', 'err'); }
+        toast(id ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Family updated' : '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Family registered!', 'ok');
+      } else toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> '+(r?.error||'Failed'), 'err');
+    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Connection error', 'err'); }
     hideSaving();
   },
 
@@ -2287,8 +2287,8 @@ const CM = {
       this._filtered = this._filtered.filter(f => f.id !== id);
       this.updateStats();
       this.render(this._filtered);
-      toast('🗑️ Family deleted', 'ok');
-    } catch(e) { toast('⚠️ Delete failed', 'err'); }
+      toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg> Family deleted', 'ok');
+    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Delete failed', 'err'); }
     hideSaving();
   },
 
@@ -2299,7 +2299,7 @@ const CM = {
     document.getElementById('cmc_familyId').value = familyId;
     document.getElementById('cmc_familyBadge').textContent = `Family: ${family?.parentName || ''}`;
     ['cmc_first','cmc_last','cmc_grade','cmc_dob','cmc_room','cmc_allergy','cmc_notes'].forEach(id=>{ document.getElementById(id).value=''; });
-    document.getElementById('cmChildModalTitle').textContent = '➕ Add Child';
+    document.getElementById('cmChildModalTitle').textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 5v14M5 12h14"/></svg> Add Child';
     openModal('cmChildModal');
   },
 
@@ -2317,7 +2317,7 @@ const CM = {
     document.getElementById('cmc_room').value    = child.room||'';
     document.getElementById('cmc_allergy').value = child.allergies||'';
     document.getElementById('cmc_notes').value   = child.notes||'';
-    document.getElementById('cmChildModalTitle').textContent = '✏️ Edit Child';
+    document.getElementById('cmChildModalTitle').textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Edit Child';
     openModal('cmChildModal');
   },
 
@@ -2325,7 +2325,7 @@ const CM = {
     const id       = document.getElementById('cmc_id').value;
     const familyId = document.getElementById('cmc_familyId').value;
     const first    = document.getElementById('cmc_first').value.trim();
-    if (!first) { toast('⚠️ First name is required', 'err'); return; }
+    if (!first) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> First name is required', 'err'); return; }
     const data = {
       familyId,
       firstName: first,
@@ -2374,9 +2374,9 @@ const CM = {
           const el = document.getElementById(`cmChildren_${familyId}`);
           if (el) el.style.display = 'block';
         }, 50);
-        toast(id ? '✅ Child updated' : '✅ Child added!', 'ok');
-      } else toast('⚠️ '+(r?.error||'Failed'), 'err');
-    } catch(e) { toast('⚠️ Connection error', 'err'); }
+        toast(id ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Child updated' : '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Child added!', 'ok');
+      } else toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> '+(r?.error||'Failed'), 'err');
+    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Connection error', 'err'); }
     hideSaving();
   },
 
@@ -2389,8 +2389,8 @@ const CM = {
       this._filtered = [...this._families];
       this.updateStats();
       this.render(this._filtered);
-      toast('🗑️ Child removed', 'ok');
-    } catch(e) { toast('⚠️ Delete failed', 'err'); }
+      toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg> Child removed', 'ok');
+    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Delete failed', 'err'); }
     hideSaving();
   },
 
@@ -2428,7 +2428,7 @@ const CM = {
               ${child.room ? `<span style="font-size:10px;font-weight:800;padding:3px 10px;border-radius:100px;background:#ecfdf5;border:1.5px solid #10b981;color:#059669">${child.room}</span>` : ''}
               ${grade ? `<span style="font-size:10px;font-weight:800;padding:3px 10px;border-radius:100px;background:#eff6ff;border:1.5px solid #3b82f6;color:#1d4ed8">${grade}</span>` : ''}
             </div>
-            ${hasAllergy ? `<div style="background:#fff5f5;border:1.5px solid #ef4444;border-radius:8px;padding:4px 10px;font-size:10px;font-weight:800;color:#dc2626;display:inline-block">⚠️ ${child.allergies}</div>` : ''}
+            ${hasAllergy ? `<div style="background:#fff5f5;border:1.5px solid #ef4444;border-radius:8px;padding:4px 10px;font-size:10px;font-weight:800;color:#dc2626;display:inline-block"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> ${child.allergies}</div>` : ''}
           </div>
           <div style="height:1px;background:repeating-linear-gradient(90deg,#ddd 0,#ddd 6px,transparent 6px,transparent 12px);margin:0 14px"></div>
           <div style="padding:10px 16px 14px;text-align:center;background:#f9fafb">
@@ -2455,8 +2455,8 @@ const CM = {
               </div>
             </div>
             <div style="background:#f0fdf4;border-radius:8px;padding:7px 10px;margin-bottom:7px">
-              <div style="font-size:12px;font-weight:700;color:#065f46">👤 ${family.parentName}</div>
-              <div style="font-size:11px;color:#047857;margin-top:2px">📞 ${family.phone}</div>
+              <div style="font-size:12px;font-weight:700;color:#065f46"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ${family.parentName}</div>
+              <div style="font-size:11px;color:#047857;margin-top:2px"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg> ${family.phone}</div>
             </div>
             <div style="font-size:9px;color:#bbb;text-align:center">${today} &bull; ${time}</div>
           </div>
@@ -2648,7 +2648,7 @@ const CM = {
     ].join('');
 
     const win = window.open('', '_blank', 'width=900,height=700');
-    if (!win) { toast('⚠️ Allow pop-ups to print tags','err'); return; }
+    if (!win) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Allow pop-ups to print tags','err'); return; }
 
     // Write HTML without inline scripts to avoid escaping issues
     const fullHTML = '<!DOCTYPE html><html><head>'
@@ -2686,7 +2686,7 @@ const CM = {
     };
     qrLib.onerror = function() {
       win.setTimeout(function() { win.print(); }, 500);
-      toast('⚠️ QR library failed to load', 'err');
+      toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> QR library failed to load', 'err');
     };
     win.document.head.appendChild(qrLib);
 
@@ -2698,7 +2698,7 @@ const CM = {
 
 CM.printAllTags = function() {
   const checked = this._families.filter(f=>f.children.some(ch=>this._checkedFamilies.has(ch.id)));
-  if (!checked.length) { toast('⚠️ No checked-in children yet','err'); return; }
+  if (!checked.length) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> No checked-in children yet','err'); return; }
   const today = new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
   const time  = new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
   const tagsHTML = checked.flatMap(family =>
@@ -2714,7 +2714,7 @@ CM.printAllTags = function() {
         +   (child.room?'<span class="tbr">'+child.room+'</span>':'')
         +   (child.grade?'<span class="tbg">Grade '+child.grade+'</span>':'')
         +   '</div>'
-        +   (hasAllergy?'<div class="tal">⚠️ '+child.allergies+'</div>':'')
+        +   (hasAllergy?'<div class="tal"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> '+child.allergies+'</div>':'')
         + '</div>'
         + '<div class="tdiv"></div>'
         + '<div class="tp">'
@@ -2729,13 +2729,13 @@ CM.printAllTags = function() {
   const css='*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;background:#f0f0f0;padding:20px}h2{text-align:center;font-size:14px;color:#444;margin-bottom:20px}.grid{display:flex;flex-wrap:wrap;gap:16px;justify-content:center}.tag{width:260px;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.12);page-break-inside:avoid}.ts{height:10px;background:linear-gradient(90deg,#10b981,#06b6d4)}.tc{padding:18px 20px 14px;text-align:center}.tm{font-size:8px;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:#10b981;margin-bottom:10px}.tfn{font-size:42px;font-weight:900;color:#111;line-height:1;margin-bottom:2px}.tln{font-size:18px;font-weight:700;color:#333;margin-bottom:10px}.tb{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:8px}.tbr{font-size:10px;font-weight:800;padding:3px 12px;border-radius:100px;background:#ecfdf5;border:1.5px solid #10b981;color:#059669}.tbg{font-size:10px;font-weight:800;padding:3px 12px;border-radius:100px;background:#eff6ff;border:1.5px solid #3b82f6;color:#1d4ed8}.tal{background:#fff5f5;border:1.5px solid #ef4444;border-radius:8px;padding:5px 12px;font-size:10px;font-weight:800;color:#dc2626;margin-top:4px;display:inline-block}.tdiv{height:1px;background:repeating-linear-gradient(90deg,#ddd 0,#ddd 6px,transparent 6px,transparent 12px);margin:0 16px}.tp{padding:12px 20px 16px;text-align:center;background:#fafafa}.tpl{font-size:7px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:#999;margin-bottom:5px}.tpn{font-size:16px;font-weight:700;color:#222;margin-bottom:2px}.tph{font-size:12px;color:#555;margin-bottom:5px}.tdt{font-size:9px;color:#bbb}@media print{body{background:#fff;padding:8px}h2{display:none}.grid{gap:10px}.tag{box-shadow:none;border:1px solid #ddd}}';
   const total=checked.reduce((a,f)=>a+f.children.filter(ch=>this._checkedFamilies.has(ch.id)).length,0);
   const win=window.open('','_blank','width=900,height=700');
-  win.document.write('<!DOCTYPE html><html><head><title>Name Tags</title><style>'+css+'</style></head><body><h2>🧒 Childrens Ministry · '+total+' children · '+today+'</h2><div class="grid">'+tagsHTML+'</div><scr'+'ipt>window.onload=function(){window.print()}<'+'/scr'+'ipt></body></html>');
+  win.document.write('<!DOCTYPE html><html><head><title>Name Tags</title><style>'+css+'</style></head><body><h2>Children\'s Ministry · '+total+' children · '+today+'</h2><div class="grid">'+tagsHTML+'</div><scr'+'ipt>window.onload=function(){window.print()}<'+'/scr'+'ipt></body></html>');
   win.document.close();
   toast('Printing name tags','ok');
 };
 
 function showCM() { showView('vCM'); CM.load(); }
-KIOSK.selectCM = function(el) { KIOSK.selectEvent(el, "Childrens Ministry", '🧒', "Childrens church check-in"); };
+KIOSK.selectCM = function(el) { KIOSK.selectEvent(el, "Childrens Ministry", '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>', "Childrens church check-in"); };
 
 /* ════════════════════════════════════════════════════
    VOLUNTEER MODULE
@@ -2754,7 +2754,7 @@ const VOL = {
     showView('vVolunteers');
     // Set header
     const t = document.getElementById('volDeptTitle');
-    if (t) t.textContent = (icon||'🛡️') + ' ' + (department||'VOLUNTEERS').toUpperCase();
+    if (t) t.textContent = (icon||'') + ' ' + (department||'VOLUNTEERS').toUpperCase();
     const deptStat = document.getElementById('volStatDept');
     if (deptStat) deptStat.textContent = department ? department.split(' ')[0] : 'All';
     await this.load();
@@ -2768,7 +2768,7 @@ const VOL = {
       this._filtered = [...this._volunteers];
       this.updateStats();
       this.render(this._filtered);
-    } catch(e) { toast('⚠️ Failed to load volunteers','err'); }
+    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Failed to load volunteers','err'); }
     hideSaving();
   },
 
@@ -2804,7 +2804,7 @@ const VOL = {
     const el = document.getElementById('volList');
     if (!vols.length) {
       el.innerHTML = `<div class="empty-state" style="padding:60px 20px">
-        <div class="empty-icon">${this._volunteers.length ? '🔍' : '🛡️'}</div>
+        <div class="empty-icon">${this._volunteers.length ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>' : '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>'}</div>
         <div class="k-empty-title">${this._volunteers.length ? 'No volunteers match' : 'No volunteers registered'}</div>
         <div class="k-empty-sub">${this._volunteers.length ? 'Try a different name' : 'Tap <strong>+ Volunteer</strong> to add your first volunteer'}</div>
       </div>`;
@@ -2821,17 +2821,17 @@ const VOL = {
           <div style="flex:1;min-width:0">
             <div style="font-family:var(--font);font-size:15px;font-weight:800;color:${isIn ? deptColor.text : 'var(--text)'};margin-bottom:3px;display:flex;align-items:center;gap:6px">
               ${v.name}
-              ${isIn ? '<span style="font-size:9px;font-weight:800;background:rgba(255,255,255,0.15);color:#fff;padding:2px 8px;border-radius:100px;border:1px solid rgba(255,255,255,0.3)">✅ IN</span>' : ''}
+              ${isIn ? '<span style="font-size:9px;font-weight:800;background:rgba(255,255,255,0.15);color:#fff;padding:2px 8px;border-radius:100px;border:1px solid rgba(255,255,255,0.3)"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> IN</span>' : ''}
             </div>
             <div style="display:flex;flex-wrap:wrap;gap:5px">
               ${v.role ? `<span style="font-size:10px;font-weight:700;background:${deptColor.bg};color:${deptColor.text};padding:2px 8px;border-radius:100px;border:1px solid ${deptColor.border}">${v.role}</span>` : ''}
               ${v.department ? `<span style="font-size:10px;font-weight:600;color:var(--muted)">${v.department}</span>` : ''}
-              ${v.phone ? `<span style="font-size:10px;color:var(--muted2)">📞 ${v.phone}</span>` : ''}
+              ${v.phone ? `<span style="font-size:10px;color:var(--muted2)"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg> ${v.phone}</span>` : ''}
             </div>
           </div>
           <div style="display:flex;gap:5px;flex-shrink:0" onclick="event.stopPropagation()">
-            <button onclick="VOL.editVol('${v.id}')" style="width:30px;height:30px;border-radius:8px;background:var(--surface2);border:1px solid var(--rim);color:var(--muted);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center">✏️</button>
-            <button onclick="VOL.deleteVol('${v.id}','${v.name.replace(/'/,"\\'")}')" style="width:30px;height:30px;border-radius:8px;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.2);color:#fca5a5;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center">🗑️</button>
+            <button onclick="VOL.editVol('${v.id}')" style="width:30px;height:30px;border-radius:8px;background:var(--surface2);border:1px solid var(--rim);color:var(--muted);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg></button>
+            <button onclick="VOL.deleteVol('${v.id}','${v.name.replace(/'/,"\\'")}')" style="width:30px;height:30px;border-radius:8px;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.2);color:#fca5a5;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>
           </div>
         </div>
       </div>`;
@@ -2852,20 +2852,20 @@ const VOL = {
   },
 
   async checkIn(volId, name) {
-    if (this._checkedIn.has(volId)) { toast(`🔄 ${name} already checked in`,'ok'); return; }
+    if (this._checkedIn.has(volId)) { toast(`${name} already checked in`,'ok'); return; }
     this._checkedIn.add(volId);
     this.updateStats();
     this.render(this._filtered);
     try {
       const r = await API.checkInVolunteer(volId, { event: _kEvent||this._department, leader: _kLeader });
-      if (!r?.success) { this._checkedIn.delete(volId); this.updateStats(); this.render(this._filtered); toast('⚠️ Check-in failed','err'); return; }
-      toast(`✅ ${name} checked in!`,'ok');
-    } catch(e) { this._checkedIn.delete(volId); this.updateStats(); this.render(this._filtered); toast('⚠️ Connection error','err'); }
+      if (!r?.success) { this._checkedIn.delete(volId); this.updateStats(); this.render(this._filtered); toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Check-in failed','err'); return; }
+      toast(`<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> ${name} checked in!`,'ok');
+    } catch(e) { this._checkedIn.delete(volId); this.updateStats(); this.render(this._filtered); toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Connection error','err'); }
   },
 
   async batchCheckInAll() {
     const unchecked = this._volunteers.filter(v => !this._checkedIn.has(v.id));
-    if (!unchecked.length) { toast('✅ All volunteers already checked in','ok'); return; }
+    if (!unchecked.length) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> All volunteers already checked in','ok'); return; }
     if (!confirm(`Check in all ${unchecked.length} volunteers in this department?`)) return;
     showSaving(`Checking in ${unchecked.length} volunteers…`);
     let done = 0;
@@ -2877,7 +2877,7 @@ const VOL = {
     }
     this.updateStats(); this.render(this._filtered);
     hideSaving();
-    toast(`✅ ${done} volunteers checked in!`,'ok');
+    toast(`<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> ${done} volunteers checked in!`,'ok');
   },
 
   /* ── ADD / EDIT ── */
@@ -2885,7 +2885,7 @@ const VOL = {
     document.getElementById('vol_id').value = '';
     ['vol_first','vol_last','vol_phone','vol_email','vol_role','vol_notes'].forEach(id => { document.getElementById(id).value=''; });
     document.getElementById('vol_dept').value = this._department || '';
-    document.getElementById('volModalTitle').textContent = '➕ Add Volunteer';
+    document.getElementById('volModalTitle').textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 5v14M5 12h14"/></svg> Add Volunteer';
     openModal('volModal');
   },
 
@@ -2900,7 +2900,7 @@ const VOL = {
     document.getElementById('vol_dept').value  = v.department||'';
     document.getElementById('vol_role').value  = v.role||'';
     document.getElementById('vol_notes').value = v.notes||'';
-    document.getElementById('volModalTitle').textContent = '✏️ Edit Volunteer';
+    document.getElementById('volModalTitle').textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Edit Volunteer';
     openModal('volModal');
   },
 
@@ -2908,7 +2908,7 @@ const VOL = {
     const id    = document.getElementById('vol_id').value;
     const first = document.getElementById('vol_first').value.trim();
     const dept  = document.getElementById('vol_dept').value;
-    if (!first) { toast('⚠️ First name is required','err'); return; }
+    if (!first) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> First name is required','err'); return; }
     const data = { firstName:first, lastName:document.getElementById('vol_last').value.trim(),
       phone:document.getElementById('vol_phone').value.trim(), email:document.getElementById('vol_email').value.trim(),
       department:dept, role:document.getElementById('vol_role').value.trim(),
@@ -2919,9 +2919,9 @@ const VOL = {
       if (r?.success) {
         closeModal('volModal');
         await this.load();
-        toast(id ? '✅ Volunteer updated' : '✅ Volunteer added!','ok');
-      } else toast('⚠️ '+(r?.error||'Failed'),'err');
-    } catch(e) { toast('⚠️ Connection error','err'); }
+        toast(id ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Volunteer updated' : '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Volunteer added!','ok');
+      } else toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> '+(r?.error||'Failed'),'err');
+    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Connection error','err'); }
     hideSaving();
   },
 
@@ -2931,8 +2931,8 @@ const VOL = {
     try {
       await API.deleteVolunteer(id);
       await this.load();
-      toast('🗑️ Volunteer removed','ok');
-    } catch(e) { toast('⚠️ Delete failed','err'); }
+      toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg> Volunteer removed','ok');
+    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Delete failed','err'); }
     hideSaving();
   },
 
@@ -2950,9 +2950,9 @@ const VOL = {
       if (!list) return;
       list.innerHTML = this._departments.map(d =>
         `<div style="display:flex;align-items:center;gap:10px;background:var(--ink2);border:1px solid var(--rim);border-radius:12px;padding:10px 14px">
-          <div style="font-size:20px">${d.icon||'🏷️'}</div>
+          <div style="font-size:20px">${d.icon||'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7" stroke-width="2.5"/></svg>'}</div>
           <div style="flex:1;font-size:13px;font-weight:600">${d.name}</div>
-          <button onclick="VOL.deleteDept('${d.id}','${d.name.replace(/'/,"\\'")}')" style="width:28px;height:28px;border-radius:8px;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);color:#fca5a5;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center">🗑️</button>
+          <button onclick="VOL.deleteDept('${d.id}','${d.name.replace(/'/,"\\'")}')" style="width:28px;height:28px;border-radius:8px;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);color:#fca5a5;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>
         </div>`
       ).join('') || '<div class="empty-state"><p class="empty-txt">No departments found</p></div>';
     } catch(e) {}
@@ -2960,9 +2960,9 @@ const VOL = {
 
   async addDept() {
     const name = document.getElementById('newDeptInput').value.trim();
-    if (!name) { toast('⚠️ Enter a department name','err'); return; }
+    if (!name) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Enter a department name','err'); return; }
     try {
-      const r = await API.addDepartment(name, '🏷️', '#6b7280');
+      const r = await API.addDepartment(name, '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7" stroke-width="2.5"/></svg>', '#6b7280');
       if (r?.success) {
         document.getElementById('newDeptInput').value = '';
         await this.loadDepts();
@@ -2973,9 +2973,9 @@ const VOL = {
           opt.value = name; opt.textContent = name;
           sel.appendChild(opt);
         }
-        toast('✅ Department added','ok');
+        toast('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Department added','ok');
       }
-    } catch(e) { toast('⚠️ Failed','err'); }
+    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Failed','err'); }
   },
 
   async deleteDept(id, name) {
@@ -2983,8 +2983,8 @@ const VOL = {
     try {
       await API.deleteDepartment(id);
       await this.loadDepts();
-      toast('🗑️ Department deleted','ok');
-    } catch(e) { toast('⚠️ Failed','err'); }
+      toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg> Department deleted','ok');
+    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Failed','err'); }
   }
 };
 
@@ -3017,7 +3017,7 @@ const SG = {
       this._filtered = [...this._groups];
       this.updateStats();
       this.render(this._filtered);
-    } catch(e) { toast('⚠️ Failed to load groups','err'); }
+    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Failed to load groups','err'); }
     hideSaving();
   },
 
@@ -3054,7 +3054,7 @@ const SG = {
     const el = document.getElementById('sgGroupList');
     if (!groups.length) {
       el.innerHTML = `<div class="empty-state" style="padding:60px 20px">
-        <div class="empty-icon">${this._groups.length?'🔍':'👥'}</div>
+        <div class="empty-icon">${this._groups.length?'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>':'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>'}</div>
         <div class="k-empty-title">${this._groups.length?'No groups match':'No small groups yet'}</div>
         <div class="k-empty-sub">${this._groups.length?'Try a different search':'Tap <strong>+ Group</strong> to create your first small group'}</div>
       </div>`;
@@ -3072,11 +3072,11 @@ const SG = {
           <div style="flex:1;min-width:0">
             <div style="font-family:var(--font);font-size:16px;font-weight:900;color:#fff;margin-bottom:3px">${g.name}</div>
             <div style="display:flex;flex-wrap:wrap;gap:7px;align-items:center">
-              ${g.leader?`<span style="font-size:11px;color:#6ee7b7;font-weight:700">👤 ${g.leader}</span>`:''}
+              ${g.leader?`<span style="font-size:11px;color:#6ee7b7;font-weight:700"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ${g.leader}</span>`:''}
               ${g.day?`<span style="font-size:10px;color:var(--muted)">${g.day}${g.time?' · '+g.time:''}</span>`:''}
               ${g.category?`<span style="font-size:10px;font-weight:700;background:rgba(13,148,136,0.12);color:#6ee7b7;padding:2px 8px;border-radius:100px;border:1px solid rgba(13,148,136,0.25)">${g.category}</span>`:''}
               <span style="font-size:10px;font-weight:700;background:rgba(6,182,212,0.1);color:#67e8f9;padding:2px 8px;border-radius:100px">${g.members.length} member${g.members.length!==1?'s':''}</span>
-              ${isChecked?'<span style="font-size:10px;font-weight:800;background:rgba(16,185,129,0.15);color:#6ee7b7;padding:2px 8px;border-radius:100px;border:1px solid rgba(16,185,129,0.3)">✅ Checked In</span>':''}
+              ${isChecked?'<span style="font-size:10px;font-weight:800;background:rgba(16,185,129,0.15);color:#6ee7b7;padding:2px 8px;border-radius:100px;border:1px solid rgba(16,185,129,0.3)"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Checked In</span>':''}
             </div>
           </div>
           <div style="font-size:20px;color:var(--muted2);flex-shrink:0" id="sgArrow_${g.id}">›</div>
@@ -3102,18 +3102,18 @@ const SG = {
                   <div style="font-size:10px;color:var(--muted);margin-top:2px">${m.phone||''} ${m.email?'· '+m.email:''}</div>
                 </div>
                 <div style="display:flex;gap:4px;flex-shrink:0">
-                  <button onclick="SG.editMember('${m.id}','${g.id}')" style="width:28px;height:28px;border-radius:8px;background:var(--surface2);border:1px solid var(--rim);color:var(--muted);cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center">✏️</button>
-                  <button onclick="SG.deleteMember('${m.id}','${m.name.replace(/'/,"\\'")}')" style="width:28px;height:28px;border-radius:8px;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);color:#fca5a5;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center">🗑️</button>
+                  <button onclick="SG.editMember('${m.id}','${g.id}')" style="width:28px;height:28px;border-radius:8px;background:var(--surface2);border:1px solid var(--rim);color:var(--muted);cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg></button>
+                  <button onclick="SG.deleteMember('${m.id}','${m.name.replace(/'/,"\\'")}')" style="width:28px;height:28px;border-radius:8px;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);color:#fca5a5;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>
                 </div>
               </div>`;
             }).join('')}
 
           <!-- Group actions bar -->
           <div style="display:flex;gap:7px;padding:11px 16px;background:rgba(6,14,16,0.4)">
-            <button onclick="SG.checkInAll('${g.id}')" style="flex:1;padding:9px;border-radius:11px;background:rgba(13,148,136,0.15);border:1px solid rgba(13,148,136,0.4);color:#6ee7b7;font-family:var(--body);font-size:12px;font-weight:800;cursor:pointer">✅ Check In All</button>
+            <button onclick="SG.checkInAll('${g.id}')" style="flex:1;padding:9px;border-radius:11px;background:rgba(13,148,136,0.15);border:1px solid rgba(13,148,136,0.4);color:#6ee7b7;font-family:var(--body);font-size:12px;font-weight:800;cursor:pointer"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Check In All</button>
             <button onclick="SG.addMemberToGroup('${g.id}','${g.name.replace(/'/,"\\'")}')" style="padding:9px 13px;border-radius:11px;background:rgba(13,148,136,0.08);border:1px solid rgba(13,148,136,0.2);color:#6ee7b7;font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer">+ Member</button>
-            <button onclick="SG.editGroup('${g.id}')" style="padding:9px 11px;border-radius:11px;background:var(--surface2);border:1px solid var(--rim);color:var(--muted);font-family:var(--body);font-size:12px;cursor:pointer">✏️</button>
-            <button onclick="SG.deleteGroup('${g.id}','${g.name.replace(/'/,"\\'")}')" style="padding:9px 11px;border-radius:11px;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);color:#fca5a5;font-family:var(--body);font-size:12px;cursor:pointer">🗑️</button>
+            <button onclick="SG.editGroup('${g.id}')" style="padding:9px 11px;border-radius:11px;background:var(--surface2);border:1px solid var(--rim);color:var(--muted);font-family:var(--body);font-size:12px;cursor:pointer"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg></button>
+            <button onclick="SG.deleteGroup('${g.id}','${g.name.replace(/'/,"\\'")}')" style="padding:9px 11px;border-radius:11px;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);color:#fca5a5;font-family:var(--body);font-size:12px;cursor:pointer"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>
           </div>
         </div>
       </div>`;
@@ -3132,7 +3132,7 @@ const SG = {
   /* ── CHECK IN ── */
   async checkInAll(groupId) {
     const group = this._groups.find(g=>g.id===groupId);
-    if (!group || !group.members.length) { toast('⚠️ No members in this group','err'); return; }
+    if (!group || !group.members.length) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> No members in this group','err'); return; }
     showSaving('Checking in group…');
     try {
       const r = await API.checkInSGGroup(groupId, { leader:_kLeader, event:_kEvent||'Small Groups' });
@@ -3141,9 +3141,9 @@ const SG = {
         const el2 = document.getElementById('sgStatChecked');
         if (el2) el2.textContent = parseInt(el2.textContent||0) + (r.count||group.members.length);
         this.render(this._filtered);
-        toast(`✅ ${group.name} — ${r.count||group.members.length} members checked in!`,'ok');
-      } else toast('⚠️ '+(r?.error||'Check-in failed'),'err');
-    } catch(e) { toast('⚠️ Connection error','err'); }
+        toast(`<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> ${group.name} — ${r.count||group.members.length} members checked in!`,'ok');
+      } else toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> '+(r?.error||'Check-in failed'),'err');
+    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Connection error','err'); }
     hideSaving();
   },
 
@@ -3153,7 +3153,7 @@ const SG = {
     ['sg_name','sg_leader','sg_leader_phone','sg_time','sg_location','sg_notes'].forEach(id=>{ document.getElementById(id).value=''; });
     document.getElementById('sg_day').value = '';
     document.getElementById('sg_category').value = '';
-    document.getElementById('sgGroupModalTitle').textContent = '👥 Create Small Group';
+    document.getElementById('sgGroupModalTitle').textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg> Create Small Group';
     openModal('sgGroupModal');
   },
 
@@ -3169,7 +3169,7 @@ const SG = {
     document.getElementById('sg_location').value = g.location;
     document.getElementById('sg_category').value = g.category;
     document.getElementById('sg_notes').value = g.notes;
-    document.getElementById('sgGroupModalTitle').textContent = '✏️ Edit Group';
+    document.getElementById('sgGroupModalTitle').textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Edit Group';
     openModal('sgGroupModal');
   },
 
@@ -3177,8 +3177,8 @@ const SG = {
     const id   = document.getElementById('sg_id').value;
     const name = document.getElementById('sg_name').value.trim();
     const leader = document.getElementById('sg_leader').value.trim();
-    if (!name)  { toast('⚠️ Group name is required','err'); return; }
-    if (!leader){ toast('⚠️ Leader name is required','err'); return; }
+    if (!name)  { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Group name is required','err'); return; }
+    if (!leader){ toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Leader name is required','err'); return; }
     const data = { name, leader, leaderPhone:document.getElementById('sg_leader_phone').value.trim(),
       day:document.getElementById('sg_day').value, time:document.getElementById('sg_time').value.trim(),
       location:document.getElementById('sg_location').value.trim(),
@@ -3198,9 +3198,9 @@ const SG = {
         this._filtered = [...this._groups];
         this.updateStats();
         this.render(this._filtered);
-        toast(id?'✅ Group updated':'✅ Group created!','ok');
-      } else toast('⚠️ '+(r?.error||'Failed'),'err');
-    } catch(e) { toast('⚠️ Connection error','err'); }
+        toast(id?'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Group updated':'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Group created!','ok');
+      } else toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> '+(r?.error||'Failed'),'err');
+    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Connection error','err'); }
     hideSaving();
   },
 
@@ -3212,8 +3212,8 @@ const SG = {
       this._groups = this._groups.filter(g=>g.id!==id);
       this._filtered = this._filtered.filter(g=>g.id!==id);
       this.updateStats(); this.render(this._filtered);
-      toast('🗑️ Group deleted','ok');
-    } catch(e) { toast('⚠️ Delete failed','err'); }
+      toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg> Group deleted','ok');
+    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Delete failed','err'); }
     hideSaving();
   },
 
@@ -3222,7 +3222,7 @@ const SG = {
     document.getElementById('sgm_group_id').value = groupId;
     document.getElementById('sgm_member_id').value = '';
     document.getElementById('sgMemberGroupBadge').textContent = `Group: ${groupName}`;
-    document.getElementById('sgMemberModalTitle').textContent = '➕ Add Member';
+    document.getElementById('sgMemberModalTitle').textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 5v14M5 12h14"/></svg> Add Member';
     ['sgm_first','sgm_last','sgm_phone','sgm_email'].forEach(id=>{ document.getElementById(id).value=''; });
     document.getElementById('sgm_role').value = 'Member';
     openModal('sgMemberModal');
@@ -3235,7 +3235,7 @@ const SG = {
     document.getElementById('sgm_group_id').value = groupId;
     document.getElementById('sgm_member_id').value = memberId;
     document.getElementById('sgMemberGroupBadge').textContent = `Group: ${group.name}`;
-    document.getElementById('sgMemberModalTitle').textContent = '✏️ Edit Member';
+    document.getElementById('sgMemberModalTitle').textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Edit Member';
     document.getElementById('sgm_first').value = m.firstName;
     document.getElementById('sgm_last').value  = m.lastName;
     document.getElementById('sgm_phone').value = m.phone;
@@ -3248,7 +3248,7 @@ const SG = {
     const gid  = document.getElementById('sgm_group_id').value;
     const mid  = document.getElementById('sgm_member_id').value;
     const first = document.getElementById('sgm_first').value.trim();
-    if (!first) { toast('⚠️ First name required','err'); return; }
+    if (!first) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> First name required','err'); return; }
     const group = this._groups.find(g=>g.id===gid);
     const data = { groupId:gid, groupName:group?.name||'',
       firstName:first, lastName:document.getElementById('sgm_last').value.trim(),
@@ -3278,9 +3278,9 @@ const SG = {
         this.updateStats(); this.render(this._filtered);
         setTimeout(()=>{ const b=document.getElementById(`sgBody_${gid}`); if(b) b.style.display='block';
           const a=document.getElementById(`sgArrow_${gid}`); if(a) a.textContent='⌄'; }, 50);
-        toast(mid?'✅ Member updated':'✅ Member added!','ok');
-      } else toast('⚠️ '+(r?.error||'Failed'),'err');
-    } catch(e) { toast('⚠️ Connection error','err'); }
+        toast(mid?'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Member updated':'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Member added!','ok');
+      } else toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> '+(r?.error||'Failed'),'err');
+    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Connection error','err'); }
     hideSaving();
   },
 
@@ -3291,8 +3291,8 @@ const SG = {
       await API.deleteSGMember(memberId);
       this._groups.forEach(g=>{ g.members=g.members.filter(m=>m.id!==memberId); });
       this.updateStats(); this.render(this._filtered);
-      toast('🗑️ Member removed','ok');
-    } catch(e) { toast('⚠️ Delete failed','err'); }
+      toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg> Member removed','ok');
+    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Delete failed','err'); }
     hideSaving();
   }
 };
@@ -3533,12 +3533,12 @@ const SCHED = {
       'Other':['rgba(107,114,128,0.15)','#9ca3af']
     };
 
-    const statusIcon = { accepted:'✅', declined:'❌', pending:'⏳' };
+    const statusIcon = { accepted:'✓', declined:'✕', pending:'–' };
     const statusColor = { accepted:'#6ee7b7', declined:'#fca5a5', pending:'#fcd34d' };
 
     if (!dayEvents.length) {
       evEl.innerHTML = `<div style="padding:20px;text-align:center">
-        <div style="font-size:32px;margin-bottom:10px">📅</div>
+        <div style="font-size:32px;margin-bottom:10px"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
         <div style="font-size:13px;color:var(--muted)">No events scheduled</div>
         <button onclick="SCHED.openNewEventOnDate('${dateStr}')" style="margin-top:12px;padding:8px 18px;border-radius:100px;background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.4);color:#c4b5fd;font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer">+ Schedule Event</button>
       </div>`;
@@ -3554,8 +3554,8 @@ const SCHED = {
               <div style="font-size:11px;color:var(--muted);margin-top:2px">${[fmtSchedTime_(ev.startTime),fmtSchedTime_(ev.endTime)].filter(Boolean).join(' – ')}${ev.location ? ' · '+ev.location : ''}</div>
             </div>
             <div style="display:flex;gap:5px">
-              <button onclick="SCHED.openEditEvent('${ev.id}')" style="width:28px;height:28px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--muted);cursor:pointer;font-size:11px">✏️</button>
-              <button onclick="SCHED.deleteEvent('${ev.id}','${ev.name.replace(/'/,"\\'")}'); " style="width:28px;height:28px;border-radius:8px;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.2);color:#fca5a5;cursor:pointer;font-size:11px">🗑️</button>
+              <button onclick="SCHED.openEditEvent('${ev.id}')" style="width:28px;height:28px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--muted);cursor:pointer;font-size:11px"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg></button>
+              <button onclick="SCHED.deleteEvent('${ev.id}','${ev.name.replace(/'/,"\\'")}'); " style="width:28px;height:28px;border-radius:8px;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.2);color:#fca5a5;cursor:pointer;font-size:11px"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>
             </div>
           </div>
           ${ev.notes ? `<div style="font-size:11px;color:var(--muted);font-style:italic;margin-bottom:10px;padding:8px 10px;background:rgba(0,0,0,0.2);border-radius:8px">${ev.notes}</div>` : ''}
@@ -3593,7 +3593,7 @@ const SCHED = {
     // Set date to today
     const today = new Date().toISOString().slice(0,10);
     document.getElementById('se_date').value = today;
-    document.getElementById('schedEventModalTitle').textContent = '📅 Schedule Event';
+    document.getElementById('schedEventModalTitle').textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Schedule Event';
     this.renderVolAssignList();
     openModal('schedEventModal');
   },
@@ -3616,7 +3616,7 @@ const SCHED = {
     document.getElementById('se_end').value = ev.endTime || '12:00';
     document.getElementById('se_location').value = ev.location || '';
     document.getElementById('se_notes').value = ev.notes || '';
-    document.getElementById('schedEventModalTitle').textContent = '✏️ Edit Event';
+    document.getElementById('schedEventModalTitle').textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Edit Event';
     this.renderVolAssignList();
     openModal('schedEventModal');
   },
@@ -3628,14 +3628,14 @@ const SCHED = {
       el.innerHTML = '<div style="text-align:center;padding:16px;font-size:12px;color:var(--muted)">No volunteers assigned yet — tap <strong>+ Add Volunteer Assignment</strong> below</div>';
       return;
     }
-    const statusIcon = { accepted:'✅', declined:'❌', pending:'⏳' };
+    const statusIcon = { accepted:'✓', declined:'✕', pending:'–' };
     el.innerHTML = this._assignments.map((a, i) => `
       <div style="display:flex;align-items:center;gap:10px;background:var(--ink3);border:1px solid var(--rim);border-radius:12px;padding:10px 12px">
         <div style="width:32px;height:32px;border-radius:50%;background:${gradientForName(a.volName||'?')};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0">${initials(a.volName||'?')}</div>
         <div style="flex:1;min-width:0">
           <div style="font-size:13px;font-weight:700;color:var(--text)">${a.volName||'—'}</div>
           <div style="font-size:11px;color:var(--muted)">${a.role||'Volunteer'}${a.department ? ' · '+a.department : ''}${a.volEmail ? ' · '+a.volEmail : ''}</div>
-          ${a._existing ? `<div style="font-size:10px;color:var(--muted2)">${statusIcon[a.status]||'⏳'} ${a.status||'pending'}</div>` : '<div style="font-size:10px;color:#c4b5fd">📧 Invitation will be sent</div>'}
+          ${a._existing ? `<div style="font-size:10px;color:var(--muted2)">${statusIcon[a.status]||'⏳'} ${a.status||'pending'}</div>` : '<div style="font-size:10px;color:#c4b5fd"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22 6 12 13 2 6"/></svg> Invitation will be sent</div>'}
         </div>
         ${!a._existing ? `<button onclick="SCHED._removeAssign(${i})" style="width:26px;height:26px;border-radius:8px;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.2);color:#fca5a5;cursor:pointer;font-size:11px">✕</button>` : ''}
       </div>`).join('');
@@ -3649,7 +3649,7 @@ const SCHED = {
   addVolAssignment() {
     // Show a quick volunteer picker
     const vols = this._volunteers;
-    if (!vols.length) { toast('⚠️ No volunteers registered yet','err'); return; }
+    if (!vols.length) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> No volunteers registered yet','err'); return; }
 
     // Build a simple selection modal inline
     const picker = document.createElement('div');
@@ -3660,7 +3660,7 @@ const SCHED = {
         <div style="width:34px;height:34px;border-radius:50%;background:${gradientForName(v.name)};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0">${initials(v.name)}</div>
         <div style="flex:1">
           <div style="font-size:13px;font-weight:700;color:var(--text)">${v.name}</div>
-          <div style="font-size:11px;color:var(--muted)">${v.role||''}${v.department ? ' · '+v.department : ''}${v.email ? ' · 📧' : ' · ⚠️ no email'}</div>
+          <div style="font-size:11px;color:var(--muted)">${v.role||''}${v.department ? ' · '+v.department : ''}${v.email ? ' · <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22 6 12 13 2 6"/></svg>' : ' · <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> no email'}</div>
         </div>
       </div>`).join('')}
       <button onclick="this.parentElement.parentElement.remove()" style="width:100%;margin-top:8px;padding:12px;border-radius:12px;background:var(--surface2);border:1px solid var(--rim);color:var(--muted);font-family:var(--body);font-size:13px;font-weight:700;cursor:pointer">Cancel</button>
@@ -3693,9 +3693,9 @@ const SCHED = {
           location: ev2?.location, notes: ev2?.notes,
           newAssignments: newAssign
         });
-        if (r?.success) { await this.load(); toast(volEmail ? '✅ Volunteer added & invitation sent!' : '✅ Volunteer added (no email on file)','ok'); }
-        else toast('⚠️ '+(r?.error||'Failed'),'err');
-      } catch(e) { toast('⚠️ Error','err'); }
+        if (r?.success) { await this.load(); toast(volEmail ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Volunteer added & invitation sent!' : '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Volunteer added (no email on file)','ok'); }
+        else toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> '+(r?.error||'Failed'),'err');
+      } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Error','err'); }
       hideSaving();
       this._pickVol = origPick;
     };
@@ -3705,7 +3705,7 @@ const SCHED = {
     const id = document.getElementById('se_id').value;
     const name = document.getElementById('se_name').value.trim();
     const date = document.getElementById('se_date').value;
-    if (!name || !date) { toast('⚠️ Event name and date are required','err'); return; }
+    if (!name || !date) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Event name and date are required','err'); return; }
     const data = {
       name, type: document.getElementById('se_type').value,
       date, startTime: document.getElementById('se_start').value,
@@ -3725,9 +3725,9 @@ const SCHED = {
         closeModal('schedEventModal');
         await this.load();
         const sent = r.emailsSent?.length || 0;
-        toast(id ? '✅ Event updated' : `✅ Event created! ${sent} invitation${sent!==1?'s':''} sent`,'ok');
-      } else toast('⚠️ '+(r?.error||'Failed'),'err');
-    } catch(e) { toast('⚠️ Error','err'); }
+        toast(id ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Event updated' : `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Event created! ${sent} invitation${sent!==1?'s':''} sent`,'ok');
+      } else toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> '+(r?.error||'Failed'),'err');
+    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Error','err'); }
     hideSaving();
   },
 
@@ -3736,8 +3736,8 @@ const SCHED = {
     showSaving('Deleting…');
     try {
       const r = await gasRun('deleteScheduledEventAPI', id);
-      if (r?.success) { document.getElementById('schedDayDetail').style.display = 'none'; await this.load(); toast('🗑️ Event deleted','ok'); }
-    } catch(e) { toast('⚠️ Error','err'); }
+      if (r?.success) { document.getElementById('schedDayDetail').style.display = 'none'; await this.load(); toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg> Event deleted','ok'); }
+    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Error','err'); }
     hideSaving();
   },
 
@@ -3800,9 +3800,9 @@ const SCHED = {
         ${ev.notes ? `<div class="sched-event-notes">${ev.notes}</div>` : ''}
         ${ev.assignments.length ? `
           <div class="sched-stats">
-            <span class="stat-chip accepted">✅ ${cols.accepted} Confirmed</span>
+            <span class="stat-chip accepted"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> ${cols.accepted} Confirmed</span>
             <span class="stat-chip pending">⏳ ${cols.pending} Pending</span>
-            ${cols.declined ? `<span class="stat-chip declined">❌ ${cols.declined} Declined</span>` : ''}
+            ${cols.declined ? `<span class="stat-chip declined"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17" stroke-width="2.5"/></svg> ${cols.declined} Declined</span>` : ''}
           </div>
           <table class="vol-table">
             <thead><tr><th>Volunteer</th><th>Role</th><th>Department</th><th>Status</th></tr></thead>
@@ -3855,11 +3855,11 @@ const SCHED = {
       @media print{body{padding:16px}.sched-event{break-inside:avoid}}`;
 
     const win = window.open('','_blank','width=1000,height=800');
-    if (!win) { toast('⚠️ Allow pop-ups to print','err'); return; }
+    if (!win) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Allow pop-ups to print','err'); return; }
     win.document.open();
     win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Volunteer Schedule — ${monthName}</title><style>${css}</style></head>
 <body>
-  <h1>📅 Volunteer Schedule</h1>
+  <h1><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Volunteer Schedule</h1>
   <p class="subtitle">${monthName} · Generated ${new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</p>
   <div class="cal-header"><div>SUN</div><div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div></div>
   <div class="cal-grid">${calHTML}</div>
@@ -3883,7 +3883,7 @@ const SCHED = {
       if (r?.success) {
         const isAccepted = response === 'accepted';
         el.innerHTML = `<div style="text-align:center">
-          <div style="font-size:56px;margin-bottom:16px">${isAccepted ? '✅' : '❌'}</div>
+          <div style="font-size:56px;margin-bottom:16px">${isAccepted ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg>' : '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17" stroke-width="2.5"/></svg>'}</div>
           <div style="font-size:20px;font-weight:800;color:#fff;margin-bottom:8px">
             ${isAccepted ? 'You\'re confirmed!' : 'Response recorded'}
           </div>
@@ -3901,10 +3901,10 @@ const SCHED = {
           <button onclick="window.location.href=window.location.pathname" style="padding:12px 24px;border-radius:12px;background:rgba(139,92,246,0.2);border:1px solid rgba(139,92,246,0.4);color:#c4b5fd;font-family:sans-serif;font-size:14px;font-weight:700;cursor:pointer">Open Bolt Kiosk</button>
         </div>`;
       } else {
-        el.innerHTML = '<div style="text-align:center;padding:20px"><div style="font-size:40px;margin-bottom:12px">⚠️</div><div style="color:#fca5a5">Could not record response. The link may have expired.</div></div>';
+        el.innerHTML = '<div style="text-align:center;padding:20px"><div style="font-size:40px;margin-bottom:12px"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg></div><div style="color:#fca5a5">Could not record response. The link may have expired.</div></div>';
       }
     } catch(e) {
-      el.innerHTML = '<div style="text-align:center;padding:20px"><div style="font-size:40px;margin-bottom:12px">⚠️</div><div style="color:#fca5a5">Connection error. Please try again.</div></div>';
+      el.innerHTML = '<div style="text-align:center;padding:20px"><div style="font-size:40px;margin-bottom:12px"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg></div><div style="color:#fca5a5">Connection error. Please try again.</div></div>';
     }
   }
 };
