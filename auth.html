@@ -314,7 +314,7 @@
     <!-- LOGO -->
     <div class="logo-wrap">
       <div class="logo-frame">
-        <div class="logo-fallback" id="logoFallback">⚽</div>
+        <div class="logo-fallback" id="logoFallback"><span style="font-weight:900;font-size:18px;color:var(--accent)">B</span></div>
         <img src="https://raw.githubusercontent.com/kevinwallace553-oss/bolt/2ce609ed7f22893b2cb2b91e7ddb20d856cbd056/Bolt%20submark.png"
           alt="Logo"
           onload="this.style.opacity='1';document.getElementById('logoFallback').style.display='none'"
@@ -366,7 +366,7 @@
 
       <!-- THEME PICKER in login -->
       <div class="theme-section">
-        <div class="theme-section-title">🎨 System Theme</div>
+        <div class="theme-section-title">System Theme</div>
         <div class="theme-grid" id="themeGrid"></div>
       </div>
     </div>
@@ -682,7 +682,7 @@ function doRegister(){
       setLoading('regBtn',false);
       hideMsg('regOk');
       if(r&&r.success){
-        showMsg('regOk','✅ Organization created! Sign in with your credentials.','ok');
+        showMsg('regOk','Organization created! Sign in with your credentials.','ok');
         // Clear the form
         ['regChurch','regName','regEmail','regUsername','regPass','regPass2'].forEach(id=>{
           const el=document.getElementById(id);if(el)el.value='';
@@ -741,7 +741,7 @@ function doReset(){
     .withSuccessHandler(r=>{
       setLoading('resetBtn',false);
       if(r&&r.success){
-        showMsg('resetOk','✅ Password updated! Redirecting to sign in…','ok');
+        showMsg('resetOk','Password updated! Redirecting to sign in…','ok');
         setTimeout(()=>{
           document.getElementById('forgotStep2').style.display='none';
           document.getElementById('forgotStep1').style.display='block';

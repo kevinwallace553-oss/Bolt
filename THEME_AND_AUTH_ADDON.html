@@ -1,0 +1,362 @@
+<!-- ════════════════════════════════════════════════════════════════
+     SRFC YOUTH — THEME SYSTEM ADDON
+     
+     HOW TO INSTALL in kiosk.html and dashboard.html:
+     ─────────────────────────────────────────────────
+     1. Paste the <style> block below into your <head> (after existing :root vars)
+     2. Paste the <div id="themePickerModal"> block into your <body>
+     3. Paste the <script> block just before </body>
+     4. Add the theme toggle button anywhere in your UI (example at bottom)
+     
+     The theme system:
+     • 6 themes defined via CSS data-theme attributes on <html>
+     • Choice saved to localStorage so it persists across sessions
+     • Works across auth, kiosk, and dashboard pages automatically
+═══════════════════════════════════════════════════════════════ -->
+
+<!-- ══ STEP 1: Paste into <head>, after your existing :root block ══ -->
+<style id="srfc-theme-system">
+/* ════════════════════════════════════
+   THEME DEFINITIONS
+   Each theme overrides CSS variables
+════════════════════════════════════ */
+
+/* Default: Forest Night — already set in :root, no override needed */
+
+[data-theme="midnight-blue"] {
+  --green:#3b82f6;     --green2:#1d4ed8;
+  --green-glow:rgba(59,130,246,0.35);
+  --green-soft:rgba(59,130,246,0.12);
+  --teal:#7c3aed;
+  --ink:#060810;       --ink2:#090d1a;    --ink3:#0d1225;
+  --surface:rgba(255,255,255,0.04);
+  --surface2:rgba(255,255,255,0.07);
+  --rim:rgba(100,150,255,0.1);
+  --rim2:rgba(100,150,255,0.16);
+  --text:#e8f0ff;
+  --muted:rgba(232,240,255,0.45);
+  --muted2:rgba(232,240,255,0.25);
+}
+[data-theme="midnight-blue"] #spCount,
+[data-theme="midnight-blue"] .stat-item-val,
+[data-theme="midnight-blue"] .stat-value { color:#93c5fd }
+[data-theme="midnight-blue"] .lc-av { color:#93c5fd }
+
+[data-theme="crimson-night"] {
+  --green:#e11d48;     --green2:#9f1239;
+  --green-glow:rgba(225,29,72,0.35);
+  --green-soft:rgba(225,29,72,0.12);
+  --teal:#f97316;
+  --ink:#100608;       --ink2:#1a090c;    --ink3:#200d10;
+  --surface:rgba(255,255,255,0.04);
+  --surface2:rgba(255,255,255,0.07);
+  --rim:rgba(255,100,120,0.1);
+  --rim2:rgba(255,100,120,0.16);
+  --text:#fff0f2;
+  --muted:rgba(255,240,242,0.45);
+  --muted2:rgba(255,240,242,0.25);
+}
+[data-theme="crimson-night"] #spCount,
+[data-theme="crimson-night"] .stat-item-val,
+[data-theme="crimson-night"] .stat-value { color:#fda4af }
+
+[data-theme="golden-hour"] {
+  --green:#d97706;     --green2:#92400e;
+  --green-glow:rgba(217,119,6,0.35);
+  --green-soft:rgba(217,119,6,0.12);
+  --teal:#b45309;
+  --ink:#0f0a04;       --ink2:#1a1104;    --ink3:#211608;
+  --surface:rgba(255,255,255,0.04);
+  --surface2:rgba(255,255,255,0.07);
+  --rim:rgba(255,200,80,0.1);
+  --rim2:rgba(255,200,80,0.16);
+  --text:#fffbf0;
+  --muted:rgba(255,251,240,0.45);
+  --muted2:rgba(255,251,240,0.25);
+}
+[data-theme="golden-hour"] #spCount,
+[data-theme="golden-hour"] .stat-item-val,
+[data-theme="golden-hour"] .stat-value { color:#fcd34d }
+
+[data-theme="arctic-dawn"] {
+  --green:#0ea5e9;     --green2:#0369a1;
+  --green-glow:rgba(14,165,233,0.35);
+  --green-soft:rgba(14,165,233,0.12);
+  --teal:#06b6d4;
+  --ink:#030a10;       --ink2:#061018;    --ink3:#081520;
+  --surface:rgba(255,255,255,0.04);
+  --surface2:rgba(255,255,255,0.07);
+  --rim:rgba(100,220,255,0.1);
+  --rim2:rgba(100,220,255,0.16);
+  --text:#f0faff;
+  --muted:rgba(240,250,255,0.45);
+  --muted2:rgba(240,250,255,0.25);
+}
+[data-theme="arctic-dawn"] #spCount,
+[data-theme="arctic-dawn"] .stat-item-val,
+[data-theme="arctic-dawn"] .stat-value { color:#7dd3fc }
+
+[data-theme="violet-storm"] {
+  --green:#8b5cf6;     --green2:#6d28d9;
+  --green-glow:rgba(139,92,246,0.35);
+  --green-soft:rgba(139,92,246,0.12);
+  --teal:#ec4899;
+  --ink:#080610;       --ink2:#0d091a;    --ink3:#110c22;
+  --surface:rgba(255,255,255,0.04);
+  --surface2:rgba(255,255,255,0.07);
+  --rim:rgba(180,130,255,0.1);
+  --rim2:rgba(180,130,255,0.16);
+  --text:#f5f0ff;
+  --muted:rgba(245,240,255,0.45);
+  --muted2:rgba(245,240,255,0.25);
+}
+[data-theme="violet-storm"] #spCount,
+[data-theme="violet-storm"] .stat-item-val,
+[data-theme="violet-storm"] .stat-value { color:#c4b5fd }
+
+/* ════════════════════════════════════
+   THEME PICKER MODAL
+════════════════════════════════════ */
+.theme-picker-modal {
+  display:none;position:fixed;inset:0;z-index:9999;
+  background:rgba(0,0,0,0.72);backdrop-filter:blur(18px);
+  align-items:center;justify-content:center;
+}
+.theme-picker-modal.open { display:flex; }
+.tpm-card {
+  background:var(--ink2);
+  border:1px solid var(--rim2);
+  border-top:2px solid var(--green);
+  border-radius:24px;
+  width:min(420px,94vw);
+  padding:28px 24px 24px;
+  box-shadow:0 40px 80px rgba(0,0,0,0.6),0 0 60px var(--green-glow);
+  animation:tpmIn 0.35s cubic-bezier(0.22,0.68,0,1.2) both;
+  position:relative;
+}
+@keyframes tpmIn {
+  from{opacity:0;transform:scale(0.88) translateY(20px)}
+  to{opacity:1;transform:none}
+}
+.tpm-head {
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:20px;
+}
+.tpm-title {
+  font-family:'Outfit',sans-serif;
+  font-size:18px;font-weight:800;color:var(--text);
+  letter-spacing:0.5px;
+}
+.tpm-close {
+  width:30px;height:30px;border-radius:50%;
+  background:var(--surface);border:1px solid var(--rim2);
+  color:var(--muted);font-size:14px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all 0.2s;
+}
+.tpm-close:hover { background:var(--surface2);color:var(--text); }
+.tpm-grid {
+  display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
+  margin-bottom:20px;
+}
+.tpm-swatch {
+  display:flex;flex-direction:column;align-items:center;gap:7px;
+  padding:12px 8px 10px;
+  background:var(--ink3,var(--ink));
+  border:1.5px solid var(--rim);border-radius:14px;
+  cursor:pointer;transition:all 0.2s;position:relative;
+  -webkit-tap-highlight-color:transparent;
+}
+.tpm-swatch:hover { border-color:var(--rim2);transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,0.3); }
+.tpm-swatch.active {
+  border-color:var(--ts-primary,var(--green));
+  box-shadow:0 0 0 2px rgba(42,125,79,0.22),0 6px 20px rgba(0,0,0,0.25);
+}
+.tpm-swatch.active::after {
+  content:'✓';position:absolute;top:6px;right:8px;
+  font-size:9px;font-weight:900;
+  color:var(--ts-primary,var(--green));
+}
+.tpm-dot {
+  width:36px;height:36px;border-radius:50%;
+  background:conic-gradient(var(--ts-a,#2A7D4F) 0deg 180deg, var(--ts-b,#1A7A8A) 180deg 360deg);
+  box-shadow:0 4px 12px rgba(0,0,0,0.35);flex-shrink:0;
+}
+.tpm-name {
+  font-size:10px;font-weight:700;
+  color:var(--muted);text-align:center;line-height:1.2;
+}
+.tpm-swatch.active .tpm-name { color:var(--text); }
+.tpm-footer {
+  text-align:center;font-size:11px;color:var(--muted2);
+  font-weight:500;
+}
+
+/* Theme toggle button (floating) */
+.theme-toggle-btn {
+  position:fixed;bottom:18px;right:18px;z-index:1000;
+  width:42px;height:42px;border-radius:50%;
+  background:rgba(13,19,24,0.95);
+  border:1px solid var(--rim2);
+  color:var(--muted);font-size:18px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  backdrop-filter:blur(12px);transition:all 0.2s;
+  box-shadow:0 4px 16px rgba(0,0,0,0.4);
+}
+.theme-toggle-btn:hover {
+  border-color:var(--green);color:var(--text);
+  box-shadow:0 0 20px var(--green-glow),0 4px 16px rgba(0,0,0,0.4);
+}
+@media(max-width:600px) {
+  .tpm-grid { grid-template-columns:repeat(2,1fr); }
+}
+</style>
+
+<!-- ══ STEP 2: Paste into <body> (before closing tag) ══ -->
+<div class="theme-picker-modal" id="themePickerModal">
+  <div class="tpm-card">
+    <div class="tpm-head">
+      <div class="tpm-title">Choose Theme</div>
+      <button class="tpm-close" onclick="closeThemePicker()">✕</button>
+    </div>
+    <div class="tpm-grid" id="tpmGrid"></div>
+    <div class="tpm-footer">Theme is saved automatically and syncs across all pages.</div>
+  </div>
+</div>
+
+<!-- Floating theme button — reposition or restyle as desired -->
+<button class="theme-toggle-btn" onclick="openThemePicker()" title="Change theme"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+
+<!-- ══ STEP 3: Paste just before </body> ══ -->
+<script id="srfc-theme-js">
+/* ══════════════════════════════════════════════════
+   SRFC YOUTH THEME ENGINE
+   Shared across auth.html, kiosk.html, dashboard.html
+══════════════════════════════════════════════════ */
+(function(){
+  const THEMES=[
+    {id:'forest-night',  name:'Forest Night',  a:'#2A7D4F', b:'#1A7A8A'},
+    {id:'midnight-blue', name:'Midnight Blue',  a:'#3b82f6', b:'#7c3aed'},
+    {id:'crimson-night', name:'Crimson Night',  a:'#e11d48', b:'#f97316'},
+    {id:'golden-hour',   name:'Golden Hour',    a:'#d97706', b:'#b45309'},
+    {id:'arctic-dawn',   name:'Arctic Dawn',    a:'#0ea5e9', b:'#06b6d4'},
+    {id:'violet-storm',  name:'Violet Storm',   a:'#8b5cf6', b:'#ec4899'},
+  ];
+
+  // ── Apply theme to document root ───────────────────────────────
+  function applyTheme(id){
+    document.documentElement.removeAttribute('data-theme');
+    if(id && id !== 'forest-night') document.documentElement.setAttribute('data-theme', id);
+    try{ localStorage.setItem('srfc_theme', id); }catch(e){}
+    // Update swatch active state in both picker and auth page grid
+    document.querySelectorAll('.tpm-swatch, .theme-swatch').forEach(sw=>{
+      sw.classList.toggle('active', sw.dataset.theme === id);
+    });
+    // Dispatch event so other parts of UI can react
+    document.dispatchEvent(new CustomEvent('srfc-theme-change',{detail:{theme:id}}));
+  }
+
+  // ── Build the picker grid ───────────────────────────────────────
+  function buildGrid(containerId){
+    const grid = document.getElementById(containerId);
+    if(!grid) return;
+    const current = getCurrentTheme();
+    grid.innerHTML = THEMES.map(t=>`
+      <div class="tpm-swatch${t.id===current?' active':''}"
+        data-theme="${t.id}"
+        style="--ts-a:${t.a};--ts-b:${t.b};--ts-primary:${t.a}"
+        onclick="window._srfcApplyTheme('${t.id}')">
+        <div class="tpm-dot"></div>
+        <div class="tpm-name">${t.name}</div>
+      </div>
+    `).join('');
+  }
+
+  function getCurrentTheme(){
+    try{ return localStorage.getItem('srfc_theme')||'forest-night'; }catch(e){ return 'forest-night'; }
+  }
+
+  // ── Public API ──────────────────────────────────────────────────
+  window._srfcApplyTheme = applyTheme;
+  window.openThemePicker = function(){
+    buildGrid('tpmGrid');
+    document.getElementById('themePickerModal').classList.add('open');
+  };
+  window.closeThemePicker = function(){
+    document.getElementById('themePickerModal').classList.remove('open');
+  };
+
+  // Close on backdrop click
+  document.addEventListener('click',function(e){
+    const modal=document.getElementById('themePickerModal');
+    if(modal && e.target===modal) closeThemePicker();
+  });
+
+  // Close on Escape
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape') closeThemePicker();
+  });
+
+  // ── Init: apply saved theme immediately ─────────────────────────
+  applyTheme(getCurrentTheme());
+
+  // ── Also expose for auth page grid (uses class .theme-swatch) ──
+  window.buildAuthThemeGrid = function(containerId){
+    const grid = document.getElementById(containerId||'themeGrid');
+    if(!grid) return;
+    const current = getCurrentTheme();
+    grid.innerHTML = THEMES.map(t=>`
+      <div class="theme-swatch${t.id===current?' active':''}"
+        data-theme="${t.id}"
+        style="--ts-a:${t.a};--ts-b:${t.b};--ts-primary:${t.a}"
+        onclick="window._srfcApplyTheme('${t.id}')">
+        <div class="ts-dot"></div>
+        <div class="ts-name">${t.name}</div>
+      </div>
+    `).join('');
+  };
+
+})();
+</script>
+
+<!--
+═══════════════════════════════════════════════════════════════
+QUICK-REFERENCE: Where to add sign-out button
+
+In kiosk.html, find the .manage-btn button and add after it:
+
+  <button class="manage-btn" style="right:160px" onclick="signOut()"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> Sign Out</button>
+
+In dashboard.html, find .tb-right div and add:
+
+  <button class="tb-btn" onclick="signOut()" style="background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.2);color:#fca5a5"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> Sign Out</button>
+
+Then in the <script> of each page, add:
+
+  function signOut(){
+    const token = (function(){ try{ return localStorage.getItem('srfc_session')||''; }catch(e){ return ''; } })();
+    try{ localStorage.removeItem('srfc_session'); localStorage.removeItem('srfc_user'); localStorage.removeItem('srfc_remember'); }catch(e){}
+    google.script.run.withSuccessHandler(()=>{ window.location.href='?page=auth'; }).authLogoutAPI(token);
+  }
+
+═══════════════════════════════════════════════════════════════
+HOW THE AUTH FLOW WORKS (summary for your reference)
+═══════════════════════════════════════════════════════════════
+
+1. User visits your app URL — doGet() now defaults to ?page=auth
+2. They enter credentials → authLoginAPI() validates against Users sheet
+   - On success: returns a token saved to localStorage
+   - Redirect to ?page=kiosk
+3. Kiosk/dashboard pages call authValidateTokenAPI(token) on load
+   - If invalid/expired → redirect back to ?page=auth
+4. Forgot password:
+   - authForgotPasswordAPI(email) → generates 6-digit code, emails it
+   - authResetPasswordAPI(email, code, newPass) → updates password
+
+ONE-TIME SETUP:
+  In Apps Script editor → run setupAuthSheets() once.
+  This creates the Users and Sessions sheets.
+  Then register your first account via ?page=auth.
+
+═══════════════════════════════════════════════════════════════
+-->

@@ -20,7 +20,7 @@ async function gasRun(fn, ...args) {
     if(data?.code === 'AUTH_REQUIRED' && typeof showView === 'function') {
       Object.assign(SESSION, {token:'',name:'',role:'',username:''});
       showView('vAuth');
-      if(typeof toast === 'function') toast('⚠️ Session expired — please sign in again','err');
+      if(typeof toast === 'function') toast('Session expired — please sign in again','err');
     }
     return data;
   } catch(e) { return { success: false, error: text }; }
