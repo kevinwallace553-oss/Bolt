@@ -4,6 +4,11 @@
 
 /* ── SESSION ── */
 const SESSION = { token:'', name:'', role:'', username:'', orgId:'' };
+
+/* ── Mobile detection helper ── */
+function isMobile() { return window.innerWidth <= 600; }
+function isTablet() { return window.innerWidth > 600 && window.innerWidth <= 900; }
+
 let _allStudents = [];
 let _checkedToday = new Set();   // Set of student IDs checked in today
 let _checkinsToday = [];          // Full checkin objects for dashboard
@@ -71,8 +76,13 @@ function showView(id) {
   if(btn) btn.classList.add('active');
   const mobNav = document.getElementById('mobileNav');
   if(mobNav) {
-    const mainViews = ['vHome','vKiosk','vDash','vCM','vVolunteers','vSmallGroups'];
+    // On mobile, show nav for all main views — CSS hides items 4-6
+    const mainViews = ['vHome','vKiosk','vDash','vCM','vVolunteers','vSmallGroups','vSchedule'];
     mobNav.style.display = (window.innerWidth<=600 && mainViews.includes(id)) ? 'flex' : 'none';
+    // Highlight active nav btn
+    document.querySelectorAll('.mob-nav-btn').forEach(b=>b.classList.remove('active'));
+    const activeBtn=document.querySelector('.mob-nav-btn[data-view="'+id+'"]');
+    if(activeBtn)activeBtn.classList.add('active');
   }
 }
 
@@ -197,20 +207,45 @@ function closeDrawer() {
 window.addEventListener('load', async () => {
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 
-  // If this is an RSVP link, show ONLY the RSVP page — never load auth or app
   const _params = new URLSearchParams(window.location.search);
+
+  // ── RSVP link: isolated page, no auth ──
   if (_params.get('rsvp') && _params.get('r')) {
-    // Hide ALL views and show only the standalone RSVP page
     document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
     document.body.style.background = '#0a1628';
     const rsvpPage = document.getElementById('vRsvp');
     if (rsvpPage) rsvpPage.style.display = 'flex';
-    // No auth, no session, no app — just RSVP
     setTimeout(() => SCHED.handleRsvp(_params.get('rsvp'), _params.get('r')), 400);
-    return; // Stop here — do NOT load the app
+    return;
   }
 
-  // Normal app load — require authentication
+  // ── Returning from auth.html login — restore session from URL params ──
+  const urlToken  = _params.get('token');
+  const urlOrgId  = _params.get('orgId');
+  const urlUser   = _params.get('user');
+
+  if (urlToken && urlUser) {
+    try {
+      const userObj = JSON.parse(decodeURIComponent(urlUser));
+      // Restore full session including orgId
+      SESSION.token    = decodeURIComponent(urlToken);
+      SESSION.orgId    = decodeURIComponent(urlOrgId || 'ORG_DEFAULT');
+      SESSION.name     = userObj.name     || '';
+      SESSION.role     = userObj.role     || '';
+      SESSION.username = userObj.username || '';
+      // Remove params from URL so refresh doesn't re-use the same token params
+      window.history.replaceState({}, '', window.location.pathname);
+      // Go straight to home
+      const greetEl = document.getElementById('homeGreet');
+      if (greetEl) greetEl.textContent = 'Hey, ' + SESSION.name + '!';
+      setTimeout(() => showView('vHome'), 100);
+      return;
+    } catch(err) {
+      console.error('Session restore error:', err);
+    }
+  }
+
+  // ── Normal load: require authentication ──
   setTimeout(() => showView('vAuth'), 500);
 });
 
@@ -255,18 +290,25 @@ const AUTH = {
     this.setLoading(false);
   },
   async register() {
-    const n=document.getElementById('regName').value.trim(),
-          e=document.getElementById('regEmail').value.trim(),
-          u=document.getElementById('regUser').value.trim(),
-          p=document.getElementById('regPass').value;
+    const ch= document.getElementById('regChurch')?.value.trim() || '';
+    const n = document.getElementById('regName').value.trim();
+    const e = document.getElementById('regEmail').value.trim();
+    const u = document.getElementById('regUser').value.trim();
+    const p = document.getElementById('regPass').value;
     this.clearMsgs();
+    if(!ch){this.showErr('regErr','Church or organization name is required.');return;}
     if(!n||!e||!u||!p){this.showErr('regErr','All fields are required.');return;}
     this.setLoading(true);
+    this.showOk('regOk','Setting up your organization… this may take 15–20 seconds.');
     try {
-      const r = await API.register(n,e,u,p);
-      if(r?.success){this.showOk('regOk','Account created! Sign in now.');setTimeout(()=>this.tab('login'),1600);}
-      else this.showErr('regErr',r?.error||'Registration failed.');
-    } catch(e){this.showErr('regErr','Connection error.');}
+      const r = await gasRun('createOrganizationAPI', ch, e, n, u, p);
+      if(r?.success){
+        this.showOk('regOk','✅ Organization created! Sign in now.');
+        setTimeout(()=>this.tab('login'),2000);
+      } else {
+        this.showErr('regErr', r?.error||'Registration failed.');
+      }
+    } catch(err){this.showErr('regErr','Connection error.');}
     this.setLoading(false);
   },
   async forgot() {
@@ -391,7 +433,10 @@ const KIOSK = {
 
     // Update greeting with leader name
     const greetEl = document.getElementById('epGreeting');
-    if(greetEl && SESSION.name) greetEl.textContent = 'Hey, ' + SESSION.name + '!';
+    if(greetEl && SESSION.name) {
+    const isMob = window.innerWidth <= 600;
+    greetEl.textContent = isMob ? 'Hey, ' + SESSION.name.split(' ')[0] + '!' : 'Hey, ' + SESSION.name + '!';
+  }
 
     // ── Small Groups → skip kiosk, go straight to SG view ──
     if(eventName === 'Small Groups') {

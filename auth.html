@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ══════════════════════════════════════════════════
+       THEME SYSTEM — 6 themes, CSS variables
+    ══════════════════════════════════════════════════ */
+    :root {
+      /* Default: Forest Night (Bolt Teal) */
+      --th-primary:#0d9488; --th-primary2:#0f766e;
+      --th-primary-glow:rgba(13,148,136,0.4); --th-primary-soft:rgba(13,148,136,0.14);
+      --th-accent:#06b6d4; --th-accent-soft:rgba(6,182,212,0.1);
+      --th-ink:#060e10; --th-ink2:#0a1518; --th-ink3:#0d1c1f;
+      --th-surface:rgba(255,255,255,0.04); --th-surface2:rgba(255,255,255,0.07);
+      --th-rim:rgba(6,182,212,0.12); --th-rim2:rgba(6,182,212,0.2);
+      --th-text:#e8fffe; --th-muted:rgba(165,243,252,0.5); --th-muted2:rgba(165,243,252,0.28);
+      --th-val:#67e8f9; --th-val2:#a5f3fc;
+      --th-grad1:rgba(13,148,136,0.1); --th-grad2:rgba(6,182,212,0.07);
+      --th-bar:linear-gradient(90deg,transparent,#0d9488,#06b6d4,transparent);
+    }
+    [data-theme="midnight-blue"] {
+      --th-primary:#3b82f6; --th-primary2:#1d4ed8;
+      --th-primary-glow:rgba(59,130,246,0.35); --th-primary-soft:rgba(59,130,246,0.12);
+      --th-accent:#7c3aed; --th-accent-soft:rgba(124,58,237,0.1);
+      --th-ink:#060810; --th-ink2:#090d1a; --th-ink3:#0d1225;
+      --th-surface:rgba(255,255,255,0.04); --th-surface2:rgba(255,255,255,0.07);
+      --th-rim:rgba(100,150,255,0.1); --th-rim2:rgba(100,150,255,0.16);
+      --th-text:#e8f0ff; --th-muted:rgba(232,240,255,0.45); --th-muted2:rgba(232,240,255,0.25);
+      --th-val:#93c5fd; --th-val2:#c4b5fd;
+      --th-grad1:rgba(59,130,246,0.07); --th-grad2:rgba(124,58,237,0.05);
+      --th-bar:linear-gradient(90deg,transparent,#3b82f6,#7c3aed,transparent);
+    }
+    [data-theme="crimson-night"] {
+      --th-primary:#e11d48; --th-primary2:#9f1239;
+      --th-primary-glow:rgba(225,29,72,0.35); --th-primary-soft:rgba(225,29,72,0.12);
+      --th-accent:#f97316; --th-accent-soft:rgba(249,115,22,0.1);
+      --th-ink:#100608; --th-ink2:#1a090c; --th-ink3:#200d10;
+      --th-surface:rgba(255,255,255,0.04); --th-surface2:rgba(255,255,255,0.07);
+      --th-rim:rgba(255,100,120,0.1); --th-rim2:rgba(255,100,120,0.16);
+      --th-text:#fff0f2; --th-muted:rgba(255,240,242,0.45); --th-muted2:rgba(255,240,242,0.25);
+      --th-val:#fda4af; --th-val2:#fdba74;
+      --th-grad1:rgba(225,29,72,0.07); --th-grad2:rgba(249,115,22,0.05);
+      --th-bar:linear-gradient(90deg,transparent,#e11d48,#f97316,transparent);
+    }
+    [data-theme="golden-hour"] {
+      --th-primary:#d97706; --th-primary2:#92400e;
+      --th-primary-glow:rgba(217,119,6,0.35); --th-primary-soft:rgba(217,119,6,0.12);
+      --th-accent:#b45309; --th-accent-soft:rgba(180,83,9,0.1);
+      --th-ink:#0f0a04; --th-ink2:#1a1104; --th-ink3:#211608;
+      --th-surface:rgba(255,255,255,0.04); --th-surface2:rgba(255,255,255,0.07);
+      --th-rim:rgba(255,200,80,0.1); --th-rim2:rgba(255,200,80,0.16);
+      --th-text:#fffbf0; --th-muted:rgba(255,251,240,0.45); --th-muted2:rgba(255,251,240,0.25);
+      --th-val:#fcd34d; --th-val2:#fb923c;
+      --th-grad1:rgba(217,119,6,0.07); --th-grad2:rgba(180,83,9,0.05);
+      --th-bar:linear-gradient(90deg,transparent,#d97706,#b45309,transparent);
+    }
+    [data-theme="arctic-dawn"] {
+      --th-primary:#0ea5e9; --th-primary2:#0369a1;
+      --th-primary-glow:rgba(14,165,233,0.35); --th-primary-soft:rgba(14,165,233,0.12);
+      --th-accent:#06b6d4; --th-accent-soft:rgba(6,182,212,0.1);
+      --th-ink:#030a10; --th-ink2:#061018; --th-ink3:#081520;
+      --th-surface:rgba(255,255,255,0.04); --th-surface2:rgba(255,255,255,0.07);
+      --th-rim:rgba(100,220,255,0.1); --th-rim2:rgba(100,220,255,0.16);
+      --th-text:#f0faff; --th-muted:rgba(240,250,255,0.45); --th-muted2:rgba(240,250,255,0.25);
+      --th-val:#7dd3fc; --th-val2:#67e8f9;
+      --th-grad1:rgba(14,165,233,0.07); --th-grad2:rgba(6,182,212,0.05);
+      --th-bar:linear-gradient(90deg,transparent,#0ea5e9,#06b6d4,transparent);
+    }
+    [data-theme="violet-storm"] {
+      --th-primary:#8b5cf6; --th-primary2:#6d28d9;
+      --th-primary-glow:rgba(139,92,246,0.35); --th-primary-soft:rgba(139,92,246,0.12);
+      --th-accent:#ec4899; --th-accent-soft:rgba(236,72,153,0.1);
+      --th-ink:#080610; --th-ink2:#0d091a; --th-ink3:#110c22;
+      --th-surface:rgba(255,255,255,0.04); --th-surface2:rgba(255,255,255,0.07);
+      --th-rim:rgba(180,130,255,0.1); --th-rim2:rgba(180,130,255,0.16);
+      --th-text:#f5f0ff; --th-muted:rgba(245,240,255,0.45); --th-muted2:rgba(245,240,255,0.25);
+      --th-val:#c4b5fd; --th-val2:#f9a8d4;
+      --th-grad1:rgba(139,92,246,0.07); --th-grad2:rgba(236,72,153,0.05);
+      --th-bar:linear-gradient(90deg,transparent,#8b5cf6,#ec4899,transparent);
+    }
+
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;height:100dvh;overflow:hidden}
+    body{
+      font-family:'DM Sans',sans-serif;
+      background:var(--th-ink);
+      color:var(--th-text);
+      display:flex;align-items:center;justify-content:center;
+    }
+
+    /* BG */
+    .bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+    .bg-noise{
+      position:absolute;inset:0;opacity:0.028;
+      background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size:200px;
+    }
+    .bg-glow1{
+      position:absolute;width:800px;height:800px;top:-300px;left:-250px;
+      background:radial-gradient(circle,var(--th-grad1),transparent 65%);
+      animation:glowDrift 30s ease-in-out infinite;
+    }
+    .bg-glow2{
+      position:absolute;width:600px;height:600px;bottom:-250px;right:-200px;
+      background:radial-gradient(circle,var(--th-grad2),transparent 65%);
+      animation:glowDrift 22s ease-in-out infinite reverse;
+    }
+    .bg-grid{
+      position:absolute;inset:0;
+      background-image:linear-gradient(var(--th-rim) 1px,transparent 1px),
+        linear-gradient(90deg,var(--th-rim) 1px,transparent 1px);
+      background-size:64px 64px;opacity:0.5;
+    }
+    @keyframes glowDrift{0%,100%{transform:translate(0,0)}33%{transform:translate(50px,-40px)}66%{transform:translate(-35px,50px)}}
+
+    /* CARD */
+    .auth-wrap{
+      position:relative;z-index:1;
+      width:min(440px,96vw);
+      max-height:96dvh;
+      overflow-y:auto;
+      scrollbar-width:none;
+    }
+    .auth-wrap::-webkit-scrollbar{display:none}
+    .auth-card{
+      background:var(--th-ink2);
+      border:1px solid var(--th-rim2);
+      border-radius:28px;
+      padding:40px 38px 36px;
+      box-shadow:0 40px 100px rgba(0,0,0,0.65),0 0 80px var(--th-grad1),inset 0 1px 0 rgba(255,255,255,0.06);
+      animation:cardIn 0.6s cubic-bezier(0.22,0.68,0,1.1) both;
+      position:relative;overflow:hidden;
+    }
+    .auth-card::before{
+      content:'';position:absolute;top:0;left:0;right:0;height:2px;
+      background:var(--th-bar);
+    }
+    @keyframes cardIn{from{opacity:0;transform:translateY(40px) scale(0.96)}to{opacity:1;transform:none}}
+
+    /* LOGO */
+    .logo-wrap{display:flex;align-items:center;justify-content:center;margin-bottom:26px}
+    .logo-frame{
+      width:72px;height:72px;border-radius:18px;
+      background:var(--th-ink2);
+      border:1px solid var(--th-rim2);
+      padding:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;
+      box-shadow:0 0 40px var(--th-primary-glow);position:relative;
+    }
+    .logo-frame::before{
+      content:'';position:absolute;inset:-4px;border-radius:22px;
+      border:1.5px solid rgba(255,255,255,0.08);
+      animation:framePulse 4s ease-in-out infinite;
+    }
+    @keyframes framePulse{0%,100%{opacity:0.5;transform:scale(1)}50%{opacity:1;transform:scale(1.04)}}
+    .logo-frame img{width:100%;height:100%;object-fit:contain;border-radius:10px}
+    .logo-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:28px}
+
+    /* PAGE TITLES */
+    .page-view{display:none;animation:viewIn 0.3s ease both}
+    .page-view.active{display:block}
+    @keyframes viewIn{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
+    .page-title{
+      font-family:'Outfit',sans-serif;
+      font-size:28px;font-weight:900;letter-spacing:0.5px;
+      text-align:center;margin-bottom:4px;color:var(--th-text);
+    }
+    .page-title em{color:var(--th-val);font-style:normal}
+    .page-sub{
+      text-align:center;font-size:13px;color:var(--th-muted);
+      margin-bottom:28px;font-weight:400;line-height:1.5;
+    }
+
+    /* FORM ELEMENTS */
+    .field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+    .field-label{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:var(--th-muted)}
+    .field-wrap{position:relative}
+    .field-icon{position:absolute;left:15px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none;opacity:0.45;transition:opacity 0.2s}
+    .field-wrap:focus-within .field-icon{opacity:0.9}
+    .field-input{
+      width:100%;padding:14px 14px 14px 44px;
+      font-size:15px;font-family:'DM Sans',sans-serif;font-weight:500;
+      background:var(--th-ink2);border:1.5px solid var(--th-rim);border-radius:14px;
+      color:var(--th-text);transition:all 0.25s;outline:none;
+      box-shadow:inset 0 1px 4px rgba(0,0,0,0.2);
+    }
+    .field-input::placeholder{color:var(--th-muted2)}
+    .field-input:focus{border-color:var(--th-primary);box-shadow:0 0 0 4px var(--th-primary-glow),inset 0 1px 4px rgba(0,0,0,0.2)}
+    .field-input.no-icon{padding-left:16px}
+    .field-input.err{border-color:#ef4444;box-shadow:0 0 0 3px rgba(239,68,68,0.2)}
+    .pw-toggle{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--th-muted);cursor:pointer;padding:4px;font-size:13px;line-height:1;transition:color 0.2s}
+    .pw-toggle:hover{color:var(--th-text)}
+
+    /* ERROR / SUCCESS MSGS */
+    .form-msg{
+      padding:10px 14px;border-radius:10px;font-size:12px;font-weight:600;
+      margin-bottom:12px;display:none;line-height:1.5;
+    }
+    .form-msg.err{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:#fca5a5}
+    .form-msg.ok{background:rgba(42,125,79,0.1);border:1px solid rgba(42,125,79,0.25);color:var(--th-val)}
+    .form-msg.show{display:block}
+
+    /* BUTTONS */
+    .btn-primary{
+      width:100%;padding:15px;margin-top:6px;
+      font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;
+      border:none;border-radius:14px;cursor:pointer;transition:all 0.2s;
+      background:var(--th-primary);color:#fff;
+      box-shadow:0 6px 24px var(--th-primary-glow);
+      position:relative;overflow:hidden;
+    }
+    .btn-primary::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,0.1),transparent);border-radius:14px}
+    .btn-primary:hover{background:var(--th-primary2);transform:translateY(-1px);box-shadow:0 10px 32px var(--th-primary-glow)}
+    .btn-primary:active{transform:scale(0.98)}
+    .btn-primary:disabled{opacity:0.45;cursor:not-allowed;transform:none}
+    .btn-primary .btn-spinner{display:none;width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,0.25);border-top-color:#fff;animation:spin 0.7s linear infinite;margin:0 auto}
+    .btn-primary.loading .btn-text{display:none}
+    .btn-primary.loading .btn-spinner{display:block}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* LINKS */
+    .link-row{text-align:center;margin-top:16px;font-size:12px;color:var(--th-muted)}
+    .link-btn{background:none;border:none;color:var(--th-val);font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;text-decoration:none;transition:opacity 0.2s}
+    .link-btn:hover{opacity:0.75;text-decoration:underline}
+
+    /* DIVIDER */
+    .divider{display:flex;align-items:center;gap:10px;margin:16px 0;color:var(--th-muted2);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+    .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--th-rim)}
+
+    /* REMEMBER ME */
+    .check-row{display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:4px}
+    .check-box{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--th-rim2);background:var(--th-ink2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:transparent;transition:all 0.2s}
+    input[type=checkbox]:checked+.check-box{background:var(--th-primary);border-color:var(--th-primary);color:#fff}
+    input[type=checkbox]{display:none}
+    .check-label{font-size:12px;color:var(--th-muted);font-weight:500}
+
+    /* ════════════════════════════════════════
+       THEME PICKER
+    ════════════════════════════════════════ */
+    .theme-section{margin-top:20px;padding-top:18px;border-top:1px solid var(--th-rim)}
+    .theme-section-title{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:var(--th-muted);margin-bottom:12px;display:flex;align-items:center;gap:7px}
+    .theme-section-title::after{content:'';flex:1;height:1px;background:var(--th-rim)}
+    .theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+    .theme-swatch{
+      display:flex;flex-direction:column;align-items:center;gap:6px;
+      padding:10px 8px 8px;border-radius:12px;
+      border:1.5px solid var(--th-rim);background:var(--th-ink2);
+      cursor:pointer;transition:all 0.2s;position:relative;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .theme-swatch:hover{border-color:var(--th-rim2);transform:translateY(-1px)}
+    .theme-swatch.active{border-color:var(--ts-primary,#2A7D4F);box-shadow:0 0 0 2px rgba(var(--ts-primary-rgb,42 125 79),.25)}
+    .theme-swatch.active::after{content:'✓';position:absolute;top:5px;right:7px;font-size:9px;font-weight:900;color:var(--ts-primary,#2A7D4F)}
+    .ts-dot{
+      width:32px;height:32px;border-radius:50%;
+      background:conic-gradient(var(--ts-a,#2A7D4F) 0deg 180deg, var(--ts-b,#1A7A8A) 180deg 360deg);
+      box-shadow:0 3px 10px rgba(0,0,0,0.3);flex-shrink:0;
+    }
+    .ts-name{font-size:10px;font-weight:700;color:var(--th-muted);text-align:center;line-height:1.2}
+    .theme-swatch.active .ts-name{color:var(--th-text)}
+
+    /* STRENGTH METER */
+    .pw-strength{margin-top:5px;display:none}
+    .pw-strength.show{display:block}
+    .pw-strength-bar{height:3px;border-radius:2px;background:var(--th-rim);overflow:hidden}
+    .pw-strength-fill{height:100%;border-radius:2px;transition:all 0.4s;width:0}
+    .pw-strength-label{font-size:10px;font-weight:700;margin-top:4px;color:var(--th-muted)}
+
+    /* BACK BUTTON */
+    .back-btn{
+      display:flex;align-items:center;gap:6px;
+      background:none;border:none;color:var(--th-muted);
+      font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;
+      cursor:pointer;margin-bottom:20px;padding:0;transition:color 0.2s;
+    }
+    .back-btn:hover{color:var(--th-text)}
+
+    /* EMAIL SENT STATE */
+    .email-sent-state{text-align:center;padding:20px 0}
+    .email-sent-icon{font-size:56px;margin-bottom:12px;animation:iconBounce 0.6s cubic-bezier(0.22,0.68,0,1.4) both}
+    @keyframes iconBounce{from{transform:scale(0)}to{transform:scale(1)}}
+
+    /* SHAKE */
+    @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+    .shake{animation:shake 0.35s ease both}
+
+    /* SCROLLBAR */
+    ::-webkit-scrollbar{width:3px}
+    ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:var(--th-rim2);border-radius:99px}
+
+    @media(max-height:680px){.auth-card{padding:28px 28px 24px}}
+    @media(max-width:400px){.auth-card{padding:28px 20px 24px}.theme-grid{grid-template-columns:repeat(2,1fr)}}
+  </style>
+</head>
+<body>
+
+<div class="bg">
+  <div class="bg-noise"></div>
+  <div class="bg-grid"></div>
+  <div class="bg-glow1"></div>
+  <div class="bg-glow2"></div>
+</div>
+
+<div class="auth-wrap">
+  <div class="auth-card" id="authCard">
+
+    <!-- LOGO -->
+    <div class="logo-wrap">
+      <div class="logo-frame">
+        <div class="logo-fallback" id="logoFallback">⚽</div>
+        <img src="https://raw.githubusercontent.com/kevinwallace553-oss/bolt/2ce609ed7f22893b2cb2b91e7ddb20d856cbd056/Bolt%20submark.png"
+          alt="Logo"
+          onload="this.style.opacity='1';document.getElementById('logoFallback').style.display='none'"
+          onerror="this.style.display='none';document.getElementById('logoFallback').style.display='flex'"
+          style="opacity:0;transition:opacity 0.4s">
+      </div>
+    </div>
+
+    <!-- ══════════════════ LOGIN VIEW ══════════════════ -->
+    <div class="page-view active" id="viewLogin">
+      <div class="page-title">BOLT <em>KIOSK</em></div>
+      <div class="page-sub">Sign in to access Bolt Kiosk</div>
+
+      <div class="form-msg err" id="loginErr"></div>
+
+      <div class="field">
+        <label class="field-label">Username or Email</label>
+        <div class="field-wrap">
+          <span class="field-icon">👤</span>
+          <input class="field-input" id="loginUser" type="text" placeholder="your.name or email@address" autocomplete="username" autocapitalize="none" spellcheck="false">
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Password</label>
+        <div class="field-wrap">
+          <span class="field-icon">🔒</span>
+          <input class="field-input" id="loginPass" type="password" placeholder="Enter your password" autocomplete="current-password">
+          <button class="pw-toggle" onclick="togglePw('loginPass',this)" tabindex="-1">👁</button>
+        </div>
+      </div>
+
+      <label class="check-row">
+        <input type="checkbox" id="rememberMe">
+        <div class="check-box">✓</div>
+        <span class="check-label">Keep me signed in</span>
+      </label>
+
+      <button class="btn-primary" id="loginBtn" onclick="doLogin()">
+        <span class="btn-text">Sign In →</span>
+        <div class="btn-spinner"></div>
+      </button>
+
+      <div class="link-row">
+        <button class="link-btn" onclick="showView('viewForgot')">Forgot password?</button>
+        &nbsp;·&nbsp;
+        <button class="link-btn" onclick="showView('viewRegister')">Create account</button>
+      </div>
+
+      <!-- THEME PICKER in login -->
+      <div class="theme-section">
+        <div class="theme-section-title">🎨 System Theme</div>
+        <div class="theme-grid" id="themeGrid"></div>
+      </div>
+    </div>
+
+    <!-- ══════════════════ REGISTER VIEW ══════════════════ -->
+    <div class="page-view" id="viewRegister">
+      <button class="back-btn" onclick="showView('viewLogin')">← Back to Sign In</button>
+      <div class="page-title">Create <em>Account</em></div>
+      <div class="page-sub">Register with your work email — admin approval not required</div>
+
+      <div class="form-msg err" id="regErr"></div>
+      <div class="form-msg ok" id="regOk"></div>
+
+      <div class="field">
+        <label class="field-label">Church / Organization Name</label>
+        <div class="field-wrap">
+          <span class="field-icon">⛪</span>
+          <input class="field-input" id="regChurch" type="text" placeholder="e.g. Grace Community Church" autocapitalize="words">
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Full Name</label>
+        <div class="field-wrap">
+          <span class="field-icon">👤</span>
+          <input class="field-input" id="regName" type="text" placeholder="First Last" autocomplete="name" autocapitalize="words">
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Email Address</label>
+        <div class="field-wrap">
+          <span class="field-icon">📧</span>
+          <input class="field-input" id="regEmail" type="email" placeholder="you@email.com" autocomplete="email" autocapitalize="none">
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Username</label>
+        <div class="field-wrap">
+          <span class="field-icon">🏷</span>
+          <input class="field-input" id="regUsername" type="text" placeholder="no spaces, e.g. sarah.j" autocomplete="username" autocapitalize="none" oninput="sanitizeUsername(this)">
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Password</label>
+        <div class="field-wrap">
+          <span class="field-icon">🔒</span>
+          <input class="field-input" id="regPass" type="password" placeholder="Min 8 chars" autocomplete="new-password" oninput="checkPwStrength(this.value)">
+          <button class="pw-toggle" onclick="togglePw('regPass',this)" tabindex="-1">👁</button>
+        </div>
+        <div class="pw-strength" id="pwStrength">
+          <div class="pw-strength-bar"><div class="pw-strength-fill" id="pwFill"></div></div>
+          <div class="pw-strength-label" id="pwLabel">Too short</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Confirm Password</label>
+        <div class="field-wrap">
+          <span class="field-icon">🔒</span>
+          <input class="field-input" id="regPass2" type="password" placeholder="Repeat password" autocomplete="new-password">
+          <button class="pw-toggle" onclick="togglePw('regPass2',this)" tabindex="-1">👁</button>
+        </div>
+      </div>
+
+      <button class="btn-primary" id="regBtn" onclick="doRegister()">
+        <span class="btn-text">Create Account →</span>
+        <div class="btn-spinner"></div>
+      </button>
+
+      <div class="link-row">
+        Already have an account? <button class="link-btn" onclick="showView('viewLogin')">Sign In</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════ FORGOT PASSWORD VIEW ══════════════════ -->
+    <div class="page-view" id="viewForgot">
+      <button class="back-btn" onclick="showView('viewLogin')">← Back to Sign In</button>
+
+      <!-- Step 1: Enter email -->
+      <div id="forgotStep1">
+        <div class="page-title">Reset <em>Password</em></div>
+        <div class="page-sub">Enter your registered email. We'll send you a reset code.</div>
+
+        <div class="form-msg err" id="forgotErr"></div>
+
+        <div class="field">
+          <label class="field-label">Email Address</label>
+          <div class="field-wrap">
+            <span class="field-icon">📧</span>
+            <input class="field-input" id="forgotEmail" type="email" placeholder="you@email.com" autocomplete="email" autocapitalize="none">
+          </div>
+        </div>
+
+        <button class="btn-primary" id="forgotBtn" onclick="doForgot()">
+          <span class="btn-text">Send Reset Code →</span>
+          <div class="btn-spinner"></div>
+        </button>
+      </div>
+
+      <!-- Step 2: Enter code + new password -->
+      <div id="forgotStep2" style="display:none">
+        <div class="page-title">New <em>Password</em></div>
+        <div class="page-sub">Enter the 6-digit code sent to your email, then set a new password.</div>
+
+        <div class="form-msg err" id="resetErr"></div>
+        <div class="form-msg ok" id="resetOk"></div>
+
+        <div class="field">
+          <label class="field-label">Reset Code (6 digits)</label>
+          <div class="field-wrap">
+            <span class="field-icon">🔑</span>
+            <input class="field-input" id="resetCode" type="text" placeholder="123456" maxlength="6"
+              inputmode="numeric" autocomplete="one-time-code" style="letter-spacing:6px;font-size:20px;font-weight:800;text-align:center">
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">New Password</label>
+          <div class="field-wrap">
+            <span class="field-icon">🔒</span>
+            <input class="field-input" id="newPass" type="password" placeholder="Min 8 characters" oninput="checkPwStrength(this.value,'pwFill2','pwLabel2')">
+            <button class="pw-toggle" onclick="togglePw('newPass',this)" tabindex="-1">👁</button>
+          </div>
+          <div class="pw-strength show" id="pwStrength2" style="display:none">
+            <div class="pw-strength-bar"><div class="pw-strength-fill" id="pwFill2"></div></div>
+            <div class="pw-strength-label" id="pwLabel2"></div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Confirm New Password</label>
+          <div class="field-wrap">
+            <span class="field-icon">🔒</span>
+            <input class="field-input" id="newPass2" type="password" placeholder="Repeat password">
+            <button class="pw-toggle" onclick="togglePw('newPass2',this)" tabindex="-1">👁</button>
+          </div>
+        </div>
+
+        <button class="btn-primary" id="resetBtn" onclick="doReset()">
+          <span class="btn-text">Set New Password →</span>
+          <div class="btn-spinner"></div>
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /auth-card -->
+</div><!-- /auth-wrap -->
+
+<script>
+/* ══════════════════════════════════════════════════
+   THEME SYSTEM
+══════════════════════════════════════════════════ */
+const THEMES=[
+  {id:'forest-night', name:'Forest Night', a:'#0d9488', b:'#06b6d4'},
+  {id:'midnight-blue', name:'Midnight Blue', a:'#3b82f6', b:'#7c3aed'},
+  {id:'crimson-night', name:'Crimson Night', a:'#e11d48', b:'#f97316'},
+  {id:'golden-hour', name:'Golden Hour', a:'#d97706', b:'#b45309'},
+  {id:'arctic-dawn', name:'Arctic Dawn', a:'#0ea5e9', b:'#06b6d4'},
+  {id:'violet-storm', name:'Violet Storm', a:'#8b5cf6', b:'#ec4899'},
+];
+
+function loadTheme(){
+  try{const t=sessionStorage.getItem('bolt_theme')||'forest-night';applyTheme(t);}catch(e){}
+}
+function applyTheme(id){
+  const root=document.documentElement;
+  // Remove old theme attr
+  root.removeAttribute('data-theme');
+  if(id!=='forest-night') root.setAttribute('data-theme',id);
+  try{sessionStorage.setItem('bolt_theme',id);}catch(e){}
+  // Update swatch active states
+  document.querySelectorAll('.theme-swatch').forEach(sw=>{
+    sw.classList.toggle('active',sw.dataset.theme===id);
+  });
+}
+function buildThemeGrid(){
+  const grid=document.getElementById('themeGrid');
+  grid.innerHTML=THEMES.map(t=>`
+    <div class="theme-swatch" data-theme="${t.id}" onclick="applyTheme('${t.id}')"
+      style="--ts-a:${t.a};--ts-b:${t.b};--ts-primary:${t.a}">
+      <div class="ts-dot"></div>
+      <div class="ts-name">${t.name}</div>
+    </div>
+  `).join('');
+  loadTheme();
+}
+buildThemeGrid();
+
+/* ══════════════════════════════════════════════════
+   VIEW SWITCHING
+══════════════════════════════════════════════════ */
+function showView(id){
+  document.querySelectorAll('.page-view').forEach(v=>{
+    v.classList.remove('active');v.style.animation='none';
+  });
+  const v=document.getElementById(id);
+  v.style.animation='';v.classList.add('active');
+  // Scroll to top
+  const w=document.querySelector('.auth-wrap');if(w)w.scrollTop=0;
+  // Clear messages
+  document.querySelectorAll('.form-msg').forEach(m=>{m.classList.remove('show');m.textContent='';});
+}
+
+/* ══════════════════════════════════════════════════
+   UTILS
+══════════════════════════════════════════════════ */
+function togglePw(id,btn){
+  const inp=document.getElementById(id);
+  if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}
+  else{inp.type='password';btn.textContent='👁';}
+}
+function showMsg(id,msg,type='err'){
+  const el=document.getElementById(id);el.textContent=msg;
+  el.className='form-msg '+(type||'err')+' show';
+}
+function hideMsg(id){const el=document.getElementById(id);if(el){el.classList.remove('show');el.textContent='';}}
+function setLoading(btnId,on){
+  const btn=document.getElementById(btnId);
+  btn.disabled=on;btn.classList.toggle('loading',on);
+}
+function shake(inputId){
+  const el=document.getElementById(inputId);
+  el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake');
+  setTimeout(()=>el.classList.remove('shake'),400);
+}
+function sanitizeUsername(inp){inp.value=inp.value.toLowerCase().replace(/[^a-z0-9._-]/g,'');}
+
+function checkPwStrength(pw,fillId='pwFill',labelId='pwLabel'){
+  const fill=document.getElementById(fillId),label=document.getElementById(labelId);
+  const strength=document.getElementById('pwStrength');
+  if(!fill||!label)return;
+  if(strength)strength.classList.toggle('show',pw.length>0);
+  let score=0;
+  if(pw.length>=8)score++;if(pw.length>=12)score++;
+  if(/[A-Z]/.test(pw))score++;if(/[0-9]/.test(pw))score++;if(/[^A-Za-z0-9]/.test(pw))score++;
+  const configs=[
+    {pct:'20%',color:'#ef4444',text:'Too weak'},
+    {pct:'40%',color:'#f97316',text:'Weak'},
+    {pct:'60%',color:'#f59e0b',text:'Fair'},
+    {pct:'80%',color:'#84cc16',text:'Good'},
+    {pct:'100%',color:'#22c55e',text:'Strong ✓'},
+  ];
+  const c=configs[Math.max(0,score-1)]||configs[0];
+  fill.style.width=c.pct;fill.style.background=c.color;label.style.color=c.color;label.textContent=c.text;
+}
+
+/* ══════════════════════════════════════════════════
+   LOGIN
+══════════════════════════════════════════════════ */
+function doLogin(){
+  const user=document.getElementById('loginUser').value.trim();
+  const pass=document.getElementById('loginPass').value;
+  hideMsg('loginErr');
+  if(!user){showMsg('loginErr','Please enter your username or email.');shake('loginUser');return;}
+  if(!pass){showMsg('loginErr','Please enter your password.');shake('loginPass');return;}
+  setLoading('loginBtn',true);
+  google.script.run
+    .withSuccessHandler(r=>{
+      setLoading('loginBtn',false);
+      if(r&&r.success){
+        // Pass token via URL — sessionStorage doesn't persist across GAS page loads
+        const token=encodeURIComponent(r.token||'');
+        const orgId=encodeURIComponent(r.orgId||'ORG_DEFAULT');
+        const user=encodeURIComponent(JSON.stringify({name:r.name,role:r.role,username:r.username,orgId:r.orgId||'ORG_DEFAULT'}));
+        // GAS serves pages in an iframe — must use window.top to navigate
+        try{
+          window.top.location.href='?page=home&token='+token+'&orgId='+orgId+'&user='+user;
+        }catch(e){
+          // fallback if top is blocked
+          window.location.href='?page=home&token='+token+'&orgId='+orgId+'&user='+user;
+        }
+      }else{
+        showMsg('loginErr',r&&r.error||'Invalid username or password.');
+        shake('loginUser');shake('loginPass');
+      }
+    })
+    .withFailureHandler(e=>{
+      setLoading('loginBtn',false);
+      showMsg('loginErr','Server error. Please try again.');
+    })
+    .authLoginAPI(user,pass);
+}
+
+/* ══════════════════════════════════════════════════
+   REGISTER
+══════════════════════════════════════════════════ */
+function doRegister(){
+  hideMsg('regErr');hideMsg('regOk');
+  const church=document.getElementById('regChurch').value.trim();
+  const name=document.getElementById('regName').value.trim();
+  const email=document.getElementById('regEmail').value.trim().toLowerCase();
+  const username=document.getElementById('regUsername').value.trim().toLowerCase();
+  const pass=document.getElementById('regPass').value;
+  const pass2=document.getElementById('regPass2').value;
+
+  // Validate all fields including church name
+  if(!church||church.length<3){showMsg('regErr','Church or organization name is required (min 3 characters).');shake('regChurch');return;}
+  if(!name){showMsg('regErr','Full name is required.');shake('regName');return;}
+  if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showMsg('regErr','Enter a valid email address.');shake('regEmail');return;}
+  if(!username||username.length<3){showMsg('regErr','Username must be at least 3 characters.');shake('regUsername');return;}
+  if(pass.length<8){showMsg('regErr','Password must be at least 8 characters.');shake('regPass');return;}
+  if(pass!==pass2){showMsg('regErr','Passwords do not match.');shake('regPass2');return;}
+
+  setLoading('regBtn',true);
+  showMsg('regOk','Setting up your organization… this may take 15–20 seconds.','ok');
+
+  // createOrganizationAPI creates the org spreadsheet AND the admin user in one call
+  google.script.run
+    .withSuccessHandler(r=>{
+      setLoading('regBtn',false);
+      hideMsg('regOk');
+      if(r&&r.success){
+        showMsg('regOk','✅ Organization created! Sign in with your credentials.','ok');
+        // Clear the form
+        ['regChurch','regName','regEmail','regUsername','regPass','regPass2'].forEach(id=>{
+          const el=document.getElementById(id);if(el)el.value='';
+        });
+        setTimeout(()=>showView('viewLogin'),2500);
+      }else{
+        showMsg('regErr',r&&r.error||'Registration failed. Try again.');
+      }
+    })
+    .withFailureHandler(e=>{
+      setLoading('regBtn',false);
+      hideMsg('regOk');
+      showMsg('regErr','Server error: '+(e.message||'Please try again.'));
+    })
+    .createOrganizationAPI(church, email, name, username, pass);
+}
+
+/* ══════════════════════════════════════════════════
+   FORGOT PASSWORD
+══════════════════════════════════════════════════ */
+let _forgotEmail='';
+function doForgot(){
+  hideMsg('forgotErr');
+  const email=document.getElementById('forgotEmail').value.trim().toLowerCase();
+  if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showMsg('forgotErr','Enter a valid email address.');shake('forgotEmail');return;}
+  _forgotEmail=email;
+  setLoading('forgotBtn',true);
+  google.script.run
+    .withSuccessHandler(r=>{
+      setLoading('forgotBtn',false);
+      if(r&&r.success){
+        document.getElementById('forgotStep1').style.display='none';
+        document.getElementById('forgotStep2').style.display='block';
+        setTimeout(()=>document.getElementById('resetCode').focus(),200);
+      }else{
+        showMsg('forgotErr',r&&r.error||'No account found with that email.');
+      }
+    })
+    .withFailureHandler(e=>{
+      setLoading('forgotBtn',false);
+      showMsg('forgotErr','Server error. Please try again.');
+    })
+    .authForgotPasswordAPI(email);
+}
+
+function doReset(){
+  hideMsg('resetErr');hideMsg('resetOk');
+  const code=document.getElementById('resetCode').value.trim();
+  const np=document.getElementById('newPass').value;
+  const np2=document.getElementById('newPass2').value;
+  if(!code||code.length!==6||!/^\d{6}$/.test(code)){showMsg('resetErr','Enter the 6-digit code from your email.');shake('resetCode');return;}
+  if(np.length<8){showMsg('resetErr','New password must be at least 8 characters.');shake('newPass');return;}
+  if(np!==np2){showMsg('resetErr','Passwords do not match.');shake('newPass2');return;}
+  setLoading('resetBtn',true);
+  google.script.run
+    .withSuccessHandler(r=>{
+      setLoading('resetBtn',false);
+      if(r&&r.success){
+        showMsg('resetOk','✅ Password updated! Redirecting to sign in…','ok');
+        setTimeout(()=>{
+          document.getElementById('forgotStep2').style.display='none';
+          document.getElementById('forgotStep1').style.display='block';
+          document.getElementById('forgotEmail').value='';
+          showView('viewLogin');
+        },2200);
+      }else{
+        showMsg('resetErr',r&&r.error||'Invalid or expired code. Try again.');
+        shake('resetCode');
+      }
+    })
+    .withFailureHandler(e=>{
+      setLoading('resetBtn',false);
+      showMsg('resetErr','Server error. Please try again.');
+    })
+    .authResetPasswordAPI(_forgotEmail,code,np);
+}
+
+/* ══════════════════════════════════════════════════
+   ENTER KEY SUPPORT
+══════════════════════════════════════════════════ */
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Enter'||e.isComposing)return;
+  const active=document.querySelector('.page-view.active');if(!active)return;
+  const id=active.id;
+  if(id==='viewLogin')doLogin();
+  else if(id==='viewRegister')doRegister();
+  else if(id==='viewForgot'){
+    if(document.getElementById('forgotStep2').style.display!=='none')doReset();
+    else doForgot();
+  }
+});
+
+/* ══════════════════════════════════════════════════
+   AUTO-LOGIN CHECK
+══════════════════════════════════════════════════ */
+(function checkSession(){
+  // Check if token passed via URL (coming from auth redirect)
+  try{
+    const params=new URLSearchParams(window.location.search);
+    const urlToken=params.get('token');
+    if(urlToken){
+      // Already authenticated — shouldn't be on auth page; go to kiosk
+      try{window.top.location.href='?page=kiosk&token='+encodeURIComponent(urlToken);}
+      catch(e){window.location.href='?page=kiosk&token='+encodeURIComponent(urlToken);}
+      return;
+    }
+  }catch(e){}
+})();
+</script>
+</body>
+</html>
