@@ -70,102 +70,106 @@ function icon(name, size=18, cls='', style='') {
 
 /* ═══════════════════════════════════════════════
    HOME ICON PATCH — replaces emoji in static HTML
-   with professional SVG icons on every load
+   Direct innerHTML replacement on icon containers
 ═══════════════════════════════════════════════ */
 (function patchHomeIcons() {
+
+  // SVG icon generator
   function mkSvg(paths, sz) {
-    sz = sz || 22;
     return '<svg xmlns="http://www.w3.org/2000/svg" width="'+sz+'" height="'+sz+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block">'+paths+'</svg>';
   }
 
   var PATHS = {
-    bolt:   '<path d="M13 2L4.5 13.5H12L11 22l8.5-11.5H13Z"/>',
-    dash:   '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 18h7M17.5 14.5v7"/>',
-    child:  '<circle cx="12" cy="6" r="3"/><path d="M9 21v-5a3 3 0 0 1 6 0v5"/><path d="M6 21l3-5M18 21l-3-5"/>',
-    shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
-    sched:  '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01" stroke-width="2.5"/>',
-    home:   '<path d="M3 9.5L12 3l9 6.5V21a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/><path d="M9 22V12h6v10"/>',
-    people: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
-    analytics: '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>',
-    groups: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>'
+    bolt:      '<path d="M13 2L4.5 13.5H12L11 22l8.5-11.5H13Z"/>',
+    dash:      '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 18h7M17.5 14.5v7"/>',
+    child:     '<circle cx="12" cy="6" r="3"/><path d="M9 21v-5a3 3 0 0 1 6 0v5"/><path d="M6 21l3-5M18 21l-3-5"/>',
+    shield:    '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+    schedule:  '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01" stroke-width="2.5"/>',
+    home:      '<path d="M3 9.5L12 3l9 6.5V21a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/><path d="M9 22V12h6v10"/>',
+    groups:    '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+    analytics: '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>'
   };
 
-  // Map emoji chars to their icon key + size
-  var EMOJI_MAP = {
-    '\u26a1':     { key:'bolt',      sz:22 },
-    '\u26a1\ufe0f': { key:'bolt',   sz:22 },
-    '\ud83d\udcca': { key:'dash',   sz:22 },
-    '\ud83e\uddd2': { key:'child',  sz:22 },
-    '\ud83d\udee1': { key:'shield', sz:22 },
-    '\ud83d\udee1\ufe0f': { key:'shield', sz:22 },
-    '\ud83d\udc65': { key:'people', sz:22 },
-    '\ud83d\udcc5': { key:'sched',  sz:22 },
-    '\ud83c\udfe0': { key:'home',   sz:20 },
-    '\ud83d\udcca': { key:'analytics', sz:20 },
-  };
+  // Map: text content → icon key
+  // We match based on what the parent card does (onclick) rather than emoji value
+  // since emoji can vary by OS/font
+  function patchIcons() {
+    // ── Home cards: replace .hc-icon and .hc-icon-lg content ──
+    document.querySelectorAll('.hc-icon, .hc-icon-lg').forEach(function(el) {
+      // Determine which icon to use based on the card's onclick
+      var card = el.closest('[onclick]');
+      var fn = card ? (card.getAttribute('onclick') || '') : '';
+      var key = null;
+      if (fn.indexOf('showKiosk') >= 0)          key = 'bolt';
+      else if (fn.indexOf('showDash') >= 0)       key = 'dash';
+      else if (fn.indexOf('showCM') >= 0)         key = 'child';
+      else if (fn.indexOf('openVolDeptModal') >= 0) key = 'shield';
+      else if (fn.indexOf('showSchedule') >= 0)   key = 'schedule';
+      else if (fn.indexOf('showSmallGroups') >= 0) key = 'groups';
+      if (key && PATHS[key]) {
+        var sz = el.classList.contains('hc-icon-lg') ? 28 : 26;
+        el.innerHTML = mkSvg(PATHS[key], sz);
+        // Remove font-size so SVG isn't sized like text
+        el.style.fontSize = '0';
+      }
+    });
 
-  function replaceEmojiInEl(el) {
-    if (!el) return;
-    // Walk text nodes
-    var walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null, false);
-    var nodes = [];
-    var node;
-    while ((node = walker.nextNode())) nodes.push(node);
-    nodes.forEach(function(tn) {
-      var text = tn.textContent;
-      var changed = false;
-      Object.keys(EMOJI_MAP).forEach(function(emoji) {
-        if (text.indexOf(emoji) >= 0) {
-          var info = EMOJI_MAP[emoji];
-          var svg = mkSvg(PATHS[info.key], info.sz);
-          // Replace the text node with a span containing the SVG
-          var span = document.createElement('span');
-          span.innerHTML = text.replace(new RegExp(emoji, 'g'), svg);
-          tn.parentNode.replaceChild(span, tn);
-          changed = true;
-          text = span.innerHTML;
+    // ── Mobile nav: replace emoji span content ──
+    document.querySelectorAll('.mob-nav-btn').forEach(function(btn) {
+      var fn  = btn.getAttribute('onclick') || '';
+      var view = btn.getAttribute('data-view') || '';
+      var key = null;
+      var sz  = 22;
+      if (view === 'vHome' || fn.indexOf("'vHome'") >= 0)        key = 'home';
+      else if (view === 'vKiosk' || fn.indexOf('showKiosk') >= 0)     key = 'bolt';
+      else if (view === 'vDash' || fn.indexOf('showDash') >= 0)       key = 'analytics';
+      else if (view === 'vCM' || fn.indexOf('showCM') >= 0)           key = 'child';
+      else if (view === 'vVolunteers' || fn.indexOf('VolDept') >= 0)   key = 'shield';
+      else if (view === 'vSmallGroups' || fn.indexOf('SmallGroups') >= 0) key = 'groups';
+      else if (view === 'vSchedule' || fn.indexOf('showSchedule') >= 0)  key = 'schedule';
+
+      if (key && PATHS[key]) {
+        // Find the emoji span (first span, usually large font-size)
+        var spans = btn.querySelectorAll('span');
+        if (spans.length > 0) {
+          var iconSpan = spans[0];
+          iconSpan.innerHTML = mkSvg(PATHS[key], sz);
+          iconSpan.style.fontSize = '0';
+          iconSpan.style.display = 'flex';
+          iconSpan.style.alignItems = 'center';
+          iconSpan.style.justifyContent = 'center';
+          iconSpan.style.width = sz + 'px';
+          iconSpan.style.height = sz + 'px';
         }
-      });
+      }
     });
   }
 
-  // Patch home cards on vHome load
-  function patchHome() {
-    // Patch hc-icon and hc-icon-lg elements
-    document.querySelectorAll('.hc-icon, .hc-icon-lg').forEach(replaceEmojiInEl);
-    // Patch mobile nav buttons
-    document.querySelectorAll('.mob-nav-btn span[style*="font-size:20px"], .mob-nav-btn span[style*="font-size: 20px"]').forEach(function(span) {
-      replaceEmojiInEl(span);
-      // Also set size appropriate for nav
-      span.style.fontSize = '0';
-    });
-    // Patch any remaining emoji spans in vHome
-    var vHome = document.getElementById('vHome');
-    if (vHome) replaceEmojiInEl(vHome);
-    // Patch mobile nav
-    var nav = document.getElementById('mobileNav');
-    if (nav) replaceEmojiInEl(nav);
-  }
-
-  // Run after DOM ready and after any view switch to vHome
+  // Run immediately and also after DOM is ready
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', patchHome);
+    document.addEventListener('DOMContentLoaded', function() {
+      patchIcons();
+      setTimeout(patchIcons, 500); // extra pass for late renders
+    });
   } else {
-    patchHome();
+    patchIcons();
+    setTimeout(patchIcons, 300);
   }
 
-  // Also patch whenever vHome becomes active
-  var _origShowView = window.showView;
-  document.addEventListener('DOMContentLoaded', function() {
-    var orig = window.showView;
-    if (orig) {
+  // Also hook into showView to re-patch when home is shown
+  window.addEventListener('load', function() {
+    patchIcons();
+    setTimeout(patchIcons, 800);
+    // Override showView to patch after nav
+    var origShow = window.showView;
+    if (origShow) {
       window.showView = function(id) {
-        orig(id);
-        if (id === 'vHome') setTimeout(patchHome, 50);
+        origShow(id);
+        if (id === 'vHome') setTimeout(patchIcons, 50);
       };
     }
-    setTimeout(patchHome, 300);
   });
+
 })();
 
 
