@@ -1125,3 +1125,159 @@ body.offline .offline-badge { display: block; }
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
+
+
+/* ═══════════════════════════════════════════════
+   MOBILE SIMPLIFICATION — phones ≤600px
+   Goal: less clutter, bigger targets, one column
+═══════════════════════════════════════════════ */
+@media(max-width:600px){
+
+  /* ── Kill complex animations on mobile ── */
+  *, *::before, *::after {
+    animation-duration: 0.15s !important;
+    transition-duration: 0.15s !important;
+  }
+
+  /* ── Views: full screen, single scroll column ── */
+  .view.active {
+    display: flex !important;
+    flex-direction: column !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 80px !important;  /* space for bottom nav */
+  }
+
+  /* ── Home cards: 2 big primary + 4 small pills ── */
+  .home-cards {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+  }
+  .home-card {
+    padding: 20px 14px !important;
+    border-radius: 16px !important;
+    min-height: 110px !important;
+  }
+  /* Primary cards (Ministry Events + Dashboard) — full width */
+  .home-card:nth-child(1),
+  .home-card:nth-child(2) {
+    grid-column: span 1 !important;
+  }
+  .home-card-wide {
+    grid-column: 1 / -1 !important;
+    min-height: 80px !important;
+    padding: 16px 14px !important;
+  }
+  .hc-icon { width:44px !important; height:44px !important; font-size:20px !important; margin-bottom:10px !important; }
+  .hc-icon-lg { width:44px !important; height:44px !important; font-size:20px !important; }
+  .hc-title { font-size:14px !important; }
+  .hc-desc { display:none !important; }     /* hide description on mobile */
+  .hc-tags { display:none !important; }     /* hide tags on mobile */
+
+  /* ── Bottom nav: show only 3 primary items ── */
+  #mobileNav { padding: 0 !important; border-top: 1px solid rgba(255,255,255,0.08) !important; }
+  .mob-nav-btn { flex: 1 !important; min-width: 0 !important; padding: 10px 4px !important; }
+  .mob-nav-btn span { font-size: 10px !important; }
+
+  /* ── Hide nav items 4-6 (Volunteers, Schedule, SmallGroups) ── */
+  .mob-nav-btn:nth-child(n+4) { display: none !important; }
+
+  /* ── Headers: smaller, tighter ── */
+  .view > div[style*="padding:16px"],
+  .view > div[style*="padding: 16px"] {
+    padding: 12px 14px !important;
+  }
+
+  /* ── Dashboard: single column stats ── */
+  #vDash .dash-stats-row,
+  [id="vDash"] [style*="display:grid"][style*="grid-template-columns:repeat(3"] {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+
+  /* ── Dashboard tabs: scrollable horizontal ── */
+  .dash-tabs {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap !important;
+    padding-bottom: 4px !important;
+  }
+  .dash-tab {
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    font-size: 12px !important;
+    padding: 7px 14px !important;
+  }
+
+  /* ── Kiosk: bigger search, bigger check-in cards ── */
+  .k-search-input { font-size: 16px !important; padding: 14px 16px !important; }
+  .k-result-item { padding: 14px 16px !important; min-height: 56px !important; }
+  .k-result-name { font-size: 16px !important; }
+
+  /* ── Modals: full screen on mobile ── */
+  .modal-box,
+  [class*="modal"] > div,
+  [style*="max-width:480px"],
+  [style*="max-width:520px"],
+  [style*="max-width:560px"] {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    border-radius: 20px 20px 0 0 !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+  }
+
+  /* ── Tables → hide less important columns ── */
+  .mob-hide { display: none !important; }
+
+  /* ── Volunteer dept cards: 2 per row max ── */
+  .vol-dept-grid { grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
+  .vol-dept-card { padding: 16px 12px !important; }
+
+  /* ── Schedule calendar: smaller cells ── */
+  #schedCalGrid > div { min-height: 48px !important; font-size: 11px !important; }
+
+  /* ── Input fields: prevent iOS zoom (needs 16px+) ── */
+  input, select, textarea { font-size: 16px !important; }
+
+  /* ── Buttons: minimum 44px tap targets ── */
+  button { min-height: 44px !important; }
+  .btn, .btn-sm { min-height: 44px !important; padding: 10px 16px !important; }
+
+  /* ── Form rows: single column ── */
+  .form-row-2,
+  [style*="grid-template-columns:1fr 1fr"],
+  [style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ── Children's: name tag preview hidden on mobile ── */
+  .cm-tag-preview { display: none !important; }
+
+  /* ── Small groups: hide description column ── */
+  .sg-desc-col { display: none !important; }
+
+  /* ── Greeting: shorter ── */
+  #homeGreet { font-size: 22px !important; }
+  #homeSub   { font-size: 13px !important; }
+}
+
+/* ── Very small phones ── */
+@media(max-width:380px){
+  .home-card { padding: 14px 10px !important; min-height: 90px !important; }
+  .hc-title  { font-size: 12px !important; }
+  .hc-icon   { width:36px !important; height:36px !important; font-size:16px !important; }
+  #homeGreet { font-size: 18px !important; }
+}
+
+/* ── Tablet (601–900px): 2-col home, show nav ── */
+@media(min-width:601px) and (max-width:900px){
+  .home-cards { grid-template-columns: 1fr 1fr !important; }
+  .view.active { padding-bottom: 0 !important; }
+}
