@@ -425,6 +425,8 @@ const AUTH = {
       b.classList.toggle('active',(i===0&&t==='login')||(i===1&&t==='register'))
     );
     this.clearMsgs();
+    // Inject church field whenever register tab opens
+    if (t === 'register') setTimeout(() => this._ensureChurchField(), 50);
   },
   clearMsgs() {
     document.querySelectorAll('.msg').forEach(m => { m.style.display='none'; m.textContent=''; });
@@ -455,26 +457,55 @@ const AUTH = {
     this.setLoading(false);
   },
   async register() {
-    const ch= document.getElementById('regChurch')?.value.trim() || '';
-    const n = document.getElementById('regName').value.trim();
-    const e = document.getElementById('regEmail').value.trim();
-    const u = document.getElementById('regUser').value.trim();
-    const p = document.getElementById('regPass').value;
+    // Auto-inject church field if it doesn't exist in the static HTML
+    AUTH._ensureChurchField();
+
+    const ch = (document.getElementById('regChurch')?.value || '').trim();
+    const n  = (document.getElementById('regName')?.value || '').trim();
+    const e  = (document.getElementById('regEmail')?.value || '').trim();
+    const u  = (document.getElementById('regUser')?.value || '').trim();
+    const p  = (document.getElementById('regPass')?.value || '');
+
     this.clearMsgs();
-    if(!ch){this.showErr('regErr','Church or organization name is required.');return;}
-    if(!n||!e||!u||!p){this.showErr('regErr','All fields are required.');return;}
+    if(!ch || ch.length < 2){ this.showErr('regErr','Church or organization name is required.'); document.getElementById('regChurch')?.focus(); return; }
+    if(!n){ this.showErr('regErr','Full name is required.'); return; }
+    if(!e || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)){ this.showErr('regErr','Valid email required.'); return; }
+    if(!u || u.length < 3){ this.showErr('regErr','Username must be 3+ characters.'); return; }
+    if(p.length < 8){ this.showErr('regErr','Password must be 8+ characters.'); return; }
+
     this.setLoading(true);
-    this.showOk('regOk','Setting up your organization… this may take 15–20 seconds.');
+    this.showOk('regOk','Creating your organization — this takes 15–20 seconds, please wait…');
     try {
       const r = await gasRun('createOrganizationAPI', ch, e, n, u, p);
       if(r?.success){
-        this.showOk('regOk','Organization created! Sign in now.');
-        setTimeout(()=>this.tab('login'),2000);
+        this.showOk('regOk','Organization created! Sign in with your credentials.');
+        ['regChurch','regName','regEmail','regUser','regPass','regPass2'].forEach(id=>{
+          const el=document.getElementById(id); if(el) el.value='';
+        });
+        setTimeout(()=>this.tab('login'), 2500);
       } else {
-        this.showErr('regErr', r?.error||'Registration failed.');
+        this.showErr('regErr', r?.error || 'Registration failed. Please try again.');
       }
-    } catch(err){this.showErr('regErr','Connection error.');}
+    } catch(err){ this.showErr('regErr','Connection error. Please try again.'); }
     this.setLoading(false);
+  },
+
+  _ensureChurchField() {
+    if (document.getElementById('regChurch')) return; // already present in HTML
+    const pane = document.getElementById('pRegister');
+    if (!pane) return;
+    // Find first input or field container to insert before
+    const anchor = pane.querySelector('input, .field, .field-group, .form-field');
+    if (!anchor) return;
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'margin-bottom:14px';
+    wrap.innerHTML = '<div style="font-size:11px;font-weight:600;color:var(--muted,#7aacb8);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px">Church / Organization</div>'
+      + '<input id="regChurch" type="text" placeholder="e.g. Grace Community Church" autocapitalize="words" '
+      + 'style="width:100%;padding:13px 16px;border-radius:12px;background:rgba(255,255,255,0.07);'
+      + 'border:1.5px solid rgba(255,255,255,0.15);color:#fff;font-size:16px;font-family:inherit;'
+      + 'outline:none;-webkit-appearance:none;box-sizing:border-box">';
+    const parent = anchor.closest('.field,.field-group,.form-field') || anchor.parentNode;
+    parent.parentNode.insertBefore(wrap, parent);
   },
   async forgot() {
     const email=document.getElementById('fgtEmail').value.trim();
