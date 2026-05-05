@@ -4062,3 +4062,130 @@ function showSchedule() {
 /* RSVP link handling moved to main load handler for security */
 
 /* ── Add to API ── */
+
+/* ══════════════════════════════════════════════════════
+   PWA REGISTER OVERRIDE
+   Replaces the static doRegister() in index.html with
+   a church-aware version that calls createOrganizationAPI
+   Also injects the Church Name field into the form
+══════════════════════════════════════════════════════ */
+window.addEventListener('load', function pwaRegisterOverride() {
+
+  // ── Inject church field into the static register form ──
+  function injectChurchField() {
+    if (document.getElementById('regChurch')) return; // already there
+
+    const pane = document.getElementById('pRegister');
+    if (!pane) return;
+
+    // Build the church field wrapper
+    const wrap = document.createElement('div');
+    wrap.className = 'field';
+    wrap.innerHTML =
+      '<label style="display:block;font-size:11px;font-weight:700;color:var(--muted,#6b9aaa);' +
+      'text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px">Church / Organization</label>' +
+      '<input id="regChurch" type="text" placeholder="e.g. Grace Community Church" ' +
+      'autocapitalize="words" ' +
+      'style="width:100%;padding:13px 16px;border-radius:12px;font-size:16px;' +
+      'font-family:inherit;outline:none;-webkit-appearance:none;box-sizing:border-box;' +
+      'background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.15);color:#fff">';
+
+    // Insert as the FIRST field in the pane (before Full Name)
+    const firstField = pane.querySelector('.field, input');
+    if (firstField) {
+      const parent = firstField.closest('.field') || firstField.parentNode;
+      pane.insertBefore(wrap, parent);
+    } else {
+      // Fallback: prepend to pane
+      pane.insertBefore(wrap, pane.firstChild);
+    }
+  }
+
+  // Run injection immediately and whenever register tab becomes visible
+  injectChurchField();
+  setTimeout(injectChurchField, 300);
+  setTimeout(injectChurchField, 800);
+
+  // Hook into auth tab switching if it exists
+  var origAuthTab = window.authTab;
+  window.authTab = function(tab) {
+    if (origAuthTab) origAuthTab(tab);
+    if (tab === 'register') setTimeout(injectChurchField, 50);
+  };
+
+  // ── Override doRegister() globally ──
+  window.doRegister = async function() {
+    // Make sure church field is there
+    injectChurchField();
+
+    // Grab all field values
+    var ch = (document.getElementById('regChurch')?.value || '').trim();
+    var n  = (document.getElementById('regName')?.value || '').trim();
+    var e  = (document.getElementById('regEmail')?.value || '').trim();
+    var u  = (document.getElementById('regUser')?.value || document.getElementById('regUsername')?.value || '').trim();
+    var p  = document.getElementById('regPass')?.value || '';
+    var p2 = document.getElementById('regPass2')?.value || '';
+
+    // Clear previous messages
+    ['regErr','regOk'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) { el.style.display = 'none'; el.textContent = ''; }
+    });
+
+    function showErr(msg) {
+      var el = document.getElementById('regErr');
+      if (el) { el.textContent = msg; el.style.display = 'block'; }
+      else alert(msg);
+    }
+    function showOk(msg) {
+      var el = document.getElementById('regOk');
+      if (el) { el.textContent = msg; el.style.display = 'block'; }
+    }
+    function setLoading(on) {
+      var btn = document.getElementById('regBtn');
+      if (btn) btn.disabled = on;
+      var load = document.getElementById('authLoad');
+      if (load) load.style.display = on ? 'block' : 'none';
+    }
+
+    // Validate
+    if (!ch || ch.length < 2) {
+      showErr('Church or organization name is required.');
+      document.getElementById('regChurch')?.focus();
+      return;
+    }
+    if (!n)                            return showErr('Full name is required.');
+    if (!e || e.indexOf('@') < 0)      return showErr('Valid email address required.');
+    if (!u || u.length < 3)            return showErr('Username must be at least 3 characters.');
+    if (p.length < 8)                  return showErr('Password must be at least 8 characters.');
+    if (p2 && p !== p2)               return showErr('Passwords do not match.');
+
+    setLoading(true);
+    showOk('Creating your organization — please wait 15–20 seconds…');
+
+    try {
+      var r = await gasRun('createOrganizationAPI', ch, e, n, u, p);
+
+      if (r && r.success) {
+        showOk('Organization created! Sign in with your credentials.');
+        // Clear form fields
+        ['regChurch','regName','regEmail','regUser','regUsername','regPass','regPass2'].forEach(function(id) {
+          var el = document.getElementById(id);
+          if (el) el.value = '';
+        });
+        // Switch to login tab after short delay
+        setTimeout(function() {
+          if (window.authTab) authTab('login');
+          else if (window.AUTH) AUTH.tab('login');
+        }, 2500);
+      } else {
+        showErr((r && r.error) || 'Registration failed. Please try again.');
+      }
+    } catch(err) {
+      showErr('Connection error. Please check your internet and try again.');
+    }
+
+    setLoading(false);
+  };
+
+}, false);
