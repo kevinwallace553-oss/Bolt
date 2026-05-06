@@ -685,7 +685,7 @@ const KIOSK = {
       banner.style.background = bc.bg;
       banner.style.borderColor = bc.border;
       banner.style.color = bc.color;
-      const icon = document.getElementById('kBannerIcon'); if(icon) icon.textContent = bc.icon;
+      const icon = document.getElementById('kBannerIcon'); if(icon) icon.innerHTML = bc.icon;
       const title = document.getElementById('kBannerTitle'); if(title) title.textContent = bc.title;
       const desc = document.getElementById('kBannerDesc'); if(desc) desc.textContent = bc.desc;
     }
@@ -864,7 +864,7 @@ const KIOSK = {
     const today = new Date();
     let isBday = false;
     if(student?.dob){ try{ const d=new Date(student.dob); isBday=d.getMonth()===today.getMonth()&&d.getDate()===today.getDate(); }catch(e){} }
-    document.getElementById('sucIcon').textContent = isBday?'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M8 3.5c0-1 1-2 2-1.5s2 .5 2-.5 1-2 2-1.5"/></svg>':'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg>';
+    document.getElementById('sucIcon').innerHTML = isBday?'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M8 3.5c0-1 1-2 2-1.5s2 .5 2-.5 1-2 2-1.5"/></svg>':'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg>';
     document.getElementById('sucName').textContent = name;
     document.getElementById('sucMsg').textContent = isBday?`Happy Birthday, ${name.split(' ')[0]}!`:sub;
     const wrap = document.getElementById('confettiWrap');
@@ -933,7 +933,7 @@ const KIOSK = {
     });
     document.getElementById('ns_checkin').checked = true;
     const title = document.getElementById('nsModalTitle');
-    if (title) { title.textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> First Timer / Guest Registration'; title.style.color = '#fcd34d'; }
+    if (title) { title.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> First Timer / Guest Registration'; title.style.color = '#fcd34d'; }
     const saveBtn = document.getElementById('nsModalSave');
     if (saveBtn) saveBtn.textContent = 'Register & Check In';
     // Always adult fields for first-timer flow
@@ -950,7 +950,7 @@ const KIOSK = {
     // Reset title in case first-timer flow changed it
     const regLbl = window._kRegLabel || {};
     const title = document.getElementById('nsModalTitle');
-    if (title) { title.textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 5v14M5 12h14"/></svg> ' + (regLbl.regTitle || 'Register Attendee'); title.style.color = ''; }
+    if (title) { title.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 5v14M5 12h14"/></svg> ' + (regLbl.regTitle || 'Register Attendee'); title.style.color = ''; }
     const saveBtn = document.getElementById('nsModalSave');
     if (saveBtn) saveBtn.textContent = regLbl.saveBtn || 'Register & Save';
     // Adapt form fields for youth vs adults
@@ -1324,7 +1324,7 @@ const DASH = {
       youngadult:'Young Adult Ministry', smallgroups:'Small Groups',
       children:"Children's Ministry", volunteers:'Volunteers' };
     const weekHead = document.getElementById('analyticsWeekTitle');
-    if(weekHead) weekHead.textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> This Week — ' + (labelMap[key]||'All Events');
+    if(weekHead) weekHead.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> This Week — ' + (labelMap[key]||'All Events');
 
     // Update stat labels
     this.updateStatLabels(key);
@@ -1725,7 +1725,7 @@ DASH.loadAnalytics = async function() {
     children:"Children's Ministry", volunteers:'Volunteers'
   };
   const weekHead = document.getElementById('analyticsWeekTitle');
-  if(weekHead) weekHead.textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> This Week — ' + (labelMap[ministry]||'All Events');
+  if(weekHead) weekHead.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> This Week — ' + (labelMap[ministry]||'All Events');
 };
 
 DASH.loadWeek = async function(offset) {
@@ -2375,7 +2375,7 @@ const CM = {
     document.getElementById('cmf_email').value   = f.email;
     document.getElementById('cmf_address').value = f.address;
     document.getElementById('cmf_notes').value   = f.notes;
-    document.getElementById('cmFamilyModalTitle').textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Edit Family';
+    document.getElementById('cmFamilyModalTitle').innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Edit Family';
     openModal('cmFamilyModal');
   },
 
@@ -2435,7 +2435,7 @@ const CM = {
     document.getElementById('cmc_familyId').value = familyId;
     document.getElementById('cmc_familyBadge').textContent = `Family: ${family?.parentName || ''}`;
     ['cmc_first','cmc_last','cmc_grade','cmc_dob','cmc_room','cmc_allergy','cmc_notes'].forEach(id=>{ document.getElementById(id).value=''; });
-    document.getElementById('cmChildModalTitle').textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 5v14M5 12h14"/></svg> Add Child';
+    document.getElementById('cmChildModalTitle').innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 5v14M5 12h14"/></svg> Add Child';
     openModal('cmChildModal');
   },
 
@@ -2453,7 +2453,7 @@ const CM = {
     document.getElementById('cmc_room').value    = child.room||'';
     document.getElementById('cmc_allergy').value = child.allergies||'';
     document.getElementById('cmc_notes').value   = child.notes||'';
-    document.getElementById('cmChildModalTitle').textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Edit Child';
+    document.getElementById('cmChildModalTitle').innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Edit Child';
     openModal('cmChildModal');
   },
 
@@ -3021,7 +3021,7 @@ const VOL = {
     document.getElementById('vol_id').value = '';
     ['vol_first','vol_last','vol_phone','vol_email','vol_role','vol_notes'].forEach(id => { document.getElementById(id).value=''; });
     document.getElementById('vol_dept').value = this._department || '';
-    document.getElementById('volModalTitle').textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 5v14M5 12h14"/></svg> Add Volunteer';
+    document.getElementById('volModalTitle').innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 5v14M5 12h14"/></svg> Add Volunteer';
     openModal('volModal');
   },
 
@@ -3036,7 +3036,7 @@ const VOL = {
     document.getElementById('vol_dept').value  = v.department||'';
     document.getElementById('vol_role').value  = v.role||'';
     document.getElementById('vol_notes').value = v.notes||'';
-    document.getElementById('volModalTitle').textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Edit Volunteer';
+    document.getElementById('volModalTitle').innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Edit Volunteer';
     openModal('volModal');
   },
 
@@ -3289,7 +3289,7 @@ const SG = {
     ['sg_name','sg_leader','sg_leader_phone','sg_time','sg_location','sg_notes'].forEach(id=>{ document.getElementById(id).value=''; });
     document.getElementById('sg_day').value = '';
     document.getElementById('sg_category').value = '';
-    document.getElementById('sgGroupModalTitle').textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg> Create Small Group';
+    document.getElementById('sgGroupModalTitle').innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg> Create Small Group';
     openModal('sgGroupModal');
   },
 
@@ -3305,7 +3305,7 @@ const SG = {
     document.getElementById('sg_location').value = g.location;
     document.getElementById('sg_category').value = g.category;
     document.getElementById('sg_notes').value = g.notes;
-    document.getElementById('sgGroupModalTitle').textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Edit Group';
+    document.getElementById('sgGroupModalTitle').innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Edit Group';
     openModal('sgGroupModal');
   },
 
@@ -3358,7 +3358,7 @@ const SG = {
     document.getElementById('sgm_group_id').value = groupId;
     document.getElementById('sgm_member_id').value = '';
     document.getElementById('sgMemberGroupBadge').textContent = `Group: ${groupName}`;
-    document.getElementById('sgMemberModalTitle').textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 5v14M5 12h14"/></svg> Add Member';
+    document.getElementById('sgMemberModalTitle').innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 5v14M5 12h14"/></svg> Add Member';
     ['sgm_first','sgm_last','sgm_phone','sgm_email'].forEach(id=>{ document.getElementById(id).value=''; });
     document.getElementById('sgm_role').value = 'Member';
     openModal('sgMemberModal');
@@ -3371,7 +3371,7 @@ const SG = {
     document.getElementById('sgm_group_id').value = groupId;
     document.getElementById('sgm_member_id').value = memberId;
     document.getElementById('sgMemberGroupBadge').textContent = `Group: ${group.name}`;
-    document.getElementById('sgMemberModalTitle').textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Edit Member';
+    document.getElementById('sgMemberModalTitle').innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Edit Member';
     document.getElementById('sgm_first').value = m.firstName;
     document.getElementById('sgm_last').value  = m.lastName;
     document.getElementById('sgm_phone').value = m.phone;
@@ -3729,7 +3729,7 @@ const SCHED = {
     // Set date to today
     const today = new Date().toISOString().slice(0,10);
     document.getElementById('se_date').value = today;
-    document.getElementById('schedEventModalTitle').textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Schedule Event';
+    document.getElementById('schedEventModalTitle').innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Schedule Event';
     this.renderVolAssignList();
     openModal('schedEventModal');
   },
@@ -3752,7 +3752,7 @@ const SCHED = {
     document.getElementById('se_end').value = ev.endTime || '12:00';
     document.getElementById('se_location').value = ev.location || '';
     document.getElementById('se_notes').value = ev.notes || '';
-    document.getElementById('schedEventModalTitle').textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Edit Event';
+    document.getElementById('schedEventModalTitle').innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Edit Event';
     this.renderVolAssignList();
     openModal('schedEventModal');
   },
