@@ -629,7 +629,7 @@
     </div>
     <div class="recent-row" id="recentRow"></div>
     <div class="search-block">
-      <span class="search-label">Find Student</span>
+      <span class="search-label">Find Attendee</span>
       <div class="search-field">
         <span class="search-field-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx=11 cy=11 r=7/><path d=M21 21l-4.35-4.35/></svg></span>
         <input id="searchBox" type="text" placeholder="Type a name to search…" oninput="onSearch()" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false">
@@ -641,11 +641,11 @@
       <button class="action-btn primary" onclick="openNewStudentForm()">＋ New Student</button>
       <button class="action-btn" onclick="clearSearch()">↺ Clear</button>
       <button class="refresh-btn" id="refreshBtn" onclick="refreshCheckedIn()" title="Auto-syncing every 5s — tap to sync now"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
-      <button class="action-btn teal" onclick="openBatchCheckIn()" style="grid-column:1/-1"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d=M13 2L4.5 13.5H12L11 22l8.5-11.5H13L13 2z/></svg> Batch Check-In</button>
+      <button class="action-btn teal" id="staticBatchBtn" onclick="openBatchCheckIn()" style="grid-column:1/-1;display:none"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg> Batch Check-In</button>
       <button class="action-btn teal" onclick="openLeaderCheckIn()" id="leaderCIBtn" style="grid-column:1/-1;display:none"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Check In Leaders</button>
     </div>
     <div id="results">
-      <div class="empty"><div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg></div><div class="empty-title">Search to get started</div><div class="empty-sub">Type any part of a name above,<br>or tap <strong>New Student</strong>.</div></div>
+      <div class="empty"><div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg></div><div class="empty-title">Search to get started</div><div class="empty-sub">Type any part of a name above,<br>or tap <strong>New Attendee</strong>.</div></div>
     </div>
   </div>
 </div>
@@ -701,7 +701,7 @@
     <div class="bc-row1">
       <span class="bc-title"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M13 2L4.5 13.5H12L11 22l8.5-11.5H13Z"/></svg> Batch</span>
       <span class="bc-count-pill" id="bcSelCount">0</span>
-      <span class="bc-sel-label" id="bcFooterNames">Tap students below</span>
+      <span class="bc-sel-label" id="bcFooterNames">Select attendees below</span>
       <button class="bc-cancel-btn" onclick="closeBatchCheckIn()">Cancel</button>
       <button class="bc-go-btn" id="bcGoBtn" onclick="commitBatchCheckIn()" disabled>Check In ✓</button>
       <button class="bc-close" onclick="closeBatchCheckIn()">&times;</button>
@@ -717,7 +717,7 @@
   <div class="bc-scroll-wrap" id="bcScrollWrap" style="display:none">
     <div class="bc-body" id="bcBody">
       <div class="bc-body-inner">
-        <div class="bc-list" id="bcGrid"><div style="text-align:center;padding:40px;color:var(--muted)">⏳ Loading students…</div></div>
+        <div class="bc-list" id="bcGrid"><div style="text-align:center;padding:40px;color:var(--muted)">Loading…</div></div>
       </div>
     </div>
     <div class="bc-scrollbar" id="bcScrollbar"><div class="bc-scrollbar-thumb" id="bcScrollThumb"></div></div>
@@ -743,13 +743,13 @@
 <div id="newStudentModal" class="modal">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <div class="sheet-title">New Student</div>
+    <div class="sheet-title">New Attendee</div>
     <div class="form-grid">
       <div class="fg"><label class="fg-label">First Name *</label><input id="newFirst" class="fg-input" type="text" placeholder="First"></div>
       <div class="fg"><label class="fg-label">Last Name *</label><input id="newLast" class="fg-input" type="text" placeholder="Last"></div>
       <div class="fg"><label class="fg-label">Grade</label><input id="newGrade" class="fg-input" type="text" placeholder="e.g. 7"></div>
       <div class="fg"><label class="fg-label">Birthday</label><input id="newBirthday" class="fg-input" type="date"></div>
-      <div class="fg full"><label class="fg-label">Student Phone</label><input id="newStudentPhone" class="fg-input" type="tel" placeholder="555-555-5555" oninput="formatPhone(this)" maxlength="12"></div>
+      <div class="fg full"><label class="fg-label">Phone</label><input id="newStudentPhone" class="fg-input" type="tel" placeholder="555-555-5555" oninput="formatPhone(this)" maxlength="12"></div>
       <div class="fg full"><label class="fg-label">Emergency Contact Name</label><input id="newECName" class="fg-input" type="text" placeholder="Parent / Guardian"></div>
       <div class="fg full"><label class="fg-label">Emergency Contact Phone</label><input id="newECPhone" class="fg-input" type="tel" placeholder="555-555-5555" oninput="formatPhone(this)" maxlength="12"></div>
       <div class="fg full">
@@ -759,7 +759,7 @@
       </div>
     </div>
     <div class="cam-section">
-      <div class="cam-title"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> Student Photo <span style="font-weight:400;opacity:0.4">(optional)</span></div>
+      <div class="cam-title"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> Photo <span style="font-weight:400;opacity:0.4">(optional)</span></div>
       <img id="photoPreview" alt="Preview">
       <div class="cam-btns">
         <button class="cam-btn open-cam" onclick="startCamera()"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> Open Camera</button>
@@ -779,7 +779,7 @@
 <div id="editStudentModal" class="modal">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <div class="sheet-title"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d=M11 4H4a2 2 0 0 0-2 2v14/><path d=M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z/></svg> Edit Student</div>
+    <div class="sheet-title"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d=M11 4H4a2 2 0 0 0-2 2v14/><path d=M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z/></svg> Edit Record</div>
     <div class="edit-photo-wrap">
       <div id="editPhotoEl"></div>
       <button class="edit-photo-btn" onclick="startEditCamera()"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> Change Photo</button>
@@ -789,7 +789,7 @@
       <div class="fg"><label class="fg-label">Last Name *</label><input id="editLast" class="fg-input" type="text" placeholder="Last"></div>
       <div class="fg"><label class="fg-label">Grade</label><input id="editGrade" class="fg-input" type="text" placeholder="e.g. 7"></div>
       <div class="fg"><label class="fg-label">Birthday</label><input id="editBirthday" class="fg-input" type="date"></div>
-      <div class="fg full"><label class="fg-label">Student Phone</label><input id="editStudentPhone" class="fg-input" type="tel" placeholder="555-555-5555" oninput="formatPhone(this)" maxlength="12"></div>
+      <div class="fg full"><label class="fg-label">Phone</label><input id="editStudentPhone" class="fg-input" type="tel" placeholder="555-555-5555" oninput="formatPhone(this)" maxlength="12"></div>
       <div class="fg full"><label class="fg-label">Emergency Contact Name</label><input id="editECName" class="fg-input" type="text" placeholder="Parent / Guardian"></div>
       <div class="fg full"><label class="fg-label">Emergency Contact Phone</label><input id="editECPhone" class="fg-input" type="tel" placeholder="555-555-5555" oninput="formatPhone(this)" maxlength="12"></div>
       <div class="fg full">
@@ -807,12 +807,12 @@
 <!-- ══ MANAGE STUDENTS ═══════════════════════════════════════ -->
 <div id="manageStudentsModal" class="manage-modal">
   <div class="manage-modal-head">
-    <div class="manage-modal-title"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg> Manage Students</div>
+    <div class="manage-modal-title"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg> Manage</div>
     <div class="manage-modal-count" id="manageCount"></div>
     <button class="manage-close" onclick="closeManageStudents()">&times;</button>
   </div>
   <div class="manage-toolbar">
-    <input class="manage-search-inp" id="manageSearch" type="text" placeholder="Search students…" oninput="renderManageList()" autocomplete="off" autocorrect="off">
+    <input class="manage-search-inp" id="manageSearch" type="text" placeholder="Search by name…" oninput="renderManageList()" autocomplete="off" autocorrect="off">
     <div class="manage-view-toggle">
       <button class="manage-view-btn" id="mgViewList" onclick="setManageView('list')" title="List view"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6" stroke-width="2.5"/><line x1="3" y1="12" x2="3.01" y2="12" stroke-width="2.5"/><line x1="3" y1="18" x2="3.01" y2="18" stroke-width="2.5"/></svg></button>
       <button class="manage-view-btn active" id="mgViewGrid" onclick="setManageView('grid')" title="Grid view">⊞</button>
@@ -822,7 +822,7 @@
     <div class="manage-list-view" id="manageListView"></div>
     <div class="manage-grid-view active" id="manageGridView">
       <div class="manage-grid" id="manageGrid">
-        <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted)">⏳ Loading students…</div>
+        <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted)">Loading…</div>
       </div>
     </div>
   </div>
@@ -833,7 +833,7 @@
 <audio id="checkinSound"><source src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg" type="audio/ogg"></audio>
 
 <!-- ══ TOP BUTTONS ═══════════════════════════════════════════ -->
-<button class="top-btn btn-manage" onclick="openManageStudents()"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg> Manage Students</button>
+<button class="top-btn btn-manage" onclick="openManageStudents()"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg> Manage</button>
 <button class="top-btn btn-signout" onclick="signOut()"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d=M9 21H5a2 2 0 0 1-2-2V5/><polyline points=16 17 21 12 16 7/><line x1=21 y1=12 x2=9 y2=12/></svg> Sign Out</button>
 <button class="top-btn btn-theme" onclick="openThemePicker()"> Theme</button>
 
@@ -988,11 +988,11 @@ function onSearch(){
   },180);
 }
 function clearSearch(){document.getElementById('searchBox').value='';document.getElementById('clearBtn').classList.remove('show');document.getElementById('searchSpin').classList.remove('on');renderEmpty();document.getElementById('searchBox').focus();}
-function renderEmpty(){document.getElementById('results').innerHTML='<div class="empty"><div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg></div><div class="empty-title">Search to get started</div><div class="empty-sub">Type any part of a name above,<br>or tap <strong>New Student</strong>.</div></div>';}
+function renderEmpty(){document.getElementById('results').innerHTML='<div class="empty"><div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg></div><div class="empty-title">Search to get started</div><div class="empty-sub">Type any part of a name above,<br>or tap <strong>New Attendee</strong>.</div></div>';}
 
 function displayResults(res){
   const c=document.getElementById('results');c.innerHTML='';
-  if(!Array.isArray(res)||!res.length){c.innerHTML='<div class="empty"><div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d=M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2/><circle cx=12 cy=7 r=4/></svg></div><div class="empty-title">No students found</div><div class="empty-sub">Check the spelling or tap <strong>New Student</strong>.</div></div>';return;}
+  if(!Array.isArray(res)||!res.length){c.innerHTML='<div class="empty"><div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d=M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2/><circle cx=12 cy=7 r=4/></svg></div><div class="empty-title">No results found</div><div class="empty-sub">Check the spelling or tap <strong>New Attendee</strong>.</div></div>';return;}
   const today=new Date();
   res.forEach((st,i)=>{
     const d=document.createElement('div');d.className='student-card';d.dataset.id=st.id;d.style.animationDelay=(i*0.04)+'s';

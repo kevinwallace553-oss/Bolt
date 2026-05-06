@@ -696,34 +696,37 @@ const KIOSK = {
 
     // Config per event type — defines all labels so nothing is hardcoded
     const evtCfg = {
-      'Sunday Service':       { search:'Search members or guests…',  addBtn:icon('plus',13)+' New Member',    addLbl:'New Member',    manageLbl:'Update Records', batchLbl:'Batch Check-In', firstTimer:true,  firstLbl:icon('star',13)+' Register First Timer' },
-      'Youth Night':          { search:'Search students by name…',   addBtn:'<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 5v14M5 12h14"/></svg> New Student',   addLbl:'New Student',   manageLbl:'Manage',         batchLbl:'Batch Check-In', firstTimer:false },
-      'Young Adult Ministry': { search:'Search attendees by name…',  addBtn:'<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 5v14M5 12h14"/></svg> New Attendee',  addLbl:'New Attendee',  manageLbl:'Update Records', batchLbl:'Batch Check-In', firstTimer:true,  firstLbl:'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Register First Timer' },
-      'Small Groups':         { search:'Search group members…',      addBtn:icon('plus',13)+' New Member',    addLbl:'New Member',    manageLbl:'Manage Groups',  batchLbl:'Batch Check-In', firstTimer:false },
-      'Special Event':        { search:'Search attendees…',          addBtn:'<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 5v14M5 12h14"/></svg> New Attendee',  addLbl:'New Attendee',  manageLbl:'Manage',         batchLbl:'Batch Check-In', firstTimer:true,  firstLbl:'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Register Guest' },
+      // showBatch: ONLY Youth Night has batch check-in
+      'Sunday Service':       { search:'Search members or guests…',     addBtn:icon('plus',13)+' New Member',    addLbl:'New Member',    manageLbl:'Update Records', showBatch:false, firstTimer:true,  firstLbl:icon('star',13)+' Register First Timer' },
+      'Youth Night':          { search:'Search students by name…',      addBtn:icon('plus',13)+' New Student',   addLbl:'New Student',   manageLbl:'Manage Students', showBatch:true,  batchLbl:'Batch Check-In', firstTimer:false },
+      'Young Adult Ministry': { search:'Search young adults by name…',  addBtn:icon('plus',13)+' New Attendee',  addLbl:'New Attendee',  manageLbl:'Update Records', showBatch:false, firstTimer:true,  firstLbl:icon('star',13)+' Register First Timer' },
+      'Small Groups':         { search:'Search group members…',         addBtn:icon('plus',13)+' New Member',    addLbl:'New Member',    manageLbl:'Manage Groups',  showBatch:false, firstTimer:false },
+      'Special Event':        { search:'Search attendees…',             addBtn:icon('plus',13)+' New Attendee',  addLbl:'New Attendee',  manageLbl:'Manage',         showBatch:false, firstTimer:true,  firstLbl:icon('star',13)+' Register Guest' },
     };
-    const cfg = evtCfg[eventName] || { search:'Search by name…', addBtn:'<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 5v14M5 12h14"/></svg> Add Attendee', addLbl:'Add Attendee', manageLbl:'Manage', batchLbl:'Batch Check-In', firstTimer:false };
+    const cfg = evtCfg[eventName] || { search:'Search by name…', addBtn:icon('plus',13)+' Add', addLbl:'Add', manageLbl:'Manage', showBatch:false, firstTimer:false };
 
     // Store cfg for use in batch modal and other places
     window._kEventCfg = cfg;
     window._kEventName = eventName;
+    // Show/hide the static batch button in kiosk.html based on event type
+    const staticBatch = document.getElementById('staticBatchBtn');
+    if (staticBatch) staticBatch.style.display = cfg.showBatch ? '' : 'none';
 
     // Update search placeholder
     if (searchEl) searchEl.placeholder = cfg.search;
 
     // Build action buttons
     if (acts) {
+      // Build action buttons based on showBatch + firstTimer flags
+      const manageBtn = `<button class="k-btn" onclick="KIOSK.openManage()">${icon('manage',13)} ${cfg.manageLbl}</button>`;
+      const addBtn    = `<button class="k-btn" onclick="KIOSK.openNewStudent()">${cfg.addBtn}</button>`;
+      const batchBtn  = cfg.showBatch ? `<button class="k-btn teal full" onclick="KIOSK.openBatch()">${icon('batch',13)} ${cfg.batchLbl||'Batch Check-In'}</button>` : '';
+      const firstBtn  = cfg.firstTimer ? `<button class="k-btn amber full" onclick="KIOSK.openFirstTimerFlow()" style="background:rgba(245,158,11,0.18);border-color:rgba(245,158,11,0.5);color:#fcd34d;font-weight:800">${cfg.firstLbl}</button>` : '';
+
       if (cfg.firstTimer) {
-        acts.innerHTML = `
-          <button class="k-btn amber full" onclick="KIOSK.openFirstTimerFlow()" style="background:rgba(245,158,11,0.18);border-color:rgba(245,158,11,0.5);color:#fcd34d;font-weight:800">${cfg.firstLbl}</button>
-          <button class="k-btn" onclick="KIOSK.openBatch()">${cfg.batchLbl ? icon('batch',13)+' '+cfg.batchLbl : icon('batch',13)+' Batch Check-In'}</button>
-          <button class="k-btn" onclick="KIOSK.openNewStudent()">${cfg.addBtn}</button>
-          <button class="k-btn" onclick="KIOSK.openManage()"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6" stroke-width="2.5"/><line x1="3" y1="12" x2="3.01" y2="12" stroke-width="2.5"/><line x1="3" y1="18" x2="3.01" y2="18" stroke-width="2.5"/></svg> ${cfg.manageLbl}</button>`;
+        acts.innerHTML = firstBtn + batchBtn + addBtn + manageBtn;
       } else {
-        acts.innerHTML = `
-          <button class="k-btn teal full" onclick="KIOSK.openBatch()"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg> ${cfg.batchLbl || 'Batch Check-In'}</button>
-          <button class="k-btn" onclick="KIOSK.openNewStudent()">${cfg.addBtn}</button>
-          <button class="k-btn" onclick="KIOSK.openManage()"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6" stroke-width="2.5"/><line x1="3" y1="12" x2="3.01" y2="12" stroke-width="2.5"/><line x1="3" y1="18" x2="3.01" y2="18" stroke-width="2.5"/></svg> ${cfg.manageLbl}</button>`;
+        acts.innerHTML = batchBtn + addBtn + manageBtn;
       }
     }
 
@@ -735,11 +738,10 @@ const KIOSK = {
           <div style="font-size:48px;margin-bottom:14px"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
           <div style="font-family:var(--font);font-size:17px;font-weight:800;color:var(--text);margin-bottom:6px">Welcome to Sunday Service</div>
           <div style="font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.6">Search for a member or guest above,<br>or use the quick actions below</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:400px;margin:0 auto">
-            <button onclick="KIOSK.openFirstTimerFlow()" style="padding:14px 10px;border-radius:14px;background:rgba(245,158,11,0.12);border:1.5px solid rgba(245,158,11,0.4);color:#fcd34d;font-family:var(--body);font-size:12px;font-weight:800;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px"><span style="font-size:24px"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>First Timer</button>
-            <button onclick="KIOSK.openBatch()" style="padding:14px 10px;border-radius:14px;background:var(--surface2);border:1.5px solid var(--rim);color:var(--muted);font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px"><span style="font-size:24px"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Batch Check-In</button>
-            <button onclick="KIOSK.openNewStudent()" style="padding:14px 10px;border-radius:14px;background:var(--surface2);border:1.5px solid var(--rim);color:var(--muted);font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px"><span style="font-size:24px"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 5v14M5 12h14"/></svg></span>New Member</button>
-            <button onclick="KIOSK.openManage()" style="padding:14px 10px;border-radius:14px;background:var(--surface2);border:1.5px solid var(--rim);color:var(--muted);font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px"><span style="font-size:24px"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6" stroke-width="2.5"/><line x1="3" y1="12" x2="3.01" y2="12" stroke-width="2.5"/><line x1="3" y1="18" x2="3.01" y2="18" stroke-width="2.5"/></svg></span>Update Records</button>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;max-width:480px;margin:0 auto">
+            <button onclick="KIOSK.openFirstTimerFlow()" style="padding:14px 10px;border-radius:14px;background:rgba(245,158,11,0.12);border:1.5px solid rgba(245,158,11,0.4);color:#fcd34d;font-family:var(--body);font-size:12px;font-weight:800;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px">${icon('star',22)}<span>First Timer</span></button>
+            <button onclick="KIOSK.openNewStudent()" style="padding:14px 10px;border-radius:14px;background:var(--surface2);border:1.5px solid var(--rim);color:var(--muted);font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px">${icon('person',22)}<span>New Member</span></button>
+            <button onclick="KIOSK.openManage()" style="padding:14px 10px;border-radius:14px;background:var(--surface2);border:1.5px solid var(--rim);color:var(--muted);font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px">${icon('manage',22)}<span>Update Records</span></button>
           </div>
         </div>`;
     }
@@ -750,13 +752,13 @@ const KIOSK = {
 
   updateSidebarLabels(eventName) {
     const labelMap = {
-      'Sunday Service':       { total:'Attendees', checked:'Checked In', newBtn:'New Member',    regTitle:'Register Member / Guest',   saveBtn:'Register & Save' },
-      'Youth Night':          { total:'Students',  checked:'Checked In', newBtn:'New Student',   regTitle:'Register Student',          saveBtn:'Register & Save' },
-      'Young Adult Ministry': { total:'Attendees', checked:'Checked In', newBtn:'New Attendee',  regTitle:'Register Young Adult',      saveBtn:'Register & Save' },
-      'Small Groups':         { total:'Members',   checked:'Checked In', newBtn:'New Member',    regTitle:'Register Member',           saveBtn:'Register & Save' },
-      'Special Event':        { total:'Attendees', checked:'Checked In', newBtn:'New Attendee',  regTitle:'Register Attendee',         saveBtn:'Register & Save' },
+      'Sunday Service':       { total:'Members',   checked:'Checked In', newBtn:'New Member',    regTitle:'Register Member / Guest',   saveBtn:'Register & Save', listTitle:'Members & Guests',   searchHint:'Search members or guests…'   },
+      'Youth Night':          { total:'Students',  checked:'Checked In', newBtn:'New Student',   regTitle:'Register Student',          saveBtn:'Register & Save', listTitle:'Youth Students',     searchHint:'Search students by name…'    },
+      'Young Adult Ministry': { total:'Young Adults', checked:'Checked In', newBtn:'New Attendee', regTitle:'Register Young Adult',   saveBtn:'Register & Save', listTitle:'Young Adults',       searchHint:'Search young adults…'        },
+      'Small Groups':         { total:'Members',   checked:'Checked In', newBtn:'New Member',    regTitle:'Register Group Member',     saveBtn:'Register & Save', listTitle:'Group Members',      searchHint:'Search group members…'       },
+      'Special Event':        { total:'Attendees', checked:'Checked In', newBtn:'New Attendee',  regTitle:'Register Attendee / Guest', saveBtn:'Register & Save', listTitle:'Event Attendees',    searchHint:'Search attendees…'           },
     };
-    const lbl = labelMap[eventName] || { total:'Attendees', checked:'Checked In', newBtn:'New Attendee', regTitle:'Register Attendee', saveBtn:'Register & Save' };
+    const lbl = labelMap[eventName] || { total:'Attendees', checked:'Checked In', newBtn:'New Attendee', regTitle:'Register Attendee', saveBtn:'Register & Save', listTitle:'Attendees', searchHint:'Search by name…' };
 
     // Update sidebar stat labels
     const el1 = document.getElementById('kLblChecked'); if(el1) el1.textContent = lbl.checked;
@@ -779,7 +781,7 @@ const KIOSK = {
   search(q) {
     document.getElementById('kClear').classList.toggle('show', q.length>0);
     if(!q.trim()){
-      document.getElementById('kResults').innerHTML = `<div class="k-empty"><div class="k-empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg></div><div class="k-empty-title">Search for a student</div><div class="k-empty-sub">Type a name to find and check in</div></div>`;
+      document.getElementById('kResults').innerHTML = `<div class="k-empty"><div class="k-empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg></div><div class="k-empty-title">Search by name</div><div class="k-empty-sub">Type a name to find and check in</div></div>`;
       return;
     }
     const ql = q.toLowerCase();
@@ -790,7 +792,7 @@ const KIOSK = {
   renderResults(students) {
     const el = document.getElementById('kResults');
     if(!students.length){
-      el.innerHTML=`<div class="k-empty"><div class="k-empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><div class="k-empty-title">No students found</div><div class="k-empty-sub">Try a different name or add a new student</div></div>`;
+      el.innerHTML=`<div class="k-empty"><div class="k-empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><div class="k-empty-title">No results found</div><div class="k-empty-sub">Try a different name or add a new student</div></div>`;
       return;
     }
     const today = new Date();
@@ -988,7 +990,7 @@ const KIOSK = {
     const backend = toBackendStudent(display);
     const ci = document.getElementById('ns_checkin').checked;
     const meta = ci && _kLeader ? {leader:_kLeader, event:_kEvent} : null;
-    showSaving('Adding student…');
+    showSaving('Adding ' + ((window._kEventCfg && window._kEventCfg.addLbl) || 'attendee') + '…');
     try {
       const r = await API.addStudent(backend, meta);
       if(r?.status==='error'||r?.success===false){
@@ -1034,6 +1036,12 @@ const KIOSK = {
 
   openManage() {
     _manageAll = [..._allStudents];
+    // Update modal title to match event type
+    const lbl = window._kRegLabel || {};
+    const manTitle = document.querySelector('.manage-modal-title');
+    if (manTitle) manTitle.innerHTML = icon('manage',16) + ' ' + (lbl.listTitle || 'Attendees');
+    const manSearch = document.getElementById('manageSearch');
+    if (manSearch) manSearch.placeholder = lbl.searchHint || 'Search by name…';
     openModal('manageModal');
     this.renderManage('');
   },
@@ -1934,7 +1942,7 @@ DASH.lookupSearch = async function(q) {
   document.getElementById('lookupHistory').style.display = 'none';
   el.style.display = 'block';
   if (!q.trim()) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg></div><p class="empty-txt">Search for a student to see their attendance history</p></div>';
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg></div><p class="empty-txt">Search for an attendee to see their history</p></div>';
     return;
   }
   const ql = q.toLowerCase();
