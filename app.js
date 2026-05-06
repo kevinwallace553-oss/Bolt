@@ -602,7 +602,7 @@ const KIOSK = {
 
   async startSession() {
     const sel = document.getElementById('leaderSelect');
-    if(!sel.value){toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Select your name first','err');return;}
+    if(!sel.value){toast('Select your name first','err');return;}
     _kLeader = sel.value;
     document.getElementById('epGreeting').textContent = `Hey, ${_kLeader}!`;
       document.getElementById('eventPicker').classList.add('open');
@@ -616,11 +616,11 @@ const KIOSK = {
   },
 
   confirmEvent() {
-    if(!_selectedEvent){toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Pick an event type','err');return;}
+    if(!_selectedEvent){toast('Pick an event type','err');return;}
     let eventName = _selectedEvent.name;
     if(eventName==='__other__'){
       eventName = document.getElementById('epOtherInput').value.trim();
-      if(!eventName){toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Enter event name','err');return;}
+      if(!eventName){toast('Enter event name','err');return;}
     }
 
     // Auto-set leader from signed-in session — no leader login screen needed
@@ -708,6 +708,17 @@ const KIOSK = {
     // Store cfg for use in batch modal and other places
     window._kEventCfg = cfg;
     window._kEventName = eventName;
+    // Sync _kRegLabel so manage modal always has correct labels
+    window._kRegLabel = (() => {
+      const m = {
+        'Sunday Service':       { total:'Members',     listTitle:'Members & Guests',   searchHint:'Search members or guests…' },
+        'Youth Night':          { total:'Students',    listTitle:'Youth Students',      searchHint:'Search students by name…' },
+        'Young Adult Ministry': { total:'Young Adults',listTitle:'Young Adults',        searchHint:'Search young adults…' },
+        'Small Groups':         { total:'Members',     listTitle:'Group Members',       searchHint:'Search group members…' },
+        'Special Event':        { total:'Attendees',   listTitle:'Event Attendees',     searchHint:'Search attendees…' },
+      };
+      return m[eventName] || { total:'Attendees', listTitle:'Attendees', searchHint:'Search by name…' };
+    })();
     // Show/hide the static batch button in kiosk.html based on event type
     const staticBatch = document.getElementById('staticBatchBtn');
     if (staticBatch) staticBatch.style.display = cfg.showBatch ? '' : 'none';
@@ -747,7 +758,7 @@ const KIOSK = {
     }
 
     API.checkIn({type:'leader',leader:_kLeader}, {leader:_kLeader,event:eventName,type:'leader'}).catch(()=>{});
-    toast(`${style.icon} Session started — ${eventName}`,'ok');
+    toast(`Session started — ${eventName}`,'ok');
   },
 
   updateSidebarLabels(eventName) {
@@ -829,7 +840,7 @@ const KIOSK = {
   },
 
   async checkIn(studentId, name) {
-    if(!_kLeader){toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Start your session first','err');return;}
+    if(!_kLeader){toast('Start your session first','err');return;}
     const sid = String(studentId);
     const student = _allStudents.find(s=>String(s.id)===sid);
     if(!student) return;
@@ -850,14 +861,14 @@ const KIOSK = {
         _checkedToday.delete(sid);
         const _sc1=document.getElementById('kStatChecked');if(_sc1)_sc1.textContent=_checkedToday.size;
       const _sc2=document.getElementById('kStatCheckedSide');if(_sc2)_sc2.textContent=_checkedToday.size;
-        toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Check-in failed — try again','err');
+        toast('Check-in failed — try again','err');
         this.search(document.getElementById('kSearch').value);
       }
     } catch(e){
       _checkedToday.delete(sid);
       const _sc1=document.getElementById('kStatChecked');if(_sc1)_sc1.textContent=_checkedToday.size;
       const _sc2=document.getElementById('kStatCheckedSide');if(_sc2)_sc2.textContent=_checkedToday.size;
-      toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Connection error','err');
+      toast('Connection error','err');
       this.search(document.getElementById('kSearch').value);
     }
   },
@@ -925,7 +936,7 @@ const KIOSK = {
       this.clearSearch(); this.renderManage('');
       document.getElementById('kStatTotal').textContent = _allStudents.length;
       toast('Student deleted','ok');
-    } catch(e){ toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Delete failed','err'); }
+    } catch(e){ toast('Delete failed','err'); }
     hideSaving();
   },
 
@@ -976,7 +987,7 @@ const KIOSK = {
 
   async saveNewStudent() {
     const name = document.getElementById('ns_name').value.trim();
-    if(!name){toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Name is required','err');return;}
+    if(!name){toast('Name is required','err');return;}
     const display = {
       name,
       grade: document.getElementById('ns_grade').value.trim(),
@@ -994,22 +1005,22 @@ const KIOSK = {
     try {
       const r = await API.addStudent(backend, meta);
       if(r?.status==='error'||r?.success===false){
-        toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> '+(r?.message||r?.error||'Failed to add student'),'err');
+        toast(''+(r?.message||r?.error||'Failed to add student'),'err');
       } else {
         closeModal('newStudentModal');
         await this.loadAllStudents();
         if(ci && r?.id) _checkedToday.add(String(r.id));
         this.clearSearch();
-        toast(`<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> ${name} added!`,'ok');
+        toast(`${name} added!`,'ok');
       }
-    } catch(e){ toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Connection error','err'); }
+    } catch(e){ toast('Connection error','err'); }
     hideSaving();
   },
 
   async saveEditStudent() {
     const id = document.getElementById('es_id').value;
     const name = document.getElementById('es_name').value.trim();
-    if(!name){toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Name is required','err');return;}
+    if(!name){toast('Name is required','err');return;}
     const display = {
       name,
       grade: document.getElementById('es_grade').value.trim(),
@@ -1028,9 +1039,9 @@ const KIOSK = {
         closeModal('editStudentModal');
         await this.loadAllStudents();
         this.clearSearch();
-        toast('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Student updated','ok');
-      } else toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> '+(r?.error||'Failed to save'),'err');
-    } catch(e){ toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Connection error','err'); }
+        toast('Student updated','ok');
+      } else toast(''+(r?.error||'Failed to save'),'err');
+    } catch(e){ toast('Connection error','err'); }
     hideSaving();
   },
 
@@ -1096,7 +1107,7 @@ const KIOSK = {
       this.renderManage(document.getElementById('manageSearch').value||'');
       document.getElementById('kStatTotal').textContent = _allStudents.length;
       toast('Student deleted','ok');
-    } catch(e){ toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Delete failed','err'); }
+    } catch(e){ toast('Delete failed','err'); }
     hideSaving();
   },
 
@@ -1113,9 +1124,9 @@ const KIOSK = {
         opt.value = name.trim(); opt.textContent = name.trim();
         sel.appendChild(opt);
         sel.value = name.trim();
-        toast('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Leader added','ok');
-      } else toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> '+(r?.error||'Failed'),'err');
-    } catch(e){ toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Connection error','err'); }
+        toast('Leader added','ok');
+      } else toast(''+(r?.error||'Failed'),'err');
+    } catch(e){ toast('Connection error','err'); }
     hideSaving();
   },
 
@@ -1196,7 +1207,7 @@ const KIOSK = {
 
   async submitBatch() {
     if(_batchSelected.size===0) return;
-    if(!_kLeader){toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Start your session first (select a leader)','err');return;}
+    if(!_kLeader){toast('Start your session first (select a leader)','err');return;}
     const ids = [..._batchSelected];
     const students = ids.map(id=>_allStudents.find(s=>String(s.id)===id)).filter(Boolean);
     showSaving(`Checking in ${ids.length} students…`);
@@ -1212,8 +1223,8 @@ const KIOSK = {
       const _sc1=document.getElementById('kStatChecked');if(_sc1)_sc1.textContent=_checkedToday.size;
       const _sc2=document.getElementById('kStatCheckedSide');if(_sc2)_sc2.textContent=_checkedToday.size;
       this.search(document.getElementById('kSearch').value);
-      toast(`<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> ${ids.length} students checked in!`,'ok');
-    } catch(e){ toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Batch check-in failed — check connection','err'); }
+      toast(`${ids.length} students checked in!`,'ok');
+    } catch(e){ toast('Batch check-in failed — check connection','err'); }
     hideSaving();
   }
 };
@@ -1263,7 +1274,7 @@ const DASH = {
       this.renderWeek(week);
       this.renderAtRisk(atRisk);
       this.loadVolunteerDash();
-    } catch(e){ if(!silent) toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Refresh failed','err'); console.error(e); }
+    } catch(e){ if(!silent) toast('Refresh failed','err'); console.error(e); }
     if(!silent) hideSaving();
   },
 
@@ -2162,7 +2173,7 @@ DASH.downloadReport = async function() {
 
     toast('Report downloaded!', 'ok');
   } catch(e) {
-    toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Download failed — try again', 'err');
+    toast('Download failed — try again', 'err');
     console.error(e);
   }
   hideSaving();
@@ -2193,7 +2204,7 @@ const CM = {
       this.updateStats();
       this.render(this._filtered);
     } catch(e) {
-      toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Failed to load families', 'err');
+      toast('Failed to load families', 'err');
     }
     hideSaving();
   },
@@ -2337,10 +2348,10 @@ const CM = {
       const el = document.getElementById('cmStatChecked');
       if (el) el.textContent = this._checkedFamilies.size;
       this.render(this._filtered);
-      toast(`<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> ${name} checked in!`, 'ok');
+      toast(`${name} checked in!`, 'ok');
     } catch(e) {
       this._checkedFamilies.delete(childId);
-      toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Check-in failed', 'err');
+      toast('Check-in failed', 'err');
     }
   },
 
@@ -2348,7 +2359,7 @@ const CM = {
   async checkInAll(familyId) {
     const family = this._families.find(f => f.id === familyId);
     if (!family || !family.children.length) {
-      toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> No children in this family', 'err');
+      toast('No children in this family', 'err');
       return;
     }
     showSaving('Checking in family…');
@@ -2358,9 +2369,9 @@ const CM = {
       const el = document.getElementById('cmStatChecked');
       if (el) el.textContent = this._checkedFamilies.size;
       this.render(this._filtered);
-      toast(`<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> ${family.parentName} family checked in!`, 'ok');
+      toast(`${family.parentName} family checked in!`, 'ok');
     } catch(e) {
-      toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Check-in failed', 'err');
+      toast('Check-in failed', 'err');
     }
     hideSaving();
   },
@@ -2394,8 +2405,8 @@ const CM = {
     const id   = document.getElementById('cmf_id').value;
     const name = document.getElementById('cmf_name').value.trim();
     const phone= document.getElementById('cmf_phone').value.trim();
-    if (!name)  { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Parent name is required', 'err'); return; }
-    if (!phone) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Phone number is required', 'err'); return; }
+    if (!name)  { toast('Parent name is required', 'err'); return; }
+    if (!phone) { toast('Phone number is required', 'err'); return; }
     const data = { parentName:name, phone, email:document.getElementById('cmf_email').value.trim(),
       address:document.getElementById('cmf_address').value.trim(), notes:document.getElementById('cmf_notes').value.trim() };
     showSaving(id ? 'Updating family…' : 'Registering family…');
@@ -2419,9 +2430,9 @@ const CM = {
         closeModal('cmFamilyModal');
         this.updateStats();
         this.render(this._filtered);
-        toast(id ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Family updated' : '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Family registered!', 'ok');
-      } else toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> '+(r?.error||'Failed'), 'err');
-    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Connection error', 'err'); }
+        toast(id ? 'Family updated' : 'Family registered!', 'ok');
+      } else toast(''+(r?.error||'Failed'), 'err');
+    } catch(e) { toast('Connection error', 'err'); }
     hideSaving();
   },
 
@@ -2434,8 +2445,8 @@ const CM = {
       this._filtered = this._filtered.filter(f => f.id !== id);
       this.updateStats();
       this.render(this._filtered);
-      toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg> Family deleted', 'ok');
-    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Delete failed', 'err'); }
+      toast('Family deleted', 'ok');
+    } catch(e) { toast('Delete failed', 'err'); }
     hideSaving();
   },
 
@@ -2472,7 +2483,7 @@ const CM = {
     const id       = document.getElementById('cmc_id').value;
     const familyId = document.getElementById('cmc_familyId').value;
     const first    = document.getElementById('cmc_first').value.trim();
-    if (!first) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> First name is required', 'err'); return; }
+    if (!first) { toast('First name is required', 'err'); return; }
     const data = {
       familyId,
       firstName: first,
@@ -2521,9 +2532,9 @@ const CM = {
           const el = document.getElementById(`cmChildren_${familyId}`);
           if (el) el.style.display = 'block';
         }, 50);
-        toast(id ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Child updated' : '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Child added!', 'ok');
-      } else toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> '+(r?.error||'Failed'), 'err');
-    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Connection error', 'err'); }
+        toast(id ? 'Child updated' : 'Child added!', 'ok');
+      } else toast(''+(r?.error||'Failed'), 'err');
+    } catch(e) { toast('Connection error', 'err'); }
     hideSaving();
   },
 
@@ -2536,8 +2547,8 @@ const CM = {
       this._filtered = [...this._families];
       this.updateStats();
       this.render(this._filtered);
-      toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg> Child removed', 'ok');
-    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Delete failed', 'err'); }
+      toast('Child removed', 'ok');
+    } catch(e) { toast('Delete failed', 'err'); }
     hideSaving();
   },
 
@@ -2795,7 +2806,7 @@ const CM = {
     ].join('');
 
     const win = window.open('', '_blank', 'width=900,height=700');
-    if (!win) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Allow pop-ups to print tags','err'); return; }
+    if (!win) { toast('Allow pop-ups to print tags','err'); return; }
 
     // Write HTML without inline scripts to avoid escaping issues
     const fullHTML = '<!DOCTYPE html><html><head>'
@@ -2833,7 +2844,7 @@ const CM = {
     };
     qrLib.onerror = function() {
       win.setTimeout(function() { win.print(); }, 500);
-      toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> QR library failed to load', 'err');
+      toast('QR library failed to load', 'err');
     };
     win.document.head.appendChild(qrLib);
 
@@ -2845,7 +2856,7 @@ const CM = {
 
 CM.printAllTags = function() {
   const checked = this._families.filter(f=>f.children.some(ch=>this._checkedFamilies.has(ch.id)));
-  if (!checked.length) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> No checked-in children yet','err'); return; }
+  if (!checked.length) { toast('No checked-in children yet','err'); return; }
   const today = new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
   const time  = new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
   const tagsHTML = checked.flatMap(family =>
@@ -2915,7 +2926,7 @@ const VOL = {
       this._filtered = [...this._volunteers];
       this.updateStats();
       this.render(this._filtered);
-    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Failed to load volunteers','err'); }
+    } catch(e) { toast('Failed to load volunteers','err'); }
     hideSaving();
   },
 
@@ -3005,14 +3016,14 @@ const VOL = {
     this.render(this._filtered);
     try {
       const r = await API.checkInVolunteer(volId, { event: _kEvent||this._department, leader: _kLeader });
-      if (!r?.success) { this._checkedIn.delete(volId); this.updateStats(); this.render(this._filtered); toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Check-in failed','err'); return; }
-      toast(`<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> ${name} checked in!`,'ok');
-    } catch(e) { this._checkedIn.delete(volId); this.updateStats(); this.render(this._filtered); toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Connection error','err'); }
+      if (!r?.success) { this._checkedIn.delete(volId); this.updateStats(); this.render(this._filtered); toast('Check-in failed','err'); return; }
+      toast(`${name} checked in!`,'ok');
+    } catch(e) { this._checkedIn.delete(volId); this.updateStats(); this.render(this._filtered); toast('Connection error','err'); }
   },
 
   async batchCheckInAll() {
     const unchecked = this._volunteers.filter(v => !this._checkedIn.has(v.id));
-    if (!unchecked.length) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> All volunteers already checked in','ok'); return; }
+    if (!unchecked.length) { toast('All volunteers already checked in','ok'); return; }
     if (!confirm(`Check in all ${unchecked.length} volunteers in this department?`)) return;
     showSaving(`Checking in ${unchecked.length} volunteers…`);
     let done = 0;
@@ -3024,7 +3035,7 @@ const VOL = {
     }
     this.updateStats(); this.render(this._filtered);
     hideSaving();
-    toast(`<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> ${done} volunteers checked in!`,'ok');
+    toast(`${done} volunteers checked in!`,'ok');
   },
 
   /* ── ADD / EDIT ── */
@@ -3055,7 +3066,7 @@ const VOL = {
     const id    = document.getElementById('vol_id').value;
     const first = document.getElementById('vol_first').value.trim();
     const dept  = document.getElementById('vol_dept').value;
-    if (!first) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> First name is required','err'); return; }
+    if (!first) { toast('First name is required','err'); return; }
     const data = { firstName:first, lastName:document.getElementById('vol_last').value.trim(),
       phone:document.getElementById('vol_phone').value.trim(), email:document.getElementById('vol_email').value.trim(),
       department:dept, role:document.getElementById('vol_role').value.trim(),
@@ -3066,9 +3077,9 @@ const VOL = {
       if (r?.success) {
         closeModal('volModal');
         await this.load();
-        toast(id ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Volunteer updated' : '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Volunteer added!','ok');
-      } else toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> '+(r?.error||'Failed'),'err');
-    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Connection error','err'); }
+        toast(id ? 'Volunteer updated' : 'Volunteer added!','ok');
+      } else toast(''+(r?.error||'Failed'),'err');
+    } catch(e) { toast('Connection error','err'); }
     hideSaving();
   },
 
@@ -3078,8 +3089,8 @@ const VOL = {
     try {
       await API.deleteVolunteer(id);
       await this.load();
-      toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg> Volunteer removed','ok');
-    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Delete failed','err'); }
+      toast('Volunteer removed','ok');
+    } catch(e) { toast('Delete failed','err'); }
     hideSaving();
   },
 
@@ -3107,7 +3118,7 @@ const VOL = {
 
   async addDept() {
     const name = document.getElementById('newDeptInput').value.trim();
-    if (!name) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Enter a department name','err'); return; }
+    if (!name) { toast('Enter a department name','err'); return; }
     try {
       const r = await API.addDepartment(name, '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7" stroke-width="2.5"/></svg>', '#6b7280');
       if (r?.success) {
@@ -3120,9 +3131,9 @@ const VOL = {
           opt.value = name; opt.textContent = name;
           sel.appendChild(opt);
         }
-        toast('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Department added','ok');
+        toast('Department added','ok');
       }
-    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Failed','err'); }
+    } catch(e) { toast('Failed','err'); }
   },
 
   async deleteDept(id, name) {
@@ -3130,8 +3141,8 @@ const VOL = {
     try {
       await API.deleteDepartment(id);
       await this.loadDepts();
-      toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg> Department deleted','ok');
-    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Failed','err'); }
+      toast('Department deleted','ok');
+    } catch(e) { toast('Failed','err'); }
   }
 };
 
@@ -3164,7 +3175,7 @@ const SG = {
       this._filtered = [...this._groups];
       this.updateStats();
       this.render(this._filtered);
-    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Failed to load groups','err'); }
+    } catch(e) { toast('Failed to load groups','err'); }
     hideSaving();
   },
 
@@ -3279,7 +3290,7 @@ const SG = {
   /* ── CHECK IN ── */
   async checkInAll(groupId) {
     const group = this._groups.find(g=>g.id===groupId);
-    if (!group || !group.members.length) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> No members in this group','err'); return; }
+    if (!group || !group.members.length) { toast('No members in this group','err'); return; }
     showSaving('Checking in group…');
     try {
       const r = await API.checkInSGGroup(groupId, { leader:_kLeader, event:_kEvent||'Small Groups' });
@@ -3288,9 +3299,9 @@ const SG = {
         const el2 = document.getElementById('sgStatChecked');
         if (el2) el2.textContent = parseInt(el2.textContent||0) + (r.count||group.members.length);
         this.render(this._filtered);
-        toast(`<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> ${group.name} — ${r.count||group.members.length} members checked in!`,'ok');
-      } else toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> '+(r?.error||'Check-in failed'),'err');
-    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Connection error','err'); }
+        toast(`${group.name} — ${r.count||group.members.length} members checked in!`,'ok');
+      } else toast(''+(r?.error||'Check-in failed'),'err');
+    } catch(e) { toast('Connection error','err'); }
     hideSaving();
   },
 
@@ -3324,8 +3335,8 @@ const SG = {
     const id   = document.getElementById('sg_id').value;
     const name = document.getElementById('sg_name').value.trim();
     const leader = document.getElementById('sg_leader').value.trim();
-    if (!name)  { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Group name is required','err'); return; }
-    if (!leader){ toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Leader name is required','err'); return; }
+    if (!name)  { toast('Group name is required','err'); return; }
+    if (!leader){ toast('Leader name is required','err'); return; }
     const data = { name, leader, leaderPhone:document.getElementById('sg_leader_phone').value.trim(),
       day:document.getElementById('sg_day').value, time:document.getElementById('sg_time').value.trim(),
       location:document.getElementById('sg_location').value.trim(),
@@ -3345,9 +3356,9 @@ const SG = {
         this._filtered = [...this._groups];
         this.updateStats();
         this.render(this._filtered);
-        toast(id?'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Group updated':'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Group created!','ok');
-      } else toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> '+(r?.error||'Failed'),'err');
-    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Connection error','err'); }
+        toast(id?'Group updated':'Group created!','ok');
+      } else toast(''+(r?.error||'Failed'),'err');
+    } catch(e) { toast('Connection error','err'); }
     hideSaving();
   },
 
@@ -3359,8 +3370,8 @@ const SG = {
       this._groups = this._groups.filter(g=>g.id!==id);
       this._filtered = this._filtered.filter(g=>g.id!==id);
       this.updateStats(); this.render(this._filtered);
-      toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg> Group deleted','ok');
-    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Delete failed','err'); }
+      toast('Group deleted','ok');
+    } catch(e) { toast('Delete failed','err'); }
     hideSaving();
   },
 
@@ -3395,7 +3406,7 @@ const SG = {
     const gid  = document.getElementById('sgm_group_id').value;
     const mid  = document.getElementById('sgm_member_id').value;
     const first = document.getElementById('sgm_first').value.trim();
-    if (!first) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> First name required','err'); return; }
+    if (!first) { toast('First name required','err'); return; }
     const group = this._groups.find(g=>g.id===gid);
     const data = { groupId:gid, groupName:group?.name||'',
       firstName:first, lastName:document.getElementById('sgm_last').value.trim(),
@@ -3425,9 +3436,9 @@ const SG = {
         this.updateStats(); this.render(this._filtered);
         setTimeout(()=>{ const b=document.getElementById(`sgBody_${gid}`); if(b) b.style.display='block';
           const a=document.getElementById(`sgArrow_${gid}`); if(a) a.textContent='⌄'; }, 50);
-        toast(mid?'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Member updated':'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Member added!','ok');
-      } else toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> '+(r?.error||'Failed'),'err');
-    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Connection error','err'); }
+        toast(mid?'Member updated':'Member added!','ok');
+      } else toast(''+(r?.error||'Failed'),'err');
+    } catch(e) { toast('Connection error','err'); }
     hideSaving();
   },
 
@@ -3438,8 +3449,8 @@ const SG = {
       await API.deleteSGMember(memberId);
       this._groups.forEach(g=>{ g.members=g.members.filter(m=>m.id!==memberId); });
       this.updateStats(); this.render(this._filtered);
-      toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg> Member removed','ok');
-    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Delete failed','err'); }
+      toast('Member removed','ok');
+    } catch(e) { toast('Delete failed','err'); }
     hideSaving();
   }
 };
@@ -3796,7 +3807,7 @@ const SCHED = {
   addVolAssignment() {
     // Show a quick volunteer picker
     const vols = this._volunteers;
-    if (!vols.length) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> No volunteers registered yet','err'); return; }
+    if (!vols.length) { toast('No volunteers registered yet','err'); return; }
 
     // Build a simple selection modal inline
     const picker = document.createElement('div');
@@ -3840,9 +3851,9 @@ const SCHED = {
           location: ev2?.location, notes: ev2?.notes,
           newAssignments: newAssign
         });
-        if (r?.success) { await this.load(); toast(volEmail ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Volunteer added & invitation sent!' : '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Volunteer added (no email on file)','ok'); }
-        else toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> '+(r?.error||'Failed'),'err');
-      } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Error','err'); }
+        if (r?.success) { await this.load(); toast(volEmail ? 'Volunteer added & invitation sent!' : 'Volunteer added (no email on file)','ok'); }
+        else toast(''+(r?.error||'Failed'),'err');
+      } catch(e) { toast('Error','err'); }
       hideSaving();
       this._pickVol = origPick;
     };
@@ -3852,7 +3863,7 @@ const SCHED = {
     const id = document.getElementById('se_id').value;
     const name = document.getElementById('se_name').value.trim();
     const date = document.getElementById('se_date').value;
-    if (!name || !date) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Event name and date are required','err'); return; }
+    if (!name || !date) { toast('Event name and date are required','err'); return; }
     const data = {
       name, type: document.getElementById('se_type').value,
       date, startTime: document.getElementById('se_start').value,
@@ -3872,9 +3883,9 @@ const SCHED = {
         closeModal('schedEventModal');
         await this.load();
         const sent = r.emailsSent?.length || 0;
-        toast(id ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Event updated' : `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Event created! ${sent} invitation${sent!==1?'s':''} sent`,'ok');
-      } else toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> '+(r?.error||'Failed'),'err');
-    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Error','err'); }
+        toast(id ? 'Event updated' :`Event created! ${sent} invitation${sent!==1?'s':''} sent`,'ok');
+      } else toast(''+(r?.error||'Failed'),'err');
+    } catch(e) { toast('Error','err'); }
     hideSaving();
   },
 
@@ -3883,8 +3894,8 @@ const SCHED = {
     showSaving('Deleting…');
     try {
       const r = await gasRun('deleteScheduledEventAPI', id);
-      if (r?.success) { document.getElementById('schedDayDetail').style.display = 'none'; await this.load(); toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg> Event deleted','ok'); }
-    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Error','err'); }
+      if (r?.success) { document.getElementById('schedDayDetail').style.display = 'none'; await this.load(); toast('Event deleted','ok'); }
+    } catch(e) { toast('Error','err'); }
     hideSaving();
   },
 
@@ -4002,7 +4013,7 @@ const SCHED = {
       @media print{body{padding:16px}.sched-event{break-inside:avoid}}`;
 
     const win = window.open('','_blank','width=1000,height=800');
-    if (!win) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Allow pop-ups to print','err'); return; }
+    if (!win) { toast('Allow pop-ups to print','err'); return; }
     win.document.open();
     win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Volunteer Schedule — ${monthName}</title><style>${css}</style></head>
 <body>
@@ -4198,5 +4209,92 @@ window.addEventListener('load', function pwaRegisterOverride() {
 
     setLoading(false);
   };
+
+}, false);
+
+/* ══ MANAGE STUDENTS MODAL OVERRIDE ══
+   Patches the static "All Students" title in the GitHub index.html
+   manage modal to show event-specific labels ══ */
+window.addEventListener('load', function patchManageModal() {
+
+  // Override openManageStudents to fix the modal title
+  var _origOpenManageStudents = window.openManageStudents;
+  window.openManageStudents = function() {
+    // Call the original function first
+    if (_origOpenManageStudents) _origOpenManageStudents.apply(this, arguments);
+
+    // Fix the modal title to match the current event type
+    setTimeout(function() {
+      var lbl = window._kRegLabel || {};
+      var listTitle = lbl.listTitle || 'Attendees';
+      var searchHint = lbl.searchHint || 'Search by name…';
+
+      // Fix the modal title element (has class or id containing "manage")
+      var titleEls = document.querySelectorAll(
+        '.manage-modal-title, #manageStudentsTitle, [class*="manage"][class*="title"], h2'
+      );
+      titleEls.forEach(function(el) {
+        var txt = el.textContent || '';
+        if (txt.includes('Students') || txt.includes('All ')) {
+          el.innerHTML = el.innerHTML
+            .replace(/All Students/g, listTitle)
+            .replace(/Manage Students/g, listTitle)
+            .replace(/All Attendees/g, listTitle);
+        }
+      });
+
+      // Fix the footer count text
+      var countEl = document.getElementById('manageCount') ||
+                    document.querySelector('[id*="manage"][id*="count"]');
+      if (countEl) {
+        var txt = countEl.textContent || '';
+        if (txt.includes('student')) {
+          countEl.textContent = txt
+            .replace(/students?/gi, (listTitle || 'attendees').toLowerCase());
+        }
+      }
+
+      // Fix search placeholder
+      var searchEls = document.querySelectorAll(
+        '#manageSearch, [id*="manage"] input[type="text"], [id*="manage"] input[type="search"]'
+      );
+      searchEls.forEach(function(el) {
+        if (el.placeholder && (el.placeholder.includes('student') || el.placeholder.includes('member') || el.placeholder.includes('guest'))) {
+          el.placeholder = searchHint;
+        }
+      });
+
+      // Fix empty state text
+      var emptyEls = document.querySelectorAll('.empty-state p, .empty-txt');
+      emptyEls.forEach(function(el) {
+        if (el.textContent.includes('student')) {
+          el.textContent = el.textContent
+            .replace(/students?/gi, (listTitle || 'attendees').toLowerCase());
+        }
+      });
+    }, 50);
+  };
+
+  // Also patch the manage modal title on every openManage call
+  var _origKIOSKOpenManage = null;
+  var _patchInterval = setInterval(function() {
+    if (window.KIOSK && window.KIOSK.openManage) {
+      var _origOpen = window.KIOSK.openManage.bind(window.KIOSK);
+      window.KIOSK.openManage = function() {
+        _origOpen();
+        setTimeout(function() {
+          var lbl = window._kRegLabel || {};
+          var allEls = document.querySelectorAll('.manage-modal-title, #manageModalTitle');
+          allEls.forEach(function(el) {
+            el.innerHTML = el.innerHTML
+              .replace(/All Students/g, lbl.listTitle || 'Attendees')
+              .replace(/Manage Students/g, lbl.listTitle || 'Attendees')
+              .replace(/All Attendees/g, lbl.listTitle || 'Attendees');
+          });
+        }, 30);
+      };
+      clearInterval(_patchInterval);
+    }
+  }, 300);
 
 }, false);
