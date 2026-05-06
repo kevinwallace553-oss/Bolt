@@ -1316,7 +1316,7 @@ const DASH = {
     const atRisk = atRiskTitleMap[key] || atRiskTitleMap.all;
     const arTitle = document.getElementById('atRiskTitle');
     const arSub   = document.getElementById('atRiskSubtitle');
-    if(arTitle) arTitle.textContent = atRisk.title;
+    if(arTitle) arTitle.innerHTML = atRisk.title;
     if(arSub)   arSub.textContent   = atRisk.sub;
 
     // Update analytics week title
