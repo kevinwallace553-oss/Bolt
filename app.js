@@ -357,7 +357,7 @@ function openDrawer(student) {
       <div class="d-sec-lbl">Details</div>
       <div class="d-field"><div class="d-field-lbl">Date of Birth</div><div class="d-field-val ${!student.dob?'empty':''}">${student.dob||'Not set'}</div></div>
       <div class="d-field"><div class="d-field-lbl">Emergency Contact</div><div class="d-field-val ${!student.emergencyContact?'empty':''}">${student.emergencyContact||'Not provided'}</div></div>
-      <div class="d-field"><div class="d-field-lbl">Student ID</div><div class="d-field-val" style="font-size:10px;color:var(--muted2)">${student.id||'—'}</div></div>
+      <div class="d-field"><div class="d-field-lbl">ID</div><div class="d-field-val" style="font-size:10px;color:var(--muted2)">${student.id||'—'}</div></div>
     </div>`;
   document.getElementById('drawerTitle').textContent = student.name;
   document.getElementById('drawerOverlay').classList.add('open');
@@ -1050,10 +1050,13 @@ const KIOSK = {
     const students = q
       ? _manageAll.filter(s=>(s.name||'').toLowerCase().includes(q.toLowerCase()))
       : _manageAll;
-    document.getElementById('manageCount').textContent = `${students.length} student${students.length!==1?'s':''}`;
+    const _lbl = window._kRegLabel || {};
+    const _term = (_lbl.total || 'Attendees').toLowerCase();
+    const _termSingular = _term.endsWith('s') ? _term.slice(0,-1) : _term;
+    document.getElementById('manageCount').textContent = `${students.length} ${students.length!==1 ? _term : _termSingular}`;
     const list = document.getElementById('manageList');
     if(!students.length){
-      list.innerHTML='<div class="empty-state"><p class="empty-txt">No students found</p></div>';
+      list.innerHTML=`<div class="empty-state"><p class="empty-txt">No ${_term} found</p></div>`;
       return;
     }
     list.innerHTML = students.map(s=>{
@@ -1118,7 +1121,7 @@ const KIOSK = {
 
   /* ── BATCH ── */
   openBatch() {
-    if(!_allStudents.length){ toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> No students loaded yet','err'); return; }
+    if(!_allStudents.length){ toast('No ' + ((window._kRegLabel && window._kRegLabel.total) || 'attendees').toLowerCase() + ' loaded yet', 'err'); return; }
     _batchSelected.clear();
     this.updateBatchUI();
     document.getElementById('batchSearch').value = '';
@@ -1167,7 +1170,7 @@ const KIOSK = {
       }).join('');
     }
 
-    el.innerHTML = html || '<div class="empty-state"><p class="empty-txt">No students found</p></div>';
+    el.innerHTML = html || '<div class="empty-state"><p class="empty-txt">No results found</p></div>';
   },
 
   toggleBatch(id) {
@@ -1186,7 +1189,7 @@ const KIOSK = {
     document.getElementById('batchPill').textContent = n;
     document.getElementById('batchGo').disabled = n===0;
     document.getElementById('batchSelLbl').textContent =
-      n===0 ? 'Tap students to select' : `${n} student${n!==1?'s':''} selected`;
+      (() => { const _bl = window._kRegLabel || {}; const _bt = (_bl.total || 'Attendees').toLowerCase(); const _bs = _bt.endsWith('s') ? _bt.slice(0,-1) : _bt; return n===0 ? `Tap ${_bt} to select` : `${n} ${n!==1 ? _bt : _bs} selected`; })();
   },
 
   filterBatch(q) { this.renderBatch(q); },
@@ -1949,7 +1952,7 @@ DASH.lookupSearch = async function(q) {
   const matches = _allStudents.filter(s => (s.name||'').toLowerCase().includes(ql));
   DASH._lookupResults = matches;
   if (!matches.length) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><p class="empty-txt">No students found matching that name</p></div>';
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><p class="empty-txt">No attendees found matching that name</p></div>';
     return;
   }
   el.innerHTML = matches.slice(0,15).map(s =>
