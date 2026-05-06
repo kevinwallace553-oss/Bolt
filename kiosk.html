@@ -512,6 +512,171 @@
     .ep-continue:hover{background:#34a060;transform:translateY(-1px);box-shadow:0 10px 30px var(--green-glow)}
     .ep-continue:disabled{opacity:0.35;cursor:not-allowed;transform:none}
     .ep-continue:active:not(:disabled){transform:scale(0.98)}
+  
+
+/* ═══════════════════════════════════════════════════════════
+   KIOSK — MOBILE & TABLET SIMPLIFICATION
+   Phone  (≤600px): single column, full scroll, large taps
+   Tablet (601–900px): sidebar collapses, main expands
+═══════════════════════════════════════════════════════════ */
+
+/* ── Phone: make panel-main fully scrollable ── */
+@media(max-width:600px){
+  /* Root layout — single column, full viewport height with scroll */
+  html, body { height:100%; overflow:hidden; }
+
+  .layout {
+    display:flex !important;
+    flex-direction:column !important;
+    height:100vh !important;
+    overflow:hidden !important;
+  }
+
+  /* Brand bar — slim horizontal strip at top */
+  .panel-brand {
+    flex-shrink:0 !important;
+    padding:10px 14px !important;
+    flex-direction:row !important;
+    gap:10px !important;
+    justify-content:space-between !important;
+    align-items:center !important;
+    min-height:0 !important;
+  }
+
+  /* Logo — tiny on mobile */
+  .logo-frame { width:36px !important; height:36px !important; }
+  .logo-inner { border-radius:9px !important; }
+  .brand-name  { font-size:15px !important; letter-spacing:1px !important; }
+  .brand-tagline { display:none !important; }
+  .brand-clock   { display:none !important; }
+
+  /* Stat list — horizontal scrollable strip instead of vertical list */
+  .panel-side { flex-shrink:0 !important; }
+  .stat-list {
+    display:flex !important;
+    flex-direction:row !important;
+    overflow-x:auto !important;
+    -webkit-overflow-scrolling:touch !important;
+    gap:8px !important;
+    padding:8px 14px !important;
+    scrollbar-width:none !important;
+  }
+  .stat-list::-webkit-scrollbar { display:none !important; }
+  .stat-item {
+    flex-shrink:0 !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    min-width:72px !important;
+    padding:8px 10px !important;
+    border-radius:12px !important;
+    gap:3px !important;
+    text-align:center !important;
+  }
+  .stat-value { font-size:20px !important; }
+  .stat-lbl   { font-size:8px !important; }
+  .leader-info { display:none !important; }
+
+  /* Main panel — takes remaining height, fully scrollable */
+  .panel-main {
+    flex:1 !important;
+    overflow-y:auto !important;
+    overflow-x:hidden !important;
+    -webkit-overflow-scrolling:touch !important;
+    padding:12px 12px 80px !important; /* bottom pad for fixed buttons */
+    gap:10px !important;
+    height:0 !important; /* forces flex child to scroll */
+  }
+
+  /* Top fixed buttons — move to bottom bar on mobile */
+  .top-btn {
+    position:fixed !important;
+    bottom:0 !important;
+    top:auto !important;
+    border-radius:0 !important;
+    border:none !important;
+    border-top:1px solid var(--rim) !important;
+    background:var(--ink) !important;
+    padding:10px 8px !important;
+    font-size:10px !important;
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    gap:2px !important;
+    justify-content:center !important;
+    width:33.33% !important;
+    z-index:900 !important;
+  }
+  .btn-manage  { right:0 !important; left:auto !important; }
+  .btn-signout { right:33.33% !important; left:auto !important; }
+  .btn-theme   { right:66.66% !important; left:auto !important; }
+
+  /* Search bar — large touch target */
+  .search-bar-wrap, #searchWrap { padding:0 !important; }
+  #mainSearch, .main-search-input {
+    font-size:16px !important;
+    padding:14px 16px !important;
+    border-radius:14px !important;
+  }
+
+  /* Action buttons — full width, stacked */
+  .actions-row, #kActionsRow, .action-btn-row {
+    display:flex !important;
+    flex-direction:column !important;
+    gap:8px !important;
+  }
+  .action-btn, .k-btn {
+    min-height:48px !important;
+    font-size:14px !important;
+    border-radius:14px !important;
+    width:100% !important;
+  }
+
+  /* Result rows — bigger tap targets */
+  .result-item, .k-result-item {
+    min-height:60px !important;
+    padding:12px 14px !important;
+  }
+  .result-name { font-size:15px !important; }
+
+  /* Banner — simplified */
+  .k-banner, #kBanner {
+    padding:10px 12px !important;
+    border-radius:12px !important;
+  }
+
+  /* Modals — full screen bottom sheet */
+  .modal-box, .manage-modal-card, .fg-card, .modal-card {
+    position:fixed !important;
+    bottom:0 !important; left:0 !important; right:0 !important;
+    top:auto !important;
+    max-width:100% !important;
+    width:100% !important;
+    border-radius:20px 20px 0 0 !important;
+    max-height:92vh !important;
+    overflow-y:auto !important;
+    margin:0 !important;
+  }
+  .modal-overlay { align-items:flex-end !important; }
+
+  /* Hide non-essential sidebar items */
+  .event-badge  { display:none !important; }
+  .recent-row   { display:none !important; }
+
+  /* Batch modal — full screen */
+  .bc-modal { border-radius:20px 20px 0 0 !important; }
+  .bc-head { padding:14px 16px !important; }
+}
+
+/* ── Tablet (601–900px): compact sidebar ── */
+@media(min-width:601px) and (max-width:900px){
+  .layout { grid-template-columns:220px 1fr !important; }
+  .brand-name { font-size:18px !important; }
+  .logo-frame { width:56px !important; height:56px !important; }
+  .stat-value { font-size:22px !important; }
+  .panel-main { padding:54px 16px 20px !important; }
+  .action-btn, .k-btn { font-size:13px !important; }
+}
+
   </style>
 </head>
 <body>
@@ -1289,7 +1454,172 @@ function startCamera(){
   const errEl=document.getElementById('cameraError');errEl.style.display='none';errEl.textContent='';
   const win=window.open('','_blank','width=420,height=560');
   if(!win){errEl.style.display='block';errEl.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Popup blocked.\nAllow popups and try again.';return;}
-  win.document.write(`<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{box-sizing:border-box;margin:0;padding:0}body{background:#060e10;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:sans-serif;color:#fff;gap:16px;padding:20px}h2{font-size:18px;font-weight:800;color:#86efac}#v{width:260px;height:260px;object-fit:cover;border-radius:50%;border:3px solid #2A7D4F;box-shadow:0 0 30px rgba(42,125,79,0.5)}#err{color:#fca5a5;font-size:13px;text-align:center;display:none;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:12px;max-width:300px}.btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}button{padding:12px 26px;font-size:14px;font-weight:800;border:none;border-radius:100px;cursor:pointer}#snapBtn{background:#2A7D4F;color:#fff}#closeBtn{background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.2)}canvas{display:none}#st{font-size:12px;color:rgba(255,255,255,.5);font-weight:600}</style></head><body><h2><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> Take Photo</h2><video id="v" autoplay playsinline webkit-playsinline></video><canvas id="c" width="300" height="300"></canvas><div id="err"></div><div id="st">Starting camera…</div><div class="btns"><button id="snapBtn" onclick="snap()"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> Take Photo</button><button id="closeBtn" onclick="window.close()">Cancel</button></div><script>const errEl=document.getElementById('err'),st=document.getElementById('st');function showErr(e){errEl.style.display='block';st.textContent='';errEl.textContent=e.name+': '+e.message;}navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:300},height:{ideal:300}}}).then(s=>{const v=document.getElementById('v');v.srcObject=s;window._stream=s;v.play().catch(()=>{});st.textContent='Camera ready!';}).catch(e=>{navigator.mediaDevices.getUserMedia({video:true}).then(s=>{const v=document.getElementById('v');v.srcObject=s;window._stream=s;v.play().catch(()=>{});st.textContent='Camera ready!';}).catch(e2=>showErr(e2));});function snap(){const v=document.getElementById('v'),c=document.getElementById('c');const sz=Math.min(v.videoWidth||300,v.videoHeight||300);c.getContext('2d').drawImage(v,(v.videoWidth-sz)/2,(v.videoHeight-sz)/2,sz,sz,0,0,300,300);const data=c.toDataURL('image/jpeg',0.6);if(data.length<1000){st.textContent='Capture failed, try again.';return;}window.opener.postMessage({type:'PHOTO_CAPTURED',data},'*');if(window._stream)window._stream.getTracks().forEach(t=>t.stop());window.close();}<\/script></body></html>`);
+  win.document.write(`<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{box-sizing:border-box;margin:0;padding:0}body{background:#060e10;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:sans-serif;color:#fff;gap:16px;padding:20px}h2{font-size:18px;font-weight:800;color:#86efac}#v{width:260px;height:260px;object-fit:cover;border-radius:50%;border:3px solid #2A7D4F;box-shadow:0 0 30px rgba(42,125,79,0.5)}#err{color:#fca5a5;font-size:13px;text-align:center;display:none;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:12px;max-width:300px}.btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}button{padding:12px 26px;font-size:14px;font-weight:800;border:none;border-radius:100px;cursor:pointer}#snapBtn{background:#2A7D4F;color:#fff}#closeBtn{background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.2)}canvas{display:none}#st{font-size:12px;color:rgba(255,255,255,.5);font-weight:600}
+
+/* ═══════════════════════════════════════════════════════════
+   KIOSK — MOBILE & TABLET SIMPLIFICATION
+   Phone  (≤600px): single column, full scroll, large taps
+   Tablet (601–900px): sidebar collapses, main expands
+═══════════════════════════════════════════════════════════ */
+
+/* ── Phone: make panel-main fully scrollable ── */
+@media(max-width:600px){
+  /* Root layout — single column, full viewport height with scroll */
+  html, body { height:100%; overflow:hidden; }
+
+  .layout {
+    display:flex !important;
+    flex-direction:column !important;
+    height:100vh !important;
+    overflow:hidden !important;
+  }
+
+  /* Brand bar — slim horizontal strip at top */
+  .panel-brand {
+    flex-shrink:0 !important;
+    padding:10px 14px !important;
+    flex-direction:row !important;
+    gap:10px !important;
+    justify-content:space-between !important;
+    align-items:center !important;
+    min-height:0 !important;
+  }
+
+  /* Logo — tiny on mobile */
+  .logo-frame { width:36px !important; height:36px !important; }
+  .logo-inner { border-radius:9px !important; }
+  .brand-name  { font-size:15px !important; letter-spacing:1px !important; }
+  .brand-tagline { display:none !important; }
+  .brand-clock   { display:none !important; }
+
+  /* Stat list — horizontal scrollable strip instead of vertical list */
+  .panel-side { flex-shrink:0 !important; }
+  .stat-list {
+    display:flex !important;
+    flex-direction:row !important;
+    overflow-x:auto !important;
+    -webkit-overflow-scrolling:touch !important;
+    gap:8px !important;
+    padding:8px 14px !important;
+    scrollbar-width:none !important;
+  }
+  .stat-list::-webkit-scrollbar { display:none !important; }
+  .stat-item {
+    flex-shrink:0 !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    min-width:72px !important;
+    padding:8px 10px !important;
+    border-radius:12px !important;
+    gap:3px !important;
+    text-align:center !important;
+  }
+  .stat-value { font-size:20px !important; }
+  .stat-lbl   { font-size:8px !important; }
+  .leader-info { display:none !important; }
+
+  /* Main panel — takes remaining height, fully scrollable */
+  .panel-main {
+    flex:1 !important;
+    overflow-y:auto !important;
+    overflow-x:hidden !important;
+    -webkit-overflow-scrolling:touch !important;
+    padding:12px 12px 80px !important; /* bottom pad for fixed buttons */
+    gap:10px !important;
+    height:0 !important; /* forces flex child to scroll */
+  }
+
+  /* Top fixed buttons — move to bottom bar on mobile */
+  .top-btn {
+    position:fixed !important;
+    bottom:0 !important;
+    top:auto !important;
+    border-radius:0 !important;
+    border:none !important;
+    border-top:1px solid var(--rim) !important;
+    background:var(--ink) !important;
+    padding:10px 8px !important;
+    font-size:10px !important;
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    gap:2px !important;
+    justify-content:center !important;
+    width:33.33% !important;
+    z-index:900 !important;
+  }
+  .btn-manage  { right:0 !important; left:auto !important; }
+  .btn-signout { right:33.33% !important; left:auto !important; }
+  .btn-theme   { right:66.66% !important; left:auto !important; }
+
+  /* Search bar — large touch target */
+  .search-bar-wrap, #searchWrap { padding:0 !important; }
+  #mainSearch, .main-search-input {
+    font-size:16px !important;
+    padding:14px 16px !important;
+    border-radius:14px !important;
+  }
+
+  /* Action buttons — full width, stacked */
+  .actions-row, #kActionsRow, .action-btn-row {
+    display:flex !important;
+    flex-direction:column !important;
+    gap:8px !important;
+  }
+  .action-btn, .k-btn {
+    min-height:48px !important;
+    font-size:14px !important;
+    border-radius:14px !important;
+    width:100% !important;
+  }
+
+  /* Result rows — bigger tap targets */
+  .result-item, .k-result-item {
+    min-height:60px !important;
+    padding:12px 14px !important;
+  }
+  .result-name { font-size:15px !important; }
+
+  /* Banner — simplified */
+  .k-banner, #kBanner {
+    padding:10px 12px !important;
+    border-radius:12px !important;
+  }
+
+  /* Modals — full screen bottom sheet */
+  .modal-box, .manage-modal-card, .fg-card, .modal-card {
+    position:fixed !important;
+    bottom:0 !important; left:0 !important; right:0 !important;
+    top:auto !important;
+    max-width:100% !important;
+    width:100% !important;
+    border-radius:20px 20px 0 0 !important;
+    max-height:92vh !important;
+    overflow-y:auto !important;
+    margin:0 !important;
+  }
+  .modal-overlay { align-items:flex-end !important; }
+
+  /* Hide non-essential sidebar items */
+  .event-badge  { display:none !important; }
+  .recent-row   { display:none !important; }
+
+  /* Batch modal — full screen */
+  .bc-modal { border-radius:20px 20px 0 0 !important; }
+  .bc-head { padding:14px 16px !important; }
+}
+
+/* ── Tablet (601–900px): compact sidebar ── */
+@media(min-width:601px) and (max-width:900px){
+  .layout { grid-template-columns:220px 1fr !important; }
+  .brand-name { font-size:18px !important; }
+  .logo-frame { width:56px !important; height:56px !important; }
+  .stat-value { font-size:22px !important; }
+  .panel-main { padding:54px 16px 20px !important; }
+  .action-btn, .k-btn { font-size:13px !important; }
+}
+
+  </style></head><body><h2><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> Take Photo</h2><video id="v" autoplay playsinline webkit-playsinline></video><canvas id="c" width="300" height="300"></canvas><div id="err"></div><div id="st">Starting camera…</div><div class="btns"><button id="snapBtn" onclick="snap()"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> Take Photo</button><button id="closeBtn" onclick="window.close()">Cancel</button></div><script>const errEl=document.getElementById('err'),st=document.getElementById('st');function showErr(e){errEl.style.display='block';st.textContent='';errEl.textContent=e.name+': '+e.message;}navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:300},height:{ideal:300}}}).then(s=>{const v=document.getElementById('v');v.srcObject=s;window._stream=s;v.play().catch(()=>{});st.textContent='Camera ready!';}).catch(e=>{navigator.mediaDevices.getUserMedia({video:true}).then(s=>{const v=document.getElementById('v');v.srcObject=s;window._stream=s;v.play().catch(()=>{});st.textContent='Camera ready!';}).catch(e2=>showErr(e2));});function snap(){const v=document.getElementById('v'),c=document.getElementById('c');const sz=Math.min(v.videoWidth||300,v.videoHeight||300);c.getContext('2d').drawImage(v,(v.videoWidth-sz)/2,(v.videoHeight-sz)/2,sz,sz,0,0,300,300);const data=c.toDataURL('image/jpeg',0.6);if(data.length<1000){st.textContent='Capture failed, try again.';return;}window.opener.postMessage({type:'PHOTO_CAPTURED',data},'*');if(window._stream)window._stream.getTracks().forEach(t=>t.stop());window.close();}<\/script></body></html>`);
   win.document.close();
 }
 function resizeDataUrl(d,max,q){return new Promise(res=>{const i=new Image();i.onload=()=>{const sc=Math.min(1,max/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=Math.round(i.width*sc);c.height=Math.round(i.height*sc);c.getContext('2d').drawImage(i,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',q));};i.onerror=()=>res(d);i.src=d;});}
@@ -1342,7 +1672,172 @@ function closeEditStudentForm(){document.getElementById('editStudentModal').clas
 document.addEventListener('DOMContentLoaded',()=>{const em=document.getElementById('editStudentModal');if(em)em.addEventListener('click',function(e){if(e.target===this&&!document.getElementById('savingOverlay').classList.contains('on'))closeEditStudentForm();});});
 function startEditCamera(){
   const win=window.open('','_blank','width=420,height=560');if(!win)return;
-  win.document.write(`<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{box-sizing:border-box;margin:0;padding:0}body{background:#060e10;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:sans-serif;color:#fff;gap:16px;padding:20px}h2{font-size:18px;font-weight:800;color:#86efac}#v{width:260px;height:260px;object-fit:cover;border-radius:50%;border:3px solid #2A7D4F;box-shadow:0 0 30px rgba(42,125,79,0.5)}.btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}button{padding:12px 26px;font-size:14px;font-weight:800;border:none;border-radius:100px;cursor:pointer}#snapBtn{background:#2A7D4F;color:#fff}#closeBtn{background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.2)}canvas{display:none}#st{font-size:12px;color:rgba(255,255,255,.5);font-weight:600}</style></head><body><h2><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> Update Photo</h2><video id="v" autoplay playsinline webkit-playsinline></video><canvas id="c" width="300" height="300"></canvas><div id="st">Starting camera…</div><div class="btns"><button id="snapBtn" onclick="snap()"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> Take Photo</button><button id="closeBtn" onclick="window.close()">Cancel</button></div><script>navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:300},height:{ideal:300}}}).then(s=>{const v=document.getElementById('v');v.srcObject=s;window._stream=s;v.play().catch(()=>{});document.getElementById('st').textContent='Camera ready!';}).catch(()=>navigator.mediaDevices.getUserMedia({video:true}).then(s=>{const v=document.getElementById('v');v.srcObject=s;window._stream=s;v.play().catch(()=>{});document.getElementById('st').textContent='Camera ready!';}));function snap(){const v=document.getElementById('v'),c=document.getElementById('c');const sz=Math.min(v.videoWidth||300,v.videoHeight||300);c.getContext('2d').drawImage(v,(v.videoWidth-sz)/2,(v.videoHeight-sz)/2,sz,sz,0,0,300,300);const data=c.toDataURL('image/jpeg',0.6);if(data.length<1000)return;window.opener.postMessage({type:'EDIT_PHOTO_CAPTURED',data},'*');if(window._stream)window._stream.getTracks().forEach(t=>t.stop());window.close();}<\/script></body></html>`);
+  win.document.write(`<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{box-sizing:border-box;margin:0;padding:0}body{background:#060e10;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:sans-serif;color:#fff;gap:16px;padding:20px}h2{font-size:18px;font-weight:800;color:#86efac}#v{width:260px;height:260px;object-fit:cover;border-radius:50%;border:3px solid #2A7D4F;box-shadow:0 0 30px rgba(42,125,79,0.5)}.btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}button{padding:12px 26px;font-size:14px;font-weight:800;border:none;border-radius:100px;cursor:pointer}#snapBtn{background:#2A7D4F;color:#fff}#closeBtn{background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.2)}canvas{display:none}#st{font-size:12px;color:rgba(255,255,255,.5);font-weight:600}
+
+/* ═══════════════════════════════════════════════════════════
+   KIOSK — MOBILE & TABLET SIMPLIFICATION
+   Phone  (≤600px): single column, full scroll, large taps
+   Tablet (601–900px): sidebar collapses, main expands
+═══════════════════════════════════════════════════════════ */
+
+/* ── Phone: make panel-main fully scrollable ── */
+@media(max-width:600px){
+  /* Root layout — single column, full viewport height with scroll */
+  html, body { height:100%; overflow:hidden; }
+
+  .layout {
+    display:flex !important;
+    flex-direction:column !important;
+    height:100vh !important;
+    overflow:hidden !important;
+  }
+
+  /* Brand bar — slim horizontal strip at top */
+  .panel-brand {
+    flex-shrink:0 !important;
+    padding:10px 14px !important;
+    flex-direction:row !important;
+    gap:10px !important;
+    justify-content:space-between !important;
+    align-items:center !important;
+    min-height:0 !important;
+  }
+
+  /* Logo — tiny on mobile */
+  .logo-frame { width:36px !important; height:36px !important; }
+  .logo-inner { border-radius:9px !important; }
+  .brand-name  { font-size:15px !important; letter-spacing:1px !important; }
+  .brand-tagline { display:none !important; }
+  .brand-clock   { display:none !important; }
+
+  /* Stat list — horizontal scrollable strip instead of vertical list */
+  .panel-side { flex-shrink:0 !important; }
+  .stat-list {
+    display:flex !important;
+    flex-direction:row !important;
+    overflow-x:auto !important;
+    -webkit-overflow-scrolling:touch !important;
+    gap:8px !important;
+    padding:8px 14px !important;
+    scrollbar-width:none !important;
+  }
+  .stat-list::-webkit-scrollbar { display:none !important; }
+  .stat-item {
+    flex-shrink:0 !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    min-width:72px !important;
+    padding:8px 10px !important;
+    border-radius:12px !important;
+    gap:3px !important;
+    text-align:center !important;
+  }
+  .stat-value { font-size:20px !important; }
+  .stat-lbl   { font-size:8px !important; }
+  .leader-info { display:none !important; }
+
+  /* Main panel — takes remaining height, fully scrollable */
+  .panel-main {
+    flex:1 !important;
+    overflow-y:auto !important;
+    overflow-x:hidden !important;
+    -webkit-overflow-scrolling:touch !important;
+    padding:12px 12px 80px !important; /* bottom pad for fixed buttons */
+    gap:10px !important;
+    height:0 !important; /* forces flex child to scroll */
+  }
+
+  /* Top fixed buttons — move to bottom bar on mobile */
+  .top-btn {
+    position:fixed !important;
+    bottom:0 !important;
+    top:auto !important;
+    border-radius:0 !important;
+    border:none !important;
+    border-top:1px solid var(--rim) !important;
+    background:var(--ink) !important;
+    padding:10px 8px !important;
+    font-size:10px !important;
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    gap:2px !important;
+    justify-content:center !important;
+    width:33.33% !important;
+    z-index:900 !important;
+  }
+  .btn-manage  { right:0 !important; left:auto !important; }
+  .btn-signout { right:33.33% !important; left:auto !important; }
+  .btn-theme   { right:66.66% !important; left:auto !important; }
+
+  /* Search bar — large touch target */
+  .search-bar-wrap, #searchWrap { padding:0 !important; }
+  #mainSearch, .main-search-input {
+    font-size:16px !important;
+    padding:14px 16px !important;
+    border-radius:14px !important;
+  }
+
+  /* Action buttons — full width, stacked */
+  .actions-row, #kActionsRow, .action-btn-row {
+    display:flex !important;
+    flex-direction:column !important;
+    gap:8px !important;
+  }
+  .action-btn, .k-btn {
+    min-height:48px !important;
+    font-size:14px !important;
+    border-radius:14px !important;
+    width:100% !important;
+  }
+
+  /* Result rows — bigger tap targets */
+  .result-item, .k-result-item {
+    min-height:60px !important;
+    padding:12px 14px !important;
+  }
+  .result-name { font-size:15px !important; }
+
+  /* Banner — simplified */
+  .k-banner, #kBanner {
+    padding:10px 12px !important;
+    border-radius:12px !important;
+  }
+
+  /* Modals — full screen bottom sheet */
+  .modal-box, .manage-modal-card, .fg-card, .modal-card {
+    position:fixed !important;
+    bottom:0 !important; left:0 !important; right:0 !important;
+    top:auto !important;
+    max-width:100% !important;
+    width:100% !important;
+    border-radius:20px 20px 0 0 !important;
+    max-height:92vh !important;
+    overflow-y:auto !important;
+    margin:0 !important;
+  }
+  .modal-overlay { align-items:flex-end !important; }
+
+  /* Hide non-essential sidebar items */
+  .event-badge  { display:none !important; }
+  .recent-row   { display:none !important; }
+
+  /* Batch modal — full screen */
+  .bc-modal { border-radius:20px 20px 0 0 !important; }
+  .bc-head { padding:14px 16px !important; }
+}
+
+/* ── Tablet (601–900px): compact sidebar ── */
+@media(min-width:601px) and (max-width:900px){
+  .layout { grid-template-columns:220px 1fr !important; }
+  .brand-name { font-size:18px !important; }
+  .logo-frame { width:56px !important; height:56px !important; }
+  .stat-value { font-size:22px !important; }
+  .panel-main { padding:54px 16px 20px !important; }
+  .action-btn, .k-btn { font-size:13px !important; }
+}
+
+  </style></head><body><h2><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> Update Photo</h2><video id="v" autoplay playsinline webkit-playsinline></video><canvas id="c" width="300" height="300"></canvas><div id="st">Starting camera…</div><div class="btns"><button id="snapBtn" onclick="snap()"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> Take Photo</button><button id="closeBtn" onclick="window.close()">Cancel</button></div><script>navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:300},height:{ideal:300}}}).then(s=>{const v=document.getElementById('v');v.srcObject=s;window._stream=s;v.play().catch(()=>{});document.getElementById('st').textContent='Camera ready!';}).catch(()=>navigator.mediaDevices.getUserMedia({video:true}).then(s=>{const v=document.getElementById('v');v.srcObject=s;window._stream=s;v.play().catch(()=>{});document.getElementById('st').textContent='Camera ready!';}));function snap(){const v=document.getElementById('v'),c=document.getElementById('c');const sz=Math.min(v.videoWidth||300,v.videoHeight||300);c.getContext('2d').drawImage(v,(v.videoWidth-sz)/2,(v.videoHeight-sz)/2,sz,sz,0,0,300,300);const data=c.toDataURL('image/jpeg',0.6);if(data.length<1000)return;window.opener.postMessage({type:'EDIT_PHOTO_CAPTURED',data},'*');if(window._stream)window._stream.getTracks().forEach(t=>t.stop());window.close();}<\/script></body></html>`);
   win.document.close();
 }
 function submitEditStudent(){
@@ -1463,6 +1958,171 @@ function formatPhone(input){let d=input.value.replace(/\D/g,'');if(d.length>10)d
 <!-- ══ LOGIN SCREEN CSS ══════════════════════════════════════ -->
 <style>
   #leaderLogin::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--green),var(--teal),transparent)}
-</style>
+
+
+/* ═══════════════════════════════════════════════════════════
+   KIOSK — MOBILE & TABLET SIMPLIFICATION
+   Phone  (≤600px): single column, full scroll, large taps
+   Tablet (601–900px): sidebar collapses, main expands
+═══════════════════════════════════════════════════════════ */
+
+/* ── Phone: make panel-main fully scrollable ── */
+@media(max-width:600px){
+  /* Root layout — single column, full viewport height with scroll */
+  html, body { height:100%; overflow:hidden; }
+
+  .layout {
+    display:flex !important;
+    flex-direction:column !important;
+    height:100vh !important;
+    overflow:hidden !important;
+  }
+
+  /* Brand bar — slim horizontal strip at top */
+  .panel-brand {
+    flex-shrink:0 !important;
+    padding:10px 14px !important;
+    flex-direction:row !important;
+    gap:10px !important;
+    justify-content:space-between !important;
+    align-items:center !important;
+    min-height:0 !important;
+  }
+
+  /* Logo — tiny on mobile */
+  .logo-frame { width:36px !important; height:36px !important; }
+  .logo-inner { border-radius:9px !important; }
+  .brand-name  { font-size:15px !important; letter-spacing:1px !important; }
+  .brand-tagline { display:none !important; }
+  .brand-clock   { display:none !important; }
+
+  /* Stat list — horizontal scrollable strip instead of vertical list */
+  .panel-side { flex-shrink:0 !important; }
+  .stat-list {
+    display:flex !important;
+    flex-direction:row !important;
+    overflow-x:auto !important;
+    -webkit-overflow-scrolling:touch !important;
+    gap:8px !important;
+    padding:8px 14px !important;
+    scrollbar-width:none !important;
+  }
+  .stat-list::-webkit-scrollbar { display:none !important; }
+  .stat-item {
+    flex-shrink:0 !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    min-width:72px !important;
+    padding:8px 10px !important;
+    border-radius:12px !important;
+    gap:3px !important;
+    text-align:center !important;
+  }
+  .stat-value { font-size:20px !important; }
+  .stat-lbl   { font-size:8px !important; }
+  .leader-info { display:none !important; }
+
+  /* Main panel — takes remaining height, fully scrollable */
+  .panel-main {
+    flex:1 !important;
+    overflow-y:auto !important;
+    overflow-x:hidden !important;
+    -webkit-overflow-scrolling:touch !important;
+    padding:12px 12px 80px !important; /* bottom pad for fixed buttons */
+    gap:10px !important;
+    height:0 !important; /* forces flex child to scroll */
+  }
+
+  /* Top fixed buttons — move to bottom bar on mobile */
+  .top-btn {
+    position:fixed !important;
+    bottom:0 !important;
+    top:auto !important;
+    border-radius:0 !important;
+    border:none !important;
+    border-top:1px solid var(--rim) !important;
+    background:var(--ink) !important;
+    padding:10px 8px !important;
+    font-size:10px !important;
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    gap:2px !important;
+    justify-content:center !important;
+    width:33.33% !important;
+    z-index:900 !important;
+  }
+  .btn-manage  { right:0 !important; left:auto !important; }
+  .btn-signout { right:33.33% !important; left:auto !important; }
+  .btn-theme   { right:66.66% !important; left:auto !important; }
+
+  /* Search bar — large touch target */
+  .search-bar-wrap, #searchWrap { padding:0 !important; }
+  #mainSearch, .main-search-input {
+    font-size:16px !important;
+    padding:14px 16px !important;
+    border-radius:14px !important;
+  }
+
+  /* Action buttons — full width, stacked */
+  .actions-row, #kActionsRow, .action-btn-row {
+    display:flex !important;
+    flex-direction:column !important;
+    gap:8px !important;
+  }
+  .action-btn, .k-btn {
+    min-height:48px !important;
+    font-size:14px !important;
+    border-radius:14px !important;
+    width:100% !important;
+  }
+
+  /* Result rows — bigger tap targets */
+  .result-item, .k-result-item {
+    min-height:60px !important;
+    padding:12px 14px !important;
+  }
+  .result-name { font-size:15px !important; }
+
+  /* Banner — simplified */
+  .k-banner, #kBanner {
+    padding:10px 12px !important;
+    border-radius:12px !important;
+  }
+
+  /* Modals — full screen bottom sheet */
+  .modal-box, .manage-modal-card, .fg-card, .modal-card {
+    position:fixed !important;
+    bottom:0 !important; left:0 !important; right:0 !important;
+    top:auto !important;
+    max-width:100% !important;
+    width:100% !important;
+    border-radius:20px 20px 0 0 !important;
+    max-height:92vh !important;
+    overflow-y:auto !important;
+    margin:0 !important;
+  }
+  .modal-overlay { align-items:flex-end !important; }
+
+  /* Hide non-essential sidebar items */
+  .event-badge  { display:none !important; }
+  .recent-row   { display:none !important; }
+
+  /* Batch modal — full screen */
+  .bc-modal { border-radius:20px 20px 0 0 !important; }
+  .bc-head { padding:14px 16px !important; }
+}
+
+/* ── Tablet (601–900px): compact sidebar ── */
+@media(min-width:601px) and (max-width:900px){
+  .layout { grid-template-columns:220px 1fr !important; }
+  .brand-name { font-size:18px !important; }
+  .logo-frame { width:56px !important; height:56px !important; }
+  .stat-value { font-size:22px !important; }
+  .panel-main { padding:54px 16px 20px !important; }
+  .action-btn, .k-btn { font-size:13px !important; }
+}
+
+  </style>
 </body>
 </html>

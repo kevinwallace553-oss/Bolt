@@ -485,6 +485,156 @@
     .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
     .toast.ok{border-color:rgba(13,148,136,0.4);color:#67e8f9}
     .toast.err{border-color:rgba(239,68,68,0.35);color:#fca5a5}
+  
+
+/* ═══════════════════════════════════════════════════════════
+   DASHBOARD — MOBILE & TABLET SIMPLIFICATION
+   Phone  (≤600px): hide heavy sections, show essentials only
+   Tablet (601–900px): 2-col stats, condensed toolbar
+═══════════════════════════════════════════════════════════ */
+
+@media(max-width:600px){
+
+  /* ── Full page scroll ── */
+  html, body { overflow-x:hidden; }
+  body { font-size:14px; }
+
+  /* ── Toolbar: wrap to 2 rows, hide less-used buttons ── */
+  .toolbar, #toolbar {
+    flex-wrap:wrap !important;
+    gap:6px !important;
+    padding:8px 10px !important;
+    position:sticky !important;
+    top:0 !important;
+    z-index:100 !important;
+    background:var(--ink) !important;
+  }
+
+  /* Keep only essential toolbar buttons visible */
+  .tb-btn { padding:7px 10px !important; font-size:11px !important; gap:4px !important; border-radius:10px !important; }
+  /* Hide secondary toolbar buttons on mobile */
+  .tb-btn.analytics,
+  .tb-btn.lookup,
+  .tb-btn.report { display:none !important; }
+
+  /* Ministry dropdown — full width on mobile */
+  .ministry-drop, #ministryDrop { max-width:100% !important; width:100% !important; }
+
+  /* ── Stats strip: 2×2 grid, larger numbers ── */
+  .stat-strip {
+    display:grid !important;
+    grid-template-columns:1fr 1fr !important;
+    gap:8px !important;
+    padding:10px !important;
+  }
+  .stat-card {
+    padding:12px 14px !important;
+    border-radius:14px !important;
+  }
+  .stat-card:hover { transform:none !important; }
+  .stat-value { font-size:28px !important; }
+  .stat-label { font-size:8px !important; letter-spacing:1.5px !important; }
+  .stat-icon  { width:18px !important; height:18px !important; opacity:0.25 !important; }
+
+  /* ── Tab bar: scrollable horizontal ── */
+  .dash-tabs, .tab-bar {
+    display:flex !important;
+    overflow-x:auto !important;
+    -webkit-overflow-scrolling:touch !important;
+    gap:6px !important;
+    padding:0 10px 8px !important;
+    scrollbar-width:none !important;
+    flex-wrap:nowrap !important;
+    border-bottom:1px solid var(--rim) !important;
+  }
+  .dash-tabs::-webkit-scrollbar { display:none !important; }
+  .dash-tab, .tab-btn {
+    flex-shrink:0 !important;
+    white-space:nowrap !important;
+    font-size:12px !important;
+    padding:7px 14px !important;
+    border-radius:100px !important;
+  }
+
+  /* ── Live feed: simplified rows ── */
+  .live-feed-section, #liveFeedSection { padding:0 10px !important; }
+  .feed-item, .ci-item {
+    padding:10px 12px !important;
+    border-radius:12px !important;
+    gap:10px !important;
+  }
+  .feed-av { width:32px !important; height:32px !important; font-size:11px !important; }
+  .feed-name { font-size:13px !important; }
+  .feed-meta { font-size:10px !important; }
+  .feed-time { font-size:10px !important; }
+
+  /* ── Birthday banner: compact ── */
+  .bday-banner { padding:10px 14px !important; font-size:12px !important; }
+  .bday-banner-icon { display:none !important; }
+
+  /* ── Analytics tab: hide on mobile, show message ── */
+  #analyticsTab::before {
+    content:'Analytics are best viewed on a larger screen.';
+    display:block;
+    padding:20px;
+    color:var(--muted);
+    font-size:13px;
+    text-align:center;
+  }
+
+  /* ── At-risk: simplified list ── */
+  .ar-item { padding:10px 12px !important; gap:10px !important; border-radius:12px !important; }
+  .ar-av   { width:32px !important; height:32px !important; font-size:11px !important; }
+  .ar-name { font-size:13px !important; }
+  .ar-meta { font-size:10px !important; }
+  .ar-badge { font-size:9px !important; padding:3px 8px !important; }
+
+  /* ── Volunteer tab: 1-col layout ── */
+  .vol-dept-grid { grid-template-columns:1fr !important; }
+  .vol-dept-card { padding:12px 14px !important; }
+
+  /* ── Week header: shorter ── */
+  .week-head { font-size:12px !important; }
+
+  /* ── Modals: full-screen bottom sheet ── */
+  .modal-overlay { align-items:flex-end !important; padding:0 !important; }
+  .modal-box, .d-modal-card, [class*="modal-card"] {
+    border-radius:20px 20px 0 0 !important;
+    max-width:100% !important;
+    width:100% !important;
+    margin:0 !important;
+    max-height:92vh !important;
+    overflow-y:auto !important;
+    position:fixed !important;
+    bottom:0 !important;
+    left:0 !important;
+    right:0 !important;
+  }
+
+  /* ── Report tab: hide chart, show table ── */
+  .chart-wrap { display:none !important; }
+
+  /* ── Date filter: full width ── */
+  #dashDateInput { width:100% !important; max-width:none !important; }
+
+  /* ── Feed search bar ── */
+  #feedSearch { font-size:16px !important; } /* prevent iOS zoom */
+
+  /* ── Section padding ── */
+  .dash-section, .d-section { padding:10px !important; margin-bottom:10px !important; }
+  .section-title, .sec-title { font-size:12px !important; }
+}
+
+/* ── Tablet (601–900px): balanced layout ── */
+@media(min-width:601px) and (max-width:900px){
+  .stat-strip { grid-template-columns:repeat(3,1fr) !important; }
+  .stat-value { font-size:30px !important; }
+  .toolbar { padding:8px 14px !important; }
+  .tb-btn { font-size:12px !important; padding:8px 12px !important; }
+  /* Hide least-used tabs on tablet */
+  .tb-btn.report { display:none !important; }
+}
+
   </style>
 </head>
 <body>

@@ -4298,3 +4298,55 @@ window.addEventListener('load', function patchManageModal() {
   }, 300);
 
 }, false);
+
+/* ══ MOBILE DASHBOARD SIMPLIFICATION ══════════════════════
+   On phones: show only Overview + Live Feed
+   Hide analytics, detailed report, lookup tabs
+   On tablets: show condensed view
+════════════════════════════════════════════════════════════ */
+function applyMobileDashboard() {
+  const isMob = window.innerWidth <= 600;
+  const isTab = window.innerWidth > 600 && window.innerWidth <= 900;
+  if (!isMob && !isTab) return;
+
+  // ── Simplify toolbar on mobile: keep Overview, At-Risk, Volunteers ──
+  if (isMob) {
+    document.querySelectorAll('.tb-btn').forEach(btn => {
+      const txt = btn.textContent || '';
+      // Only show: Overview, At-Risk, Volunteers, Live (hide Analytics, Lookup, Report)
+      const keep = ['Overview','At-Risk','Volunteer','Live','Refresh','Home','Sign Out','Theme'];
+      const shouldShow = keep.some(k => txt.includes(k));
+      if (!shouldShow && !btn.classList.contains('tb-logo') && !btn.closest('.tb-right')) {
+        btn.style.display = 'none';
+      }
+    });
+
+    // On mobile, default to Overview tab
+    const overviewTab = document.querySelector('.tb-btn[onclick*="overview"], .tb-btn[onclick*="Overview"]');
+    if (overviewTab && !document.querySelector('.tb-btn.active')) overviewTab.click();
+  }
+
+  // ── Stats: ensure 2-col on mobile ──
+  const strip = document.querySelector('.stat-strip, [class*="stat-strip"]');
+  if (strip && isMob) {
+    strip.style.gridTemplateColumns = '1fr 1fr';
+    strip.style.gap = '8px';
+    strip.style.padding = '10px';
+  }
+
+  // ── Make dashboard body scrollable ──
+  const dashBody = document.querySelector('.dash-body, #dashBody, main, [id*="dash"][id*="content"]');
+  if (dashBody && isMob) {
+    dashBody.style.overflowY = 'auto';
+    dashBody.style.webkitOverflowScrolling = 'touch';
+    dashBody.style.height = 'auto';
+    dashBody.style.minHeight = '0';
+    dashBody.style.paddingBottom = '40px';
+  }
+}
+
+// Run on load and on resize
+window.addEventListener('load', function() {
+  setTimeout(applyMobileDashboard, 400);
+});
+window.addEventListener('resize', applyMobileDashboard);
