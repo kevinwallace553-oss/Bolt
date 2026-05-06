@@ -1289,3 +1289,56 @@ body.offline .offline-badge { display: block; }
 .bk-icon ellipse { vector-effect:non-scaling-stroke; }
 button .bk-icon, a .bk-icon { margin-right:4px; }
 .k-empty-icon .bk-icon, .empty-icon .bk-icon { opacity:0.35; }
+
+
+/* ═══════════════════════════════════════════════
+   BOLT LOGO — THEME-INVARIANT STYLES
+   These never change regardless of which theme
+   is active. Bolt brand colors are always used.
+═══════════════════════════════════════════════ */
+.logo-inner,
+[data-theme] .logo-inner {
+  background: rgba(6,20,22,0.92) !important;
+  border-color: rgba(3,213,225,0.30) !important;
+  box-shadow: 0 0 40px rgba(3,213,225,0.45),
+              inset 0 1px 0 rgba(255,255,255,0.07) !important;
+}
+
+.logo-frame::before,
+[data-theme] .logo-frame::before {
+  border-color: rgba(3,213,225,0.38) !important;
+}
+
+.logo-frame::after,
+[data-theme] .logo-frame::after {
+  border-color: rgba(3,213,225,0.16) !important;
+}
+
+.tb-logo,
+[data-theme] .tb-logo {
+  background: rgba(6,20,22,0.92) !important;
+  border-color: rgba(3,213,225,0.30) !important;
+  box-shadow: 0 0 20px rgba(3,213,225,0.40) !important;
+}
+
+.tb-logo img,
+[data-theme] .tb-logo img {
+  filter: none !important;
+}
+
+.ll-logo-wrap,
+[data-theme] .ll-logo-wrap {
+  background: rgba(6,20,22,0.92) !important;
+  border-color: rgba(3,213,225,0.20) !important;
+  box-shadow: 0 0 50px rgba(3,213,225,0.40) !important;
+}
+
+/* Logo image itself — never tinted or filtered by theme */
+.logo-img,
+.ll-logo,
+.tb-logo img,
+[data-theme] .logo-img,
+[data-theme] .ll-logo {
+  filter: none !important;
+  opacity: 1 !important;
+}
