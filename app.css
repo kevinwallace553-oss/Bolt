@@ -1342,3 +1342,156 @@ button .bk-icon, a .bk-icon { margin-right:4px; }
   filter: none !important;
   opacity: 1 !important;
 }
+
+
+/* ═══════════════════════════════════════════════════════════
+   SCHEDULE MODAL — MOBILE FIX
+   Fixes black screen, clipped content, scroll issues on iOS
+═══════════════════════════════════════════════════════════ */
+
+/* Ensure modal overlay covers full screen on all devices */
+.modal {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 9999 !important;
+  background: rgba(0,0,0,0.75) !important;
+  display: none;
+  align-items: flex-end !important;
+  justify-content: center !important;
+  -webkit-overflow-scrolling: touch;
+}
+.modal.open { display: flex !important; }
+
+/* Modal sheet — proper mobile sizing */
+.modal-sheet {
+  width: 100% !important;
+  max-width: 100% !important;
+  max-height: 92vh !important;
+  min-height: 30vh;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior: contain;
+  border-radius: 24px 24px 0 0 !important;
+  padding: 6px 18px calc(env(safe-area-inset-bottom, 20px) + 24px) !important;
+  box-sizing: border-box !important;
+  /* Prevent content from going under the notch */
+  padding-bottom: max(24px, env(safe-area-inset-bottom, 24px)) !important;
+}
+
+@media(max-width:600px) {
+  .modal-sheet {
+    max-height: 88vh !important;
+    padding: 4px 14px calc(env(safe-area-inset-bottom, 16px) + 20px) !important;
+    border-radius: 20px 20px 0 0 !important;
+  }
+
+  /* Form grid — single column on mobile */
+  .form-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+  }
+  .fg, .fg.full {
+    width: 100% !important;
+    grid-column: auto !important;
+  }
+
+  /* Input fields — prevent iOS zoom (must be 16px+) */
+  .fg-inp, .fg-inp input, .fg-inp select, .fg-inp textarea,
+  input.fg-inp, select.fg-inp, textarea.fg-inp {
+    font-size: 16px !important;
+    padding: 12px 14px !important;
+    border-radius: 12px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Labels */
+  .fg-label {
+    font-size: 10px !important;
+    margin-bottom: 5px !important;
+  }
+
+  /* Modal title */
+  .modal-title {
+    font-size: 16px !important;
+    margin-bottom: 16px !important;
+  }
+
+  /* Modal handle */
+  .modal-handle {
+    margin: 12px auto 16px !important;
+  }
+
+  /* Action buttons in modal */
+  .modal-actions, .fg-actions {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    padding-top: 16px !important;
+  }
+  .modal-actions button, .fg-actions button {
+    width: 100% !important;
+    min-height: 48px !important;
+    font-size: 15px !important;
+  }
+
+  /* Volunteer assignment list inside modal */
+  #seVolList {
+    max-height: 200px !important;
+    overflow-y: auto !important;
+  }
+
+  /* Time/date row — stack vertically */
+  .sched-time-row {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+}
+
+/* Fix schedule view itself on mobile */
+@media(max-width:600px) {
+  #vSchedule {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    height: 100% !important;
+    padding-bottom: 80px !important;
+  }
+
+  /* Calendar grid — smaller cells */
+  #schedCalGrid {
+    grid-template-columns: repeat(7, 1fr) !important;
+    gap: 2px !important;
+  }
+  #schedCalGrid > div {
+    min-height: 44px !important;
+    font-size: 11px !important;
+    padding: 4px !important;
+  }
+
+  /* Day events panel */
+  #schedDayPanel {
+    position: relative !important;
+    bottom: auto !important;
+    margin-top: 12px !important;
+    border-radius: 16px !important;
+    max-height: 45vh !important;
+    overflow-y: auto !important;
+  }
+
+  /* Schedule Event button */
+  .sched-add-btn, button[onclick*="openNewEvent"] {
+    width: 100% !important;
+    min-height: 44px !important;
+  }
+
+  /* Month navigation */
+  .sched-nav { padding: 10px 14px !important; }
+  .sched-month-title { font-size: 18px !important; }
+}
