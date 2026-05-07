@@ -380,7 +380,9 @@ window.addEventListener('load', async () => {
     document.body.style.background = '#0a1628';
     const rsvpPage = document.getElementById('vRsvp');
     if (rsvpPage) rsvpPage.style.display = 'flex';
-    setTimeout(() => SCHED.handleRsvp(_params.get('rsvp'), _params.get('r')), 400);
+    // Pass orgId from URL so RSVP routes to the correct org spreadsheet
+    const rsvpOrgId = _params.get('o') || 'ORG_DEFAULT';
+    setTimeout(() => SCHED.handleRsvp(_params.get('rsvp'), _params.get('r'), rsvpOrgId), 400);
     return;
   }
 
@@ -4031,14 +4033,15 @@ const SCHED = {
   },
 
   /* ── RSVP HANDLER (called from URL params) ── */
-  async handleRsvp(assignId, response) {
+  async handleRsvp(assignId, response, orgId) {
+    orgId = orgId || 'ORG_DEFAULT';
     const el = document.getElementById('rsvpContent');
     const overlay = document.getElementById('vRsvp');
     if (overlay) overlay.style.display = 'flex';
     if (!el) return;
-    el.innerHTML = '<div style="text-align:center;padding:30px 0"><div style="font-size:32px;margin-bottom:12px">⏳</div><div style="color:#94a3b8">Recording your response…</div></div>';
+    el.innerHTML = '<div style="text-align:center;padding:30px 0"><div style="font-size:32px;margin-bottom:12px"></div><div style="color:#94a3b8">Recording your response…</div></div>';
     try {
-      const r = await gasRun('rsvpResponseAPI', assignId, response);
+      const r = await gasRun('rsvpResponseAPI', assignId, response, orgId);
       if (r?.success) {
         const isAccepted = response === 'accepted';
         el.innerHTML = `<div style="text-align:center">
