@@ -3533,12 +3533,13 @@ const SCHED = {
       }
     }
     try {
-      const [evRes, volRes] = await Promise.all([
-        gasRun('getScheduledEventsAPI', this._year, this._month),
-        gasRun('getVolunteersAPI', 'all')
-      ]);
+      // Sequential calls to avoid GAS timeout from concurrent requests
+      const evRes = await gasRun('getScheduledEventsAPI', this._year, this._month);
       this._events = evRes?.events || [];
-      this._volunteers = volRes?.volunteers || [];
+      try {
+        const volRes = await gasRun('getVolunteersAPI', 'all');
+        this._volunteers = volRes?.volunteers || [];
+      } catch(ve) { this._volunteers = []; }
     } catch(e) {
       console.error('SCHED.load error:', e);
       this._events = [];
