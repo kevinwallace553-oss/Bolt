@@ -1324,7 +1324,7 @@ const DASH = {
     });
 
     // Live feed — show CM check-ins
-    this.renderCheckIns(cm?.checkins || []);
+    this.renderFeed(cm?.checkins || []);
     this.renderBirthdays(cm?.birthdays || []);
   },
 
