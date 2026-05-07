@@ -682,31 +682,43 @@
 var SESSION = { token: '', orgId: '' };
 (function() {
   try {
-    // Read from sessionStorage first (set by app.js on login)
-    var ss = window.sessionStorage;
-    if (ss && ss.getItem('bk_token')) {
-      SESSION.token = ss.getItem('bk_token') || '';
-      SESSION.orgId = ss.getItem('bk_orgId') || '';
+    // 1. Try sessionStorage (same origin only)
+    try {
+      var ss = window.sessionStorage;
+      if (ss && ss.getItem('bk_token')) {
+        SESSION.token = ss.getItem('bk_token') || '';
+        SESSION.orgId = ss.getItem('bk_orgId') || '';
+      }
+    } catch(e) {}
+
+    // 2. Try URL params
+    if (!SESSION.token) {
+      try {
+        var params = new URLSearchParams(window.location.search);
+        var t = params.get('token') || params.get('bk_token');
+        if (t) { SESSION.token = decodeURIComponent(t); SESSION.orgId = decodeURIComponent(params.get('orgId')||params.get('bk_orgId')||''); }
+      } catch(e) {}
     }
+
+    // 3. Try parent window (works in same-origin iframes)
     if (!SESSION.token) {
       try {
         var p = window.parent && window.parent.SESSION;
         if (p && p.token) { SESSION.token = p.token; SESSION.orgId = p.orgId || ''; }
       } catch(e) {}
     }
-    if (!SESSION.token) {
-      var params = new URLSearchParams(window.location.search);
-      var t = params.get('token');
-      if (t) { SESSION.token = decodeURIComponent(t); SESSION.orgId = decodeURIComponent(params.get('orgId')||''); }
-    }
   } catch(e) {}
+  
+  // Sync SESSION every 2 seconds from window.SESSION (set by app.js)
+  setInterval(function() {
+    try {
+      if (window.SESSION && window.SESSION.token && window.SESSION.token !== SESSION.token) {
+        SESSION.token = window.SESSION.token;
+        SESSION.orgId = window.SESSION.orgId || SESSION.orgId;
+      }
+    } catch(e) {}
+  }, 2000);
 })();
-window.addEventListener('message', function(e) {
-  if (e.data && e.data.type === 'SESSION_SYNC' && e.data.session) {
-    SESSION = Object.assign(SESSION, e.data.session);
-    try { sessionStorage.setItem('bk_token', SESSION.token||''); sessionStorage.setItem('bk_orgId', SESSION.orgId||''); } catch(e2) {}
-  }
-});
 </script>
 </head>
 <body>

@@ -462,6 +462,7 @@ const AUTH = {
         sessionStorage.setItem('bk_name',  SESSION.name);
         sessionStorage.setItem('bk_role',  SESSION.role);
       } catch(e) {}
+      window.SESSION = SESSION;
         const _first=(r.name||r.username||'').split(' ')[0];
         const _el=document.getElementById('homeName');if(_el)_el.textContent=_first?`${_first}`:'Youth Check-In System';
         const _gh=document.getElementById('homeGreeting');

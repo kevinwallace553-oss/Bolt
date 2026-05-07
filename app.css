@@ -1495,3 +1495,62 @@ button .bk-icon, a .bk-icon { margin-right:4px; }
   .sched-nav { padding: 10px 14px !important; }
   .sched-month-title { font-size: 18px !important; }
 }
+
+
+/* ═══════════════════════════════════════════════════════════
+   REGISTRATION FORM FIXES
+   Constrains form width, fixes 2-col grid on mobile
+═══════════════════════════════════════════════════════════ */
+
+/* Modal sheet — proper max-width */
+.modal-sheet, .sheet {
+  max-width: 600px !important;
+  margin: 0 auto !important;
+  width: 100% !important;
+}
+
+/* The newStudentModal and editStudentModal overlay */
+#newStudentModal, #editStudentModal, #schedEventModal {
+  align-items: flex-end !important;
+  justify-content: center !important;
+}
+#newStudentModal .sheet,
+#editStudentModal .sheet,
+#newStudentModal .modal-sheet,
+#editStudentModal .modal-sheet {
+  max-width: 600px !important;
+  width: 100% !important;
+  max-height: 90vh !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* fg-grid / form-grid — 2 cols on desktop, 1 col on mobile */
+.fg-grid, .form-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 12px !important;
+}
+.fg.full, .fg-full {
+  grid-column: 1 / -1 !important;
+}
+
+@media(max-width:600px){
+  .fg-grid, .form-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .fg, .fg.full {
+    grid-column: 1 !important;
+  }
+  .fg-inp, input.fg-input, select.fg-input {
+    font-size: 16px !important;
+    padding: 12px 14px !important;
+  }
+}
+
+/* The PWA kiosk form (ns_ fields in index.html) */
+#nsFormWrap, [class*="ns-form"], .kiosk-reg-form {
+  max-width: 560px !important;
+  margin: 0 auto !important;
+  width: 100% !important;
+}
