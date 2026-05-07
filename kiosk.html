@@ -678,6 +678,20 @@
 }
 
   </style>
+<script>
+var SESSION = { token: '', orgId: '' };
+(function() {
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var t = params.get('token') || '';
+    if (t) SESSION.token = decodeURIComponent(t);
+    if (window.parent && window.parent.SESSION) {
+      SESSION.token = window.parent.SESSION.token || SESSION.token;
+      SESSION.orgId = window.parent.SESSION.orgId || '';
+    }
+  } catch(e) {}
+})();
+</script>
 </head>
 <body>
 
@@ -1073,7 +1087,7 @@ google.script.run.withSuccessHandler(list=>{
   allLeaders=list||[];
   const sel=document.getElementById('leaderSelect');
   allLeaders.forEach(n=>{const o=document.createElement('option');o.value=o.textContent=n;sel.appendChild(o);});
-}).getLeaders();
+}).gasCall(typeof SESSION!=='undefined'?SESSION.token:'', 'getLeaders');
 
 function onLeaderChange(){const v=document.getElementById('leaderSelect').value;document.getElementById('leaderCheckInBtn').style.display=v?'block':'none';document.getElementById('llDivider').style.display=v?'flex':'none';}
 function loginLeader(){const v=document.getElementById('leaderSelect').value;if(!v){shake('leaderSelect');return;}leaderName=v;_pendingCheckIn=false;openEventPicker();}
@@ -1131,7 +1145,7 @@ function dismissLogin(){
 }
 function doLeaderCheckIn(name){
   const parts=name.trim().split(' ');
-  google.script.run.withFailureHandler(e=>console.error(e)).checkInAPI(
+  google.script.run.withFailureHandler(e=>console.error(e)).gasCall(typeof SESSION!=='undefined'?SESSION.token:'', 'checkInAPI', 
     {id:'leader_'+name.replace(/\s+/g,'_').toLowerCase(),firstName:parts[0]||name,lastName:parts.slice(1).join(' ')||'',fullName:name,grade:'',first:parts[0]||name,last:parts.slice(1).join(' ')||''},
     {kioskName,leaderName:name,role:'Leader',eventName:currentEvent}
   );
@@ -1190,7 +1204,7 @@ function directCheckIn(st,cardEl){
   document.getElementById('spTime').textContent=h+':'+mi+' '+(now.getHours()<12?'AM':'PM');
   showSuccess(st.firstName+' '+st.lastName,'Successfully checked in','Great to see you!');
   clearSearch();
-  google.script.run.withSuccessHandler(r=>{}).withFailureHandler(e=>console.error('checkIn error',e)).checkInAPI(
+  google.script.run.withSuccessHandler(r=>{}).withFailureHandler(e=>console.error('checkIn error',e)).gasCall(typeof SESSION!=='undefined'?SESSION.token:'', 'checkInAPI', 
     {id:st.id,firstName:st.firstName,lastName:st.lastName,fullName:st.firstName+' '+st.lastName,grade:st.grade,first:st.firstName,last:st.lastName},
     {kioskName,leaderName,role:'Student',eventName:currentEvent}
   );
@@ -1271,7 +1285,7 @@ function submitAddLeader(){
   google.script.run
     .withSuccessHandler(r=>{btn.disabled=false;btn.textContent='＋ Add Leader';if(r&&r.success){allLeaders.push(r.name);const sel=document.getElementById('leaderSelect');const opt=document.createElement('option');opt.value=opt.textContent=r.name;sel.appendChild(opt);closeAddLeader();renderLcGrid();showSuccess(r.name,'Leader added! <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>','They can now be checked in.');}else{err.textContent=(r&&r.error)||'Could not save. Please try again.';err.style.display='block';}})
     .withFailureHandler(e=>{btn.disabled=false;btn.textContent='＋ Add Leader';err.textContent='Error: '+String(e);err.style.display='block';})
-    .addLeaderAPI(name);
+    .gasCall(typeof SESSION!=='undefined'?SESSION.token:'', 'addLeaderAPI', name);
 }
 document.addEventListener('DOMContentLoaded',()=>{
   const inp=document.getElementById('addLeaderInput');
@@ -1281,7 +1295,7 @@ document.getElementById('addLeaderModal').addEventListener('click',function(e){i
 
 /* ══ BATCH CHECK-IN ══════════════════════════════════════════ */
 let allStudentsCache=[],bcSelected={},bcSearchQuery='';
-function preloadAllStudents(cb){if(allStudentsCache.length)return;google.script.run.withSuccessHandler(d=>{allStudentsCache=(d||[]).sort((a,b)=>(a.lastName+a.firstName).localeCompare(b.lastName+b.firstName));if(typeof cb==='function')cb();}).withFailureHandler(e=>console.error('Preload error:',e)).getAllStudentsAPI();}
+function preloadAllStudents(cb){if(allStudentsCache.length)return;google.script.run.withSuccessHandler(d=>{allStudentsCache=(d||[]).sort((a,b)=>(a.lastName+a.firstName).localeCompare(b.lastName+b.firstName));if(typeof cb==='function')cb();}).withFailureHandler(e=>console.error('Preload error:',e)).gasCall(typeof SESSION!=='undefined'?SESSION.token:'', 'getAllStudentsAPI');}
 let bcViewMode='grid';
 function setBcView(mode){
   bcViewMode=mode;
@@ -1297,7 +1311,7 @@ function openBatchCheckIn(){
   window._bcResizeHandler=()=>{if(bcViewMode==='grid')setTimeout(autoFitBcGrid,150);};window.addEventListener('resize',window._bcResizeHandler);
   updateBcFooter();
   if(!allStudentsCache.length){
-    google.script.run.withSuccessHandler(d=>{allStudentsCache=(d||[]).sort((a,b)=>(a.lastName+a.firstName).localeCompare(b.lastName+b.firstName));renderBcGrid();}).withFailureHandler(()=>{document.getElementById('bcGrid').innerHTML='<div style="text-align:center;padding:30px;color:var(--muted)"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Could not load attendees.</div>';}).getAllStudentsAPI();
+    google.script.run.withSuccessHandler(d=>{allStudentsCache=(d||[]).sort((a,b)=>(a.lastName+a.firstName).localeCompare(b.lastName+b.firstName));renderBcGrid();}).withFailureHandler(()=>{document.getElementById('bcGrid').innerHTML='<div style="text-align:center;padding:30px;color:var(--muted)"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Could not load attendees.</div>';}).gasCall(typeof SESSION!=='undefined'?SESSION.token:'', 'getAllStudentsAPI');
   }else renderBcGrid();
   google.script.run.withSuccessHandler(d=>{const ids=new Set();(d||[]).forEach(ci=>{if(ci.studentId){ids.add(ci.studentId);}else if(ci.fullName&&allStudentsCache.length){const m=allStudentsCache.find(s=>(s.firstName+' '+s.lastName).trim().toLowerCase()===ci.fullName.trim().toLowerCase());if(m)ids.add(m.id);}});ids.forEach(id=>todayCheckedIds.add(id));renderBcGrid();}).withFailureHandler(()=>{}).getTodaysCheckIns();
 }
@@ -1415,7 +1429,7 @@ function commitBatchCheckIn(){
       }else if(alreadyList.length>0){document.getElementById('alreadyText').textContent=alreadyList.join(', ')+' — already checked in today!';showAlready();}
     })
     .withFailureHandler(e=>{btn.disabled=false;btn.textContent='Check In ✓';console.error('Batch error:',e);alert('Error checking in. Please try again.');})
-    .batchCheckInAPI(payload,{kioskName,leaderName,role:'Student',eventName:currentEvent});
+    .gasCall(typeof SESSION!=='undefined'?SESSION.token:'', 'batchCheckInAPI', payload,{kioskName,leaderName,role:'Student',eventName:currentEvent});
 }
 
 /* ══ RECENT ROW ══════════════════════════════════════════════ */
@@ -1654,7 +1668,7 @@ function saveNewStudent(first,last,grade,birthday,studentPhone,ecName,ecPhone,al
     document.getElementById('spCount').textContent=spCount;document.getElementById('spTime').textContent=h+':'+mi+' '+(now.getHours()<12?'AM':'PM');
     showSuccess(first+' '+last,'New student registered & checked in!','Welcome to Bolt Kiosk!');
   }).withFailureHandler(e=>{ov.classList.remove('on');console.error(e);alert('Error saving. Please try again.');})
-  .addNewStudentAPI({firstName:first,lastName:last,grade,birthday,studentPhone,ecName,ecPhone,allergies,photoUrl},{kioskName,leaderName,role:'Student',eventName:currentEvent});
+  .gasCall(typeof SESSION!=='undefined'?SESSION.token:'', 'addNewStudentAPI', {firstName:first,lastName:last,grade,birthday,studentPhone,ecName,ecPhone,allergies,photoUrl},{kioskName,leaderName,role:'Student',eventName:currentEvent});
 }
 
 /* ══ EDIT STUDENT ════════════════════════════════════════════ */
@@ -1851,7 +1865,7 @@ function submitEditStudent(){
     google.script.run
       .withSuccessHandler(r=>{ov.classList.remove('on');if(r&&r.success){const idx=allStudentsCache.findIndex(s=>s.id===editStudentId);if(idx!==-1)allStudentsCache[idx]={...allStudentsCache[idx],...updates};closeEditStudentForm();showSuccess(first+' '+last,'Profile updated!','Changes saved.');}else alert('Error: '+(r&&r.error)||'Unknown error');})
       .withFailureHandler(e=>{ov.classList.remove('on');console.error(e);alert('Error saving changes.');})
-      .editStudentAPI(editStudentId,updates);
+      .gasCall(typeof SESSION!=='undefined'?SESSION.token:'', 'editStudentAPI', editStudentId,updates);
   };
   if(editPhotoDataUrl){lb.textContent='Uploading photo…';ov.classList.add('on');google.script.run.withSuccessHandler(r=>{ov.classList.remove('on');doSave((r&&r.success)?r.url:'');}).withFailureHandler(()=>{ov.classList.remove('on');doSave('');}).uploadPhotoAPI(editPhotoDataUrl,first+' '+last);}
   else doSave();
@@ -1916,7 +1930,7 @@ function confirmManageDelete(id,name){
   google.script.run
     .withSuccessHandler(r=>{ov.classList.remove('on');if(r&&r.success){allStudentsCache=allStudentsCache.filter(s=>s.id!==id);todayCheckedIds.delete(id);renderManageList();showSuccess(name,'Student deleted','Record removed.');}else alert('Error deleting: '+(r&&r.error)||'Unknown');})
     .withFailureHandler(e=>{ov.classList.remove('on');console.error(e);alert('Error deleting student.');})
-    .deleteStudentAPI(id);
+    .gasCall(typeof SESSION!=='undefined'?SESSION.token:'', 'deleteStudentAPI', id);
 }
 
 /* ══ REFRESH / AUTO-SYNC ═════════════════════════════════════ */
@@ -1932,7 +1946,7 @@ function refreshCheckedIn(){
       btn.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg>';setTimeout(()=>{btn.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>';},1800);
     })
     .withFailureHandler(()=>{btn.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17" stroke-width="2.5"/></svg>';setTimeout(()=>{btn.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>';},1800);})
-    .getCheckInsTodayAPI();
+    .gasCall(typeof SESSION!=='undefined'?SESSION.token:'', 'getCheckInsTodayAPI');
 }
 let _autoSyncActive=false,_syncInterval=null;
 function _silentSync(){
@@ -1947,7 +1961,7 @@ function _silentSync(){
       if(changed){const btn=document.getElementById('refreshBtn');if(btn){btn.textContent='';setTimeout(()=>{btn.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>';},800);}}
     })
     .withFailureHandler(()=>{_autoSyncActive=false;})
-    .getCheckInsTodayAPI();
+    .gasCall(typeof SESSION!=='undefined'?SESSION.token:'', 'getCheckInsTodayAPI');
 }
 function startAutoSync(){if(_syncInterval)return;_syncInterval=setInterval(_silentSync,5000);}
 

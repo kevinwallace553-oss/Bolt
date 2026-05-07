@@ -4354,3 +4354,25 @@ window.addEventListener('load', function() {
   setTimeout(applyMobileDashboard, 400);
 });
 window.addEventListener('resize', applyMobileDashboard);
+
+/* ── Sync SESSION to embedded GAS page frames ── */
+function _syncSessionToFrames() {
+  try {
+    const msg = { type: 'SESSION_SYNC', session: {
+      token: SESSION.token || '',
+      orgId: SESSION.orgId || '',
+      name: SESSION.name || '',
+      role: SESSION.role || ''
+    }};
+    // Post to all iframes
+    document.querySelectorAll('iframe').forEach(f => {
+      try { f.contentWindow.postMessage(msg, '*'); } catch(e){}
+    });
+    // Also set on child windows if GAS serves as separate page
+    if (window.frames) {
+      for (let i = 0; i < window.frames.length; i++) {
+        try { window.frames[i].SESSION = msg.session; } catch(e){}
+      }
+    }
+  } catch(e){}
+}

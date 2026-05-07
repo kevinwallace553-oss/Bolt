@@ -636,6 +636,31 @@
 }
 
   </style>
+<script>
+// Access SESSION from the parent app frame
+function getDashToken() {
+  try { return (window.SESSION || window.parent.SESSION || {}).token || ''; } catch(e){ return ''; }
+}
+var SESSION = { token: '' };
+window.addEventListener('message', function(e) {
+  if (e.data && e.data.type === 'SESSION_SYNC') {
+    SESSION = e.data.session || SESSION;
+  }
+});
+// Try to get token from URL params (passed when dashboard opens)
+(function() {
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var t = params.get('token') || '';
+    if (t) SESSION.token = decodeURIComponent(t);
+    // Also check parent window
+    if (!SESSION.token && window.parent && window.parent.SESSION) {
+      SESSION.token = window.parent.SESSION.token || '';
+      SESSION.orgId = window.parent.SESSION.orgId || '';
+    }
+  } catch(e) {}
+})();
+</script>
 </head>
 <body>
 <div class="bg"><div class="bg-noise"></div><div class="bg-grid"></div><div class="bg-glow1"></div><div class="bg-glow2"></div></div>
@@ -996,7 +1021,7 @@ function closeManageModal(){document.getElementById('manageModal').classList.rem
 function loadManage(){
   if(allStudents.length){renderManage(allStudents);return;}
   document.getElementById('manageList').innerHTML='<div class="empty-state"><div class="ei">⏳</div><p>Loading…</p></div>';
-  google.script.run.withSuccessHandler(d=>{allStudents=d||[];renderManage(allStudents);}).withFailureHandler(()=>{document.getElementById('manageList').innerHTML='<div class="empty-state"><div class="ei"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg></div><p>Error loading.</p></div>';}).getAllStudentsAPI();
+  google.script.run.withSuccessHandler(d=>{allStudents=d||[];renderManage(allStudents);}).withFailureHandler(()=>{document.getElementById('manageList').innerHTML='<div class="empty-state"><div class="ei"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg></div><p>Error loading.</p></div>';}).gasCall(typeof SESSION!=='undefined'?SESSION.token:'', 'getAllStudentsAPI');
 }
 function filterManage(){const q=document.getElementById('manageSearch').value.toLowerCase();renderManage(q?allStudents.filter(s=>(s.firstName+' '+s.lastName).toLowerCase().includes(q)):allStudents);}
 function renderManage(students){
@@ -1045,7 +1070,7 @@ function loadDashboard(){
   google.script.run
     .withSuccessHandler(d=>{renderCheckIns(d.checkIns||[]);renderBirthdays(d.birthdays||[]);})
     .withFailureHandler(e=>console.error('Dashboard load error:',e))
-    .getDashboardData();
+    .gasCall(typeof SESSION!=='undefined'?SESSION.token:'', 'getDashboardData');
 }
 function renderCheckIns(data){
   allCheckIns=data||[];
@@ -1091,11 +1116,11 @@ function refreshAll(){loadDashboard();resetBar();}
 
 /* ══ AT-RISK ═════════════════════════════════════════════════ */
 let atRiskData={twoWeeks:[],oneMonth:[]},currentArTab='2w',atRiskLoaded=false;
-function preloadAtRisk(){google.script.run.withSuccessHandler(d=>{atRiskData=d||{twoWeeks:[],oneMonth:[]};atRiskLoaded=true;updateAtRiskStats();}).withFailureHandler(()=>{atRiskLoaded=true;}).getAtRiskStudents();}
+function preloadAtRisk(){google.script.run.withSuccessHandler(d=>{atRiskData=d||{twoWeeks:[],oneMonth:[]};atRiskLoaded=true;updateAtRiskStats();}).withFailureHandler(()=>{atRiskLoaded=true;}).gasCall(typeof SESSION!=='undefined'?SESSION.token:'', 'getAtRiskStudents');}
 function openAtRisk(){document.getElementById('atRiskModal').classList.add('open');arHistoryBack();loadAtRisk();}
 function closeAtRisk(){document.getElementById('atRiskModal').classList.remove('open');}
 function switchArTab(t){currentArTab=t;document.getElementById('arTab2w').classList.toggle('active',t==='2w');document.getElementById('arTab1m').classList.toggle('active',t==='1m');renderAtRisk();}
-function loadAtRisk(){document.getElementById('atRiskList').innerHTML='<div class="analytics-loading">⏳ Loading…</div>';google.script.run.withSuccessHandler(d=>{atRiskData=d||{twoWeeks:[],oneMonth:[]};atRiskLoaded=true;renderAtRisk();updateAtRiskStats();}).withFailureHandler(()=>{document.getElementById('atRiskList').innerHTML='<div class="empty-state"><div class="ei"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg></div><p>Error loading data.</p></div>';}).getAtRiskStudents();}
+function loadAtRisk(){document.getElementById('atRiskList').innerHTML='<div class="analytics-loading">⏳ Loading…</div>';google.script.run.withSuccessHandler(d=>{atRiskData=d||{twoWeeks:[],oneMonth:[]};atRiskLoaded=true;renderAtRisk();updateAtRiskStats();}).withFailureHandler(()=>{document.getElementById('atRiskList').innerHTML='<div class="empty-state"><div class="ei"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg></div><p>Error loading data.</p></div>';}).gasCall(typeof SESSION!=='undefined'?SESSION.token:'', 'getAtRiskStudents');}
 function updateAtRiskStats(){const total=atRiskData.twoWeeks.length;document.getElementById('statAtRisk').textContent=total;document.getElementById('statAtRiskSub').textContent=total>0?`${total} not seen in 2w · ${atRiskData.oneMonth.length} in 30d`:'All students active';}
 function renderAtRisk(){
   const data=currentArTab==='2w'?atRiskData.twoWeeks:atRiskData.oneMonth;const list=document.getElementById('atRiskList');
@@ -1131,7 +1156,7 @@ function renderArHistory(records,studentName){
 let weeklyData=[],monthlyData=[],currentMbwMonth=0,analyticsView='weekly',analyticsLoaded=false;
 function openAnalytics(){
   document.getElementById('analyticsModal').classList.add('open');
-  if(!analyticsLoaded||(!weeklyData.length&&!monthlyData.length)){document.getElementById('analyticsBody').innerHTML='<div class="analytics-loading">⏳ Loading attendance data…</div>';google.script.run.withSuccessHandler(d=>{weeklyData=Array.isArray(d.weekly)?d.weekly:[];monthlyData=Array.isArray(d.monthly)?d.monthly:[];analyticsLoaded=true;renderAnalyticsView();}).withFailureHandler(()=>{analyticsLoaded=true;renderAnalyticsView();}).getAnalyticsData();}else renderAnalyticsView();
+  if(!analyticsLoaded||(!weeklyData.length&&!monthlyData.length)){document.getElementById('analyticsBody').innerHTML='<div class="analytics-loading">⏳ Loading attendance data…</div>';google.script.run.withSuccessHandler(d=>{weeklyData=Array.isArray(d.weekly)?d.weekly:[];monthlyData=Array.isArray(d.monthly)?d.monthly:[];analyticsLoaded=true;renderAnalyticsView();}).withFailureHandler(()=>{analyticsLoaded=true;renderAnalyticsView();}).gasCall(typeof SESSION!=='undefined'?SESSION.token:'', 'getAnalyticsData');}else renderAnalyticsView();
 }
 function closeAnalytics(){document.getElementById('analyticsModal').classList.remove('open');}
 function switchAnalyticsView(v){analyticsView=v;['weekly','monthly','mbw'].forEach(k=>document.getElementById('avTab'+k.charAt(0).toUpperCase()+k.slice(1)).classList.toggle('active',k===v));renderAnalyticsView();}
@@ -1260,7 +1285,7 @@ window.addEventListener('message',function(e){
 
 setInterval(refreshAll,30000);
 setTimeout(preloadAtRisk,500);
-setTimeout(()=>{if(!allStudents.length)google.script.run.withSuccessHandler(d=>{allStudents=d||[];}).getAllStudentsAPI();},1500);
+setTimeout(()=>{if(!allStudents.length)google.script.run.withSuccessHandler(d=>{allStudents=d||[];}).gasCall(typeof SESSION!=='undefined'?SESSION.token:'', 'getAllStudentsAPI');},1500);
 refreshAll();
 </script>
 </body>
