@@ -463,6 +463,12 @@ const AUTH = {
         sessionStorage.setItem('bk_role',  SESSION.role);
       } catch(e) {}
       window.SESSION = SESSION;
+      // Store session key server-side for GAS page access
+      try {
+        google.script.run
+          .withSuccessHandler(function(r){ if(r && r.key) { SESSION.sessionKey = r.key; window.SESSION = SESSION; } })
+          .storeSessionToken(SESSION.token);
+      } catch(e) {}
         const _first=(r.name||r.username||'').split(' ')[0];
         const _el=document.getElementById('homeName');if(_el)_el.textContent=_first?`${_first}`:'Youth Check-In System';
         const _gh=document.getElementById('homeGreeting');
@@ -593,11 +599,23 @@ const KIOSK = {
 
   async loadAllStudents() {
     try {
-      const r = await API.getAllStudents();
-      // Backend returns array directly (not wrapped in {students:[]})
-      const raw = Array.isArray(r) ? r : (r?.students || []);
+      // Load students and today's check-ins in parallel
+      const [studRes, ciRes] = await Promise.all([
+        API.getAllStudents(),
+        API.getTodayCheckins().catch(() => [])
+      ]);
+      const raw = Array.isArray(studRes) ? studRes : (studRes?.students || []);
       _allStudents = raw.map(toDisplayStudent);
       document.getElementById('kStatTotal').textContent = _allStudents.length;
+
+      // Restore _checkedToday from server so it persists across sign-ins
+      const cis = Array.isArray(ciRes) ? ciRes : (ciRes?.checkins || ciRes?.checkIns || []);
+      cis.forEach(ci => {
+        if (ci.id || ci.studentId) _checkedToday.add(String(ci.id || ci.studentId));
+      });
+      // Update checked-in count
+      const ciCount = document.getElementById('kStatChecked');
+      if (ciCount) ciCount.textContent = _checkedToday.size;
     } catch(e){ console.error('loadAllStudents error',e); }
   },
 
