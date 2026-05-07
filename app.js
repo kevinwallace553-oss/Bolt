@@ -400,6 +400,13 @@ window.addEventListener('load', async () => {
       SESSION.name     = userObj.name     || '';
       SESSION.role     = userObj.role     || '';
       SESSION.username = userObj.username || '';
+      // Store in sessionStorage so GAS sub-pages (dashboard, kiosk) can access token
+      try {
+        sessionStorage.setItem('bk_token',  SESSION.token);
+        sessionStorage.setItem('bk_orgId',  SESSION.orgId);
+        sessionStorage.setItem('bk_name',   SESSION.name);
+        sessionStorage.setItem('bk_role',   SESSION.role);
+      } catch(e) {}
       // Remove params from URL so refresh doesn't re-use the same token params
       window.history.replaceState({}, '', window.location.pathname);
       // Go straight to home
@@ -449,6 +456,12 @@ const AUTH = {
       const r = await API.login(u,p);
       if(r?.success){
         SESSION.token=r.token; SESSION.name=r.name; SESSION.role=r.role; SESSION.username=r.username; SESSION.orgId=r.orgId||'ORG_DEFAULT';
+      try {
+        sessionStorage.setItem('bk_token', SESSION.token);
+        sessionStorage.setItem('bk_orgId', SESSION.orgId);
+        sessionStorage.setItem('bk_name',  SESSION.name);
+        sessionStorage.setItem('bk_role',  SESSION.role);
+      } catch(e) {}
         const _first=(r.name||r.username||'').split(' ')[0];
         const _el=document.getElementById('homeName');if(_el)_el.textContent=_first?`${_first}`:'Youth Check-In System';
         const _gh=document.getElementById('homeGreeting');
@@ -1264,6 +1277,18 @@ const DASH = {
   async refresh(silent=false) {
     if(!silent) showSaving('Loading…');
     try {
+      // Children's Ministry mode uses dedicated CM data
+      if (this._ministry === 'children') {
+        const cmDash = await gasRun('getCMDashboardData');
+        this._rawDash = cmDash;
+        this._rawCheckins = cmDash?.checkins || [];
+        this.renderCMStats(cmDash);
+        this.renderBirthdays(cmDash?.birthdays || []);
+        this.loadVolunteerDash();
+        if(!silent) hideSaving();
+        return;
+      }
+
       const [dash, week, atRisk] = await Promise.all([
         API.getDashboard(),
         API.getWeeklyReport(0),
@@ -1278,6 +1303,29 @@ const DASH = {
       this.loadVolunteerDash();
     } catch(e){ if(!silent) toast('Refresh failed','err'); console.error(e); }
     if(!silent) hideSaving();
+  },
+
+  renderCMStats(cm) {
+    // Use the same renderStats IDs as the normal dashboard
+    const set = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v ?? '—'; };
+    set('dStatToday',    cm?.checkedInToday  ?? 0);
+    set('dStatNew',      cm?.firstTimersToday?? 0);
+    set('dStatTodaySub', 'Children checked in');
+    set('dStatTotal',    cm?.totalChildren   ?? 0);
+    set('dStatLeaders',  cm?.totalFamilies   ?? 0);
+    set('dStatRisk',     cm?.atRisk          ?? 0);
+
+    // Update stat card sub-labels to be CM-specific
+    ['dStatTotalSub','dStatTotal-lbl'].forEach(id => {
+      const el = document.getElementById(id); if(el) el.textContent = 'Registered';
+    });
+    ['dStatLeadersSub','dStatLeaders-lbl'].forEach(id => {
+      const el = document.getElementById(id); if(el) el.textContent = 'Active today';
+    });
+
+    // Live feed — show CM check-ins
+    this.renderCheckIns(cm?.checkins || []);
+    this.renderBirthdays(cm?.birthdays || []);
   },
 
   /* ── Ministry switcher ── */

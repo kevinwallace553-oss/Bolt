@@ -682,15 +682,31 @@
 var SESSION = { token: '', orgId: '' };
 (function() {
   try {
-    var params = new URLSearchParams(window.location.search);
-    var t = params.get('token') || '';
-    if (t) SESSION.token = decodeURIComponent(t);
-    if (window.parent && window.parent.SESSION) {
-      SESSION.token = window.parent.SESSION.token || SESSION.token;
-      SESSION.orgId = window.parent.SESSION.orgId || '';
+    // Read from sessionStorage first (set by app.js on login)
+    var ss = window.sessionStorage;
+    if (ss && ss.getItem('bk_token')) {
+      SESSION.token = ss.getItem('bk_token') || '';
+      SESSION.orgId = ss.getItem('bk_orgId') || '';
+    }
+    if (!SESSION.token) {
+      try {
+        var p = window.parent && window.parent.SESSION;
+        if (p && p.token) { SESSION.token = p.token; SESSION.orgId = p.orgId || ''; }
+      } catch(e) {}
+    }
+    if (!SESSION.token) {
+      var params = new URLSearchParams(window.location.search);
+      var t = params.get('token');
+      if (t) { SESSION.token = decodeURIComponent(t); SESSION.orgId = decodeURIComponent(params.get('orgId')||''); }
     }
   } catch(e) {}
 })();
+window.addEventListener('message', function(e) {
+  if (e.data && e.data.type === 'SESSION_SYNC' && e.data.session) {
+    SESSION = Object.assign(SESSION, e.data.session);
+    try { sessionStorage.setItem('bk_token', SESSION.token||''); sessionStorage.setItem('bk_orgId', SESSION.orgId||''); } catch(e2) {}
+  }
+});
 </script>
 </head>
 <body>

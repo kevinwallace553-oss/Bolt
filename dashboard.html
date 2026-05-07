@@ -637,29 +637,43 @@
 
   </style>
 <script>
-// Access SESSION from the parent app frame
-function getDashToken() {
-  try { return (window.SESSION || window.parent.SESSION || {}).token || ''; } catch(e){ return ''; }
-}
-var SESSION = { token: '' };
-window.addEventListener('message', function(e) {
-  if (e.data && e.data.type === 'SESSION_SYNC') {
-    SESSION = e.data.session || SESSION;
-  }
-});
-// Try to get token from URL params (passed when dashboard opens)
+// SESSION token for gasCall — read from multiple sources
+var SESSION = { token: '', orgId: '' };
 (function() {
   try {
-    var params = new URLSearchParams(window.location.search);
-    var t = params.get('token') || '';
-    if (t) SESSION.token = decodeURIComponent(t);
-    // Also check parent window
-    if (!SESSION.token && window.parent && window.parent.SESSION) {
-      SESSION.token = window.parent.SESSION.token || '';
-      SESSION.orgId = window.parent.SESSION.orgId || '';
+    // 1. sessionStorage (set by app.js on login — most reliable)
+    var ss = window.sessionStorage;
+    if (ss && ss.getItem('bk_token')) {
+      SESSION.token = ss.getItem('bk_token') || '';
+      SESSION.orgId = ss.getItem('bk_orgId') || '';
+      SESSION.name  = ss.getItem('bk_name')  || '';
+      SESSION.role  = ss.getItem('bk_role')  || '';
+    }
+    // 2. Parent window (when served in iframe)
+    if (!SESSION.token) {
+      try {
+        var p = window.parent && window.parent.SESSION;
+        if (p && p.token) { SESSION.token = p.token; SESSION.orgId = p.orgId || ''; }
+      } catch(e) {}
+    }
+    // 3. URL params fallback
+    if (!SESSION.token) {
+      var params = new URLSearchParams(window.location.search);
+      var t = params.get('token');
+      if (t) { SESSION.token = decodeURIComponent(t); SESSION.orgId = decodeURIComponent(params.get('orgId')||''); }
     }
   } catch(e) {}
 })();
+// Listen for SESSION updates from parent frame
+window.addEventListener('message', function(e) {
+  if (e.data && e.data.type === 'SESSION_SYNC' && e.data.session) {
+    SESSION = Object.assign(SESSION, e.data.session);
+    try {
+      sessionStorage.setItem('bk_token', SESSION.token || '');
+      sessionStorage.setItem('bk_orgId', SESSION.orgId || '');
+    } catch(e2) {}
+  }
+});
 </script>
 </head>
 <body>
@@ -1007,13 +1021,13 @@ function saveEdits(){
   if(!first||!last){showToast('First and last name required','err');return;}
   const updates={firstName:first,lastName:last,grade:document.getElementById('editGrade').value.trim(),birthday:document.getElementById('editBirthday').value,studentPhone:document.getElementById('editStudentPhone').value.trim(),ecName:document.getElementById('editECName').value.trim(),ecPhone:document.getElementById('editECPhone').value.trim(),photoUrl:document.getElementById('editPhotoUrl').value.trim()};
   showSaving('Saving changes…');
-  google.script.run.withSuccessHandler(r=>{hideSaving();if(r&&r.success){closeEditModal();closeDrawer();showToast('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Student updated');refreshAll();if(document.getElementById('manageModal').classList.contains('open'))loadManage();}else showToast('+(r&&r.error||'Error'),'err');}).withFailureHandler(e=>{hideSaving();showToast('+e,'err');}).editStudentAPI(id,updates);
+  google.script.run.withSuccessHandler(r=>{hideSaving();if(r&&r.success){closeEditModal();closeDrawer();showToast('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Student updated');refreshAll();if(document.getElementById('manageModal').classList.contains('open'))loadManage();}else showToast('+(r&&r.error||'Error'),'err');}).withFailureHandler(e=>{hideSaving();showToast('+e,'err');}).gasCall(typeof SESSION!=='undefined'?SESSION.token:'','editStudentAPI',id,updates);
 }
 
 /* ══ DELETE ══════════════════════════════════════════════════ */
 function deleteCurrentStudent(){if(!currentDrawer||!currentDrawer.studentId)return;pendingDelId=currentDrawer.studentId;pendingDelName=currentDrawer.fullName||'this student';document.getElementById('delText').innerHTML=`This will permanently remove <strong>${pendingDelName}</strong>.`;document.getElementById('delModal').classList.add('open');}
 function closeDelModal(){document.getElementById('delModal').classList.remove('open');pendingDelId=null;}
-function confirmDelete(){if(!pendingDelId)return;showSaving('Deleting…');closeDelModal();const id=pendingDelId,name=pendingDelName;pendingDelId=null;google.script.run.withSuccessHandler(r=>{hideSaving();if(r&&r.success){closeDrawer();showToast('name+' deleted');refreshAll();if(document.getElementById('manageModal').classList.contains('open'))loadManage();}else showToast('+(r&&r.error||'Error'),'err');}).withFailureHandler(e=>{hideSaving();showToast('+e,'err');}).deleteStudentAPI(id);}
+function confirmDelete(){if(!pendingDelId)return;showSaving('Deleting…');closeDelModal();const id=pendingDelId,name=pendingDelName;pendingDelId=null;google.script.run.withSuccessHandler(r=>{hideSaving();if(r&&r.success){closeDrawer();showToast('name+' deleted');refreshAll();if(document.getElementById('manageModal').classList.contains('open'))loadManage();}else showToast('+(r&&r.error||'Error'),'err');}).withFailureHandler(e=>{hideSaving();showToast('+e,'err');}).gasCall(typeof SESSION!=='undefined'?SESSION.token:'','deleteStudentAPI',id);}
 
 /* ══ MANAGE ══════════════════════════════════════════════════ */
 function openManageModal(){document.getElementById('manageModal').classList.add('open');document.getElementById('manageSearch').value='';loadManage();}
@@ -1139,7 +1153,7 @@ function openArHistory(studentId,studentName){
   document.getElementById('arHistoryName').textContent=studentName;document.getElementById('arHistoryScroll').innerHTML='<div class="analytics-loading">⏳ Loading…</div>';
   document.getElementById('arListWrap').style.display='none';document.getElementById('arTabBar').style.display='none';
   document.getElementById('arHistoryPanel').classList.add('active');
-  google.script.run.withSuccessHandler(r=>renderArHistory(r,studentName)).withFailureHandler(()=>{document.getElementById('arHistoryScroll').innerHTML='<div class="empty-state"><div class="ei"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17" stroke-width="2.5"/></svg></div><p>Error loading history.</p></div>';}).getStudentAttendanceHistory(studentId,studentName);
+  google.script.run.withSuccessHandler(r=>renderArHistory(r,studentName)).withFailureHandler(()=>{document.getElementById('arHistoryScroll').innerHTML='<div class="empty-state"><div class="ei"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17" stroke-width="2.5"/></svg></div><p>Error loading history.</p></div>';}).gasCall(typeof SESSION!=='undefined'?SESSION.token:'','getStudentAttendanceHistory',studentId,studentName);
 }
 function arHistoryBack(){document.getElementById('arListWrap').style.display='flex';document.getElementById('arTabBar').style.display='flex';document.getElementById('arHistoryPanel').classList.remove('active');}
 function renderArHistory(records,studentName){
@@ -1195,7 +1209,7 @@ function loadReportWeek(){
   if(reportLoading)return;reportLoading=true;
   document.getElementById('reportTbody').innerHTML='<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--muted)">⏳ Loading…</td></tr>';
   document.getElementById('reportEventChips').innerHTML='';document.getElementById('reportStats').innerHTML='';document.getElementById('reportDate').textContent='Loading…';
-  google.script.run.withSuccessHandler(payload=>{reportLoading=false;reportData=(payload&&payload.records)||[];reportWeekStart=(payload&&payload.weekStart)||'';reportWeekEnd=(payload&&payload.weekEnd)||'';updateReportNav();buildEventChips();renderReport();}).withFailureHandler(e=>{reportLoading=false;document.getElementById('reportTbody').innerHTML='<tr><td colspan="6" style="text-align:center;padding:40px;color:#fca5a5"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Error: '+escH(String(e))+'</td></tr>';}).getWeeklyCheckInsAPI(reportWeekOffset);
+  google.script.run.withSuccessHandler(payload=>{reportLoading=false;reportData=(payload&&payload.records)||[];reportWeekStart=(payload&&payload.weekStart)||'';reportWeekEnd=(payload&&payload.weekEnd)||'';updateReportNav();buildEventChips();renderReport();}).withFailureHandler(e=>{reportLoading=false;document.getElementById('reportTbody').innerHTML='<tr><td colspan="6" style="text-align:center;padding:40px;color:#fca5a5"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Error: '+escH(String(e))+'</td></tr>';}).gasCall(typeof SESSION!=='undefined'?SESSION.token:'','getWeeklyCheckInsAPI',reportWeekOffset);
 }
 function updateReportNav(){
   const nextBtn=document.getElementById('reportNextWeek');if(nextBtn)nextBtn.disabled=(reportWeekOffset>=0);
@@ -1259,7 +1273,7 @@ function onLookupSearch(){
 }
 function lookupStudent(studentId,studentName){
   document.getElementById('lookupBody').innerHTML='<div class="empty-state"><div class="ei">⏳</div><p>Loading…</p></div>';document.getElementById('lookupSearchWrap').style.display='none';document.getElementById('lookupBackBtn').style.display='';
-  google.script.run.withSuccessHandler(d=>renderLookupHistory(d,studentName)).withFailureHandler(()=>{document.getElementById('lookupBody').innerHTML='<div class="empty-state"><div class="ei"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17" stroke-width="2.5"/></svg></div><p>Error loading history.</p></div>';}).getStudentAttendanceHistory(studentId,studentName);
+  google.script.run.withSuccessHandler(d=>renderLookupHistory(d,studentName)).withFailureHandler(()=>{document.getElementById('lookupBody').innerHTML='<div class="empty-state"><div class="ei"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17" stroke-width="2.5"/></svg></div><p>Error loading history.</p></div>';}).gasCall(typeof SESSION!=='undefined'?SESSION.token:'','getStudentAttendanceHistory',studentId,studentName);
 }
 function renderLookupHistory(records,studentName){
   const body=document.getElementById('lookupBody');
