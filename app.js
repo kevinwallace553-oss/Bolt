@@ -4443,3 +4443,432 @@ function _syncSessionToFrames() {
     }
   } catch(e){}
 }
+
+
+/* ═══════════════════════════════════════════════════════════════
+   BOLT KIOSK — INTERACTIVE TOUR SYSTEM
+   Professional spotlight tour with animated overlays
+   Shows once per device, skippable, resumable
+═══════════════════════════════════════════════════════════════ */
+
+const TOUR = {
+  _step: 0,
+  _active: false,
+  _el: null,
+
+  // ── Tour steps definition ─────────────────────────────────────
+  steps: [
+    {
+      title: 'Welcome to Bolt Kiosk',
+      body: 'The all-in-one ministry check-in system. This quick tour will show you everything in under 60 seconds.',
+      target: null,
+      icon: 'bolt',
+      position: 'center',
+      action: null,
+    },
+    {
+      title: 'Ministry Events',
+      body: 'Tap this card to start a check-in session. Choose from Sunday Service, Youth Night, Young Adults, Small Groups, or Special Events.',
+      target: '.home-card:first-child, [onclick*="showKiosk"]',
+      icon: 'bolt',
+      position: 'bottom',
+      action: null,
+    },
+    {
+      title: 'Dashboard & Analytics',
+      body: 'See live check-ins, attendance trends, at-risk members, and weekly reports — all updated in real time.',
+      target: '.home-card:nth-child(2), [onclick*="showDash"]',
+      icon: 'analytics',
+      position: 'bottom',
+      action: null,
+    },
+    {
+      title: "Children's Ministry",
+      body: 'Register families, check in children, and print secure name tags with parent pickup QR codes.',
+      target: '[onclick*="showCM"], .home-card-wide:first-of-type',
+      icon: 'child',
+      position: 'top',
+      action: null,
+    },
+    {
+      title: 'Volunteer Departments',
+      body: 'Manage Worship Team, Ushers, Security, Media, and more. Track who\'s on duty and check in your whole team.',
+      target: '[onclick*="openVolDeptModal"], .home-card-wide:nth-of-type(2)',
+      icon: 'shield',
+      position: 'top',
+      action: null,
+    },
+    {
+      title: 'Volunteer Schedule',
+      body: 'Schedule volunteers for upcoming events, send email invitations, and track RSVP responses — all from one calendar.',
+      target: '[onclick*="showSchedule"], .home-card-wide:nth-of-type(3)',
+      icon: 'schedule',
+      position: 'top',
+      action: null,
+    },
+    {
+      title: 'Check-In Flow',
+      body: 'Search by name → tap to check in → done. It takes under 3 seconds per person. You can also batch check-in entire groups for Youth Night.',
+      target: null,
+      icon: 'checkin',
+      position: 'center',
+      illustration: 'checkin',
+    },
+    {
+      title: 'Multi-Organization Ready',
+      body: 'Each church gets its own private database. Data is never shared between organizations — fully isolated and secure.',
+      target: null,
+      icon: 'shield',
+      position: 'center',
+      illustration: 'org',
+    },
+    {
+      title: 'You\'re all set!',
+      body: 'Start by selecting a ministry event, or explore any module from the home screen. You can replay this tour anytime from Settings.',
+      target: null,
+      icon: 'check',
+      position: 'center',
+      action: 'finish',
+    },
+  ],
+
+  // ── Init: show on first visit ─────────────────────────────────
+  init() {
+    const seen = localStorage.getItem('bk_tour_done');
+    if (!seen) {
+      setTimeout(() => this.start(), 1200);
+    }
+  },
+
+  // ── Start tour ────────────────────────────────────────────────
+  start() {
+    this._step = 0;
+    this._active = true;
+    this._render();
+    document.body.style.overflow = 'hidden';
+  },
+
+  // ── Skip/finish tour ──────────────────────────────────────────
+  finish() {
+    this._active = false;
+    localStorage.setItem('bk_tour_done', '1');
+    this._destroy();
+    document.body.style.overflow = '';
+  },
+
+  // ── Go to step ────────────────────────────────────────────────
+  goto(n) {
+    this._step = Math.max(0, Math.min(n, this.steps.length - 1));
+    this._render();
+  },
+
+  next() { if (this._step < this.steps.length - 1) this.goto(this._step + 1); else this.finish(); },
+  prev() { if (this._step > 0) this.goto(this._step - 1); },
+
+  // ── Destroy overlay ───────────────────────────────────────────
+  _destroy() {
+    const el = document.getElementById('bkTourOverlay');
+    if (el) {
+      el.style.opacity = '0';
+      el.style.transform = 'scale(1.02)';
+      setTimeout(() => el.remove(), 300);
+    }
+    const sp = document.getElementById('bkTourSpotlight');
+    if (sp) sp.remove();
+  },
+
+  // ── Get spotlight rect for target element ─────────────────────
+  _getTargetRect(step) {
+    if (!step.target) return null;
+    const selectors = step.target.split(', ');
+    for (const sel of selectors) {
+      try {
+        const el = document.querySelector(sel.trim());
+        if (el) {
+          const r = el.getBoundingClientRect();
+          if (r.width > 0) return { el, rect: r };
+        }
+      } catch(e) {}
+    }
+    return null;
+  },
+
+  // ── SVG icons for tour ────────────────────────────────────────
+  _getIcon(name) {
+    const paths = {
+      bolt:     '<path d="M13 2L4.5 13.5H12L11 22l8.5-11.5H13Z"/>',
+      analytics:'<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>',
+      child:    '<circle cx="12" cy="6" r="3"/><path d="M9 21v-5a3 3 0 0 1 6 0v5"/><path d="M6 21l3-5M18 21l-3-5"/>',
+      shield:   '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+      schedule: '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+      checkin:  '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
+      check:    '<polyline points="20 6 9 17 4 12"/>',
+      people:   '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+    };
+    const p = paths[name] || paths.bolt;
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+  },
+
+  // ── Illustrations for center steps ────────────────────────────
+  _getIllustration(type) {
+    if (type === 'checkin') {
+      return `<div style="display:flex;flex-direction:column;gap:8px;width:100%;margin:0 0 6px">
+        ${['Marcus Johnson','Rachel Pena','David Kim'].map((name, i) => `
+        <div style="display:flex;align-items:center;gap:10px;background:rgba(3,213,225,0.06);border:1px solid rgba(3,213,225,0.15);border-radius:12px;padding:10px 14px;animation:tourSlideIn .4s ease ${i*0.1}s both">
+          <div style="width:32px;height:32px;border-radius:50%;background:rgba(3,213,225,0.15);color:#03d5e1;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center">${name.split(' ').map(n=>n[0]).join('')}</div>
+          <div style="flex:1;font-size:13px;color:#d4f0f4;font-weight:600">${name}</div>
+          <div style="background:#0fa86a;color:#fff;font-size:10px;font-weight:700;padding:4px 12px;border-radius:100px">${i===0?'✓ Checked In':'Check In'}</div>
+        </div>`).join('')}
+      </div>`;
+    }
+    if (type === 'org') {
+      return `<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:4px 0 10px">
+        ${['Grace Community','Rock Church','Hope Fellowship'].map((name, i) => `
+        <div style="background:rgba(3,213,225,0.08);border:1px solid rgba(3,213,225,0.2);border-radius:12px;padding:10px 14px;text-align:center;animation:tourSlideIn .4s ease ${i*0.12}s both">
+          <div style="font-size:18px;margin-bottom:4px">⛪</div>
+          <div style="font-size:11px;color:#d4f0f4;font-weight:600">${name}</div>
+          <div style="font-size:9px;color:#4a7a88;margin-top:2px">Private DB</div>
+        </div>`).join('')}
+      </div>`;
+    }
+    return '';
+  },
+
+  // ── Render current step ───────────────────────────────────────
+  _render() {
+    this._destroy();
+    const step = this.steps[this._step];
+    const total = this.steps.length;
+    const isFirst = this._step === 0;
+    const isLast = this._step === total - 1;
+    const targetInfo = this._getTargetRect(step);
+    const isCentered = step.position === 'center' || !targetInfo;
+
+    // ── Spotlight ──
+    if (targetInfo) {
+      const sp = document.createElement('div');
+      sp.id = 'bkTourSpotlight';
+      const pad = 10;
+      const { rect } = targetInfo;
+      sp.style.cssText = `
+        position:fixed;
+        top:${rect.top - pad}px;
+        left:${rect.left - pad}px;
+        width:${rect.width + pad*2}px;
+        height:${rect.height + pad*2}px;
+        border-radius:18px;
+        box-shadow:0 0 0 9999px rgba(0,0,0,0.72),0 0 0 3px rgba(3,213,225,0.7),0 0 40px rgba(3,213,225,0.3);
+        z-index:9998;
+        pointer-events:none;
+        transition:all .35s cubic-bezier(0.22,0.68,0,1.2);
+        animation:tourPulse 2s ease infinite;
+      `;
+      document.body.appendChild(sp);
+    }
+
+    // ── Card overlay ──
+    const overlay = document.createElement('div');
+    overlay.id = 'bkTourOverlay';
+
+    // Position the card
+    let cardStyle = '';
+    if (isCentered) {
+      cardStyle = 'top:50%;left:50%;transform:translate(-50%,-50%);';
+    } else if (targetInfo) {
+      const { rect } = targetInfo;
+      const cardW = Math.min(360, window.innerWidth - 32);
+      let left = rect.left + rect.width/2 - cardW/2;
+      left = Math.max(16, Math.min(left, window.innerWidth - cardW - 16));
+      
+      if (step.position === 'bottom') {
+        cardStyle = `top:${rect.bottom + 18}px;left:${left}px;`;
+      } else {
+        cardStyle = `bottom:${window.innerHeight - rect.top + 18}px;left:${left}px;`;
+      }
+    }
+
+    const progress = ((this._step) / (total - 1)) * 100;
+
+    overlay.style.cssText = `
+      position:fixed;inset:0;z-index:9999;
+      ${isCentered ? 'background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;' : ''}
+      pointer-events:all;
+      transition:opacity .3s ease;
+    `;
+
+    overlay.innerHTML = `
+      <style>
+        @keyframes tourSlideIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes tourPulse { 0%,100%{box-shadow:0 0 0 9999px rgba(0,0,0,0.72),0 0 0 3px rgba(3,213,225,0.7),0 0 40px rgba(3,213,225,0.3)} 50%{box-shadow:0 0 0 9999px rgba(0,0,0,0.72),0 0 0 3px rgba(3,213,225,0.5),0 0 60px rgba(3,213,225,0.5)} }
+        @keyframes tourCardIn { from{opacity:0;transform:${isCentered?'translate(-50%,-48%) scale(0.96)':'translateY(8px) scale(0.97)'}} to{opacity:1;transform:${isCentered?'translate(-50%,-50%) scale(1)':'translateY(0) scale(1)'}} }
+        #bkTourCard { animation: tourCardIn .35s cubic-bezier(0.22,0.68,0,1.2) both; }
+        #bkTourCard button:hover { filter:brightness(1.15); transform:scale(1.02); }
+        #bkTourCard button:active { transform:scale(0.97); }
+        .bk-step-dot { transition:all .3s ease; }
+      </style>
+
+      <div id="bkTourCard" style="
+        position:${isCentered ? 'relative' : 'fixed'};
+        ${isCentered ? '' : cardStyle}
+        width:${isCentered ? 'min(400px,calc(100vw - 32px))' : 'min(360px,calc(100vw - 32px))'};
+        background:linear-gradient(160deg,#0d1f27 0%,#091519 100%);
+        border:1px solid rgba(3,213,225,0.25);
+        border-radius:22px;
+        padding:24px;
+        box-shadow:0 24px 80px rgba(0,0,0,0.6),0 0 0 1px rgba(255,255,255,0.04),inset 0 1px 0 rgba(255,255,255,0.06);
+        font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+        color:#d4f0f4;
+        overflow:hidden;
+      ">
+        <!-- Gradient top bar -->
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#03d5e1,#014d51);border-radius:22px 22px 0 0"></div>
+
+        <!-- Header -->
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:48px;height:48px;border-radius:14px;background:rgba(3,213,225,0.1);border:1px solid rgba(3,213,225,0.2);display:flex;align-items:center;justify-content:center;color:#03d5e1;flex-shrink:0">
+              ${this._getIcon(step.icon)}
+            </div>
+            <div>
+              <div style="font-size:9px;font-weight:700;color:#03d5e1;text-transform:uppercase;letter-spacing:2px;margin-bottom:3px">Step ${this._step + 1} of ${total}</div>
+              <div style="font-size:17px;font-weight:800;color:#fff;line-height:1.2">${step.title}</div>
+            </div>
+          </div>
+          <button onclick="TOUR.finish()" style="background:none;border:none;color:rgba(255,255,255,0.3);font-size:18px;cursor:pointer;padding:4px;border-radius:8px;line-height:1;transition:all .2s;flex-shrink:0" title="Skip tour">&times;</button>
+        </div>
+
+        <!-- Illustration (for center steps) -->
+        ${step.illustration ? this._getIllustration(step.illustration) : ''}
+
+        <!-- Body -->
+        <p style="font-size:14px;line-height:1.6;color:rgba(212,240,244,0.8);margin:0 0 20px">${step.body}</p>
+
+        <!-- Progress dots -->
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:18px">
+          ${this.steps.map((_, i) => `
+            <div class="bk-step-dot" onclick="TOUR.goto(${i})" style="
+              width:${i === this._step ? '20px' : '6px'};height:6px;
+              border-radius:3px;cursor:pointer;
+              background:${i === this._step ? '#03d5e1' : i < this._step ? 'rgba(3,213,225,0.4)' : 'rgba(255,255,255,0.12)'};
+            "></div>
+          `).join('')}
+        </div>
+
+        <!-- Progress bar -->
+        <div style="height:2px;background:rgba(255,255,255,0.08);border-radius:2px;margin-bottom:18px;overflow:hidden">
+          <div style="height:100%;width:${progress}%;background:linear-gradient(90deg,#03d5e1,#014d51);border-radius:2px;transition:width .4s ease"></div>
+        </div>
+
+        <!-- Actions -->
+        <div style="display:flex;gap:10px;align-items:center">
+          ${!isFirst ? `<button onclick="TOUR.prev()" style="flex:0 0 auto;padding:10px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.6);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s">← Back</button>` : ''}
+          <button onclick="TOUR.next()" style="flex:1;padding:12px 20px;border-radius:12px;border:none;background:linear-gradient(135deg,#03d5e1,#028a94);color:#fff;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:0.3px">
+            ${isLast ? 'Get Started →' : isFirst ? 'Start Tour →' : 'Next →'}
+          </button>
+        </div>
+
+        ${isFirst ? `<p style="text-align:center;font-size:11px;color:rgba(255,255,255,0.25);margin:12px 0 0">Tap &times; to skip · Available anytime in Settings</p>` : ''}
+      </div>
+    `;
+
+    // Click outside to advance (on centered steps)
+    if (isCentered) {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) this.next();
+      });
+    }
+
+    document.body.appendChild(overlay);
+
+    // Scroll target into view
+    if (targetInfo) {
+      targetInfo.el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  },
+};
+
+// ── Replay tour from any menu ──────────────────────────────────
+function replayTour() {
+  localStorage.removeItem('bk_tour_done');
+  TOUR.start();
+}
+
+// Start tour after home view loads
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    if (document.getElementById('vHome')) {
+      TOUR.init();
+    }
+  }, 2000);
+});
+
+/* ── TOUR BUTTON: inject on home load ── */
+(function() {
+  function injectTourButton() {
+    if (document.getElementById('bkTourBtn')) return;
+    var btn = document.createElement('button');
+    btn.id = 'bkTourBtn';
+    btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Quick Tour';
+    btn.onclick = function() { if(typeof TOUR!=='undefined') TOUR.start(); };
+    btn.setAttribute('title', 'Replay the app tour');
+    btn.style.cssText = [
+      'position:fixed', 'bottom:88px', 'right:16px',
+      'background:rgba(3,213,225,0.1)',
+      'border:1px solid rgba(3,213,225,0.28)',
+      'color:#03d5e1',
+      'font-size:11px', 'font-weight:700',
+      'padding:8px 14px', 'border-radius:100px',
+      'cursor:pointer', 'display:none',
+      'align-items:center', 'gap:6px',
+      'font-family:inherit', 'z-index:500',
+      'backdrop-filter:blur(10px)',
+      'box-shadow:0 4px 24px rgba(3,213,225,0.12)',
+      'transition:all .2s ease',
+      'letter-spacing:0.3px',
+    ].join(';');
+    btn.onmouseenter = function() {
+      btn.style.background = 'rgba(3,213,225,0.18)';
+      btn.style.transform = 'scale(1.04)';
+      btn.style.boxShadow = '0 6px 28px rgba(3,213,225,0.2)';
+    };
+    btn.onmouseleave = function() {
+      btn.style.background = 'rgba(3,213,225,0.1)';
+      btn.style.transform = '';
+      btn.style.boxShadow = '0 4px 24px rgba(3,213,225,0.12)';
+    };
+    document.body.appendChild(btn);
+  }
+
+  // Show/hide tour button based on active view
+  var _origShowViewForTour = window.showView;
+  window.addEventListener('load', function() {
+    injectTourButton();
+    var orig = window.showView;
+    if (orig && orig !== _origShowViewForTour) {
+      window.showView = function(id) {
+        orig.apply(this, arguments);
+        var btn = document.getElementById('bkTourBtn');
+        if (btn) btn.style.display = (id === 'vHome') ? 'flex' : 'none';
+      };
+    } else {
+      // Fallback: watch for vHome becoming active
+      var observer = new MutationObserver(function() {
+        var vHome = document.getElementById('vHome');
+        var btn = document.getElementById('bkTourBtn');
+        if (btn && vHome) {
+          btn.style.display = vHome.classList.contains('active') ? 'flex' : 'none';
+        }
+      });
+      var app = document.getElementById('app') || document.body;
+      observer.observe(app, { attributes: true, subtree: true, attributeFilter: ['class'] });
+    }
+    // Show on initial home load
+    setTimeout(function() {
+      var vHome = document.getElementById('vHome');
+      var btn = document.getElementById('bkTourBtn');
+      if (btn && vHome && vHome.classList.contains('active')) {
+        btn.style.display = 'flex';
+      }
+    }, 1000);
+  });
+})();
