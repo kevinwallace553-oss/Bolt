@@ -357,7 +357,7 @@ function openDrawer(student) {
       <div class="d-sec-lbl">Details</div>
       <div class="d-field"><div class="d-field-lbl">Date of Birth</div><div class="d-field-val ${!student.dob?'empty':''}">${student.dob||'Not set'}</div></div>
       <div class="d-field"><div class="d-field-lbl">Emergency Contact</div><div class="d-field-val ${!student.emergencyContact?'empty':''}">${student.emergencyContact||'Not provided'}</div></div>
-      <div class="d-field"><div class="d-field-lbl">ID</div><div class="d-field-val" style="font-size:10px;color:var(--muted2)">${student.id||'—'}</div></div>
+      <div class="d-field"><div class="d-field-lbl">Student ID</div><div class="d-field-val" style="font-size:10px;color:var(--muted2)">${student.id||'—'}</div></div>
     </div>`;
   document.getElementById('drawerTitle').textContent = student.name;
   document.getElementById('drawerOverlay').classList.add('open');
@@ -380,9 +380,7 @@ window.addEventListener('load', async () => {
     document.body.style.background = '#0a1628';
     const rsvpPage = document.getElementById('vRsvp');
     if (rsvpPage) rsvpPage.style.display = 'flex';
-    // Pass orgId from URL so RSVP routes to the correct org spreadsheet
-    const rsvpOrgId = _params.get('o') || 'ORG_DEFAULT';
-    setTimeout(() => SCHED.handleRsvp(_params.get('rsvp'), _params.get('r'), rsvpOrgId), 400);
+    setTimeout(() => SCHED.handleRsvp(_params.get('rsvp'), _params.get('r')), 400);
     return;
   }
 
@@ -400,13 +398,11 @@ window.addEventListener('load', async () => {
       SESSION.name     = userObj.name     || '';
       SESSION.role     = userObj.role     || '';
       SESSION.username = userObj.username || '';
-      // Store in sessionStorage so GAS sub-pages (dashboard, kiosk) can access token
-      try {
-        sessionStorage.setItem('bk_token',  SESSION.token);
-        sessionStorage.setItem('bk_orgId',  SESSION.orgId);
-        sessionStorage.setItem('bk_name',   SESSION.name);
-        sessionStorage.setItem('bk_role',   SESSION.role);
-      } catch(e) {}
+      // Persist session for GAS sub-pages
+      try { sessionStorage.setItem('bk_token',SESSION.token); sessionStorage.setItem('bk_orgId',SESSION.orgId); sessionStorage.setItem('bk_name',SESSION.name); sessionStorage.setItem('bk_role',SESSION.role); } catch(e){}
+      window.SESSION = SESSION;
+      // Store server-side for GAS page access
+      try { google.script.run.withSuccessHandler(function(r){if(r&&r.key)SESSION.sessionKey=r.key;window.SESSION=SESSION;}).storeSessionToken(SESSION.token); } catch(e){}
       // Remove params from URL so refresh doesn't re-use the same token params
       window.history.replaceState({}, '', window.location.pathname);
       // Go straight to home
@@ -434,8 +430,6 @@ const AUTH = {
       b.classList.toggle('active',(i===0&&t==='login')||(i===1&&t==='register'))
     );
     this.clearMsgs();
-    // Inject church field whenever register tab opens
-    if (t === 'register') setTimeout(() => this._ensureChurchField(), 50);
   },
   clearMsgs() {
     document.querySelectorAll('.msg').forEach(m => { m.style.display='none'; m.textContent=''; });
@@ -456,19 +450,9 @@ const AUTH = {
       const r = await API.login(u,p);
       if(r?.success){
         SESSION.token=r.token; SESSION.name=r.name; SESSION.role=r.role; SESSION.username=r.username; SESSION.orgId=r.orgId||'ORG_DEFAULT';
-      try {
-        sessionStorage.setItem('bk_token', SESSION.token);
-        sessionStorage.setItem('bk_orgId', SESSION.orgId);
-        sessionStorage.setItem('bk_name',  SESSION.name);
-        sessionStorage.setItem('bk_role',  SESSION.role);
-      } catch(e) {}
+      try { sessionStorage.setItem('bk_token',SESSION.token); sessionStorage.setItem('bk_orgId',SESSION.orgId); sessionStorage.setItem('bk_name',SESSION.name); sessionStorage.setItem('bk_role',SESSION.role); } catch(e){}
       window.SESSION = SESSION;
-      // Store session key server-side for GAS page access
-      try {
-        google.script.run
-          .withSuccessHandler(function(r){ if(r && r.key) { SESSION.sessionKey = r.key; window.SESSION = SESSION; } })
-          .storeSessionToken(SESSION.token);
-      } catch(e) {}
+      try { google.script.run.withSuccessHandler(function(r){if(r&&r.key)SESSION.sessionKey=r.key;window.SESSION=SESSION;}).storeSessionToken(SESSION.token); } catch(e){}
         const _first=(r.name||r.username||'').split(' ')[0];
         const _el=document.getElementById('homeName');if(_el)_el.textContent=_first?`${_first}`:'Youth Check-In System';
         const _gh=document.getElementById('homeGreeting');
@@ -479,55 +463,26 @@ const AUTH = {
     this.setLoading(false);
   },
   async register() {
-    // Auto-inject church field if it doesn't exist in the static HTML
-    AUTH._ensureChurchField();
-
-    const ch = (document.getElementById('regChurch')?.value || '').trim();
-    const n  = (document.getElementById('regName')?.value || '').trim();
-    const e  = (document.getElementById('regEmail')?.value || '').trim();
-    const u  = (document.getElementById('regUser')?.value || '').trim();
-    const p  = (document.getElementById('regPass')?.value || '');
-
+    const ch= document.getElementById('regChurch')?.value.trim() || '';
+    const n = document.getElementById('regName').value.trim();
+    const e = document.getElementById('regEmail').value.trim();
+    const u = document.getElementById('regUser').value.trim();
+    const p = document.getElementById('regPass').value;
     this.clearMsgs();
-    if(!ch || ch.length < 2){ this.showErr('regErr','Church or organization name is required.'); document.getElementById('regChurch')?.focus(); return; }
-    if(!n){ this.showErr('regErr','Full name is required.'); return; }
-    if(!e || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)){ this.showErr('regErr','Valid email required.'); return; }
-    if(!u || u.length < 3){ this.showErr('regErr','Username must be 3+ characters.'); return; }
-    if(p.length < 8){ this.showErr('regErr','Password must be 8+ characters.'); return; }
-
+    if(!ch){this.showErr('regErr','Church or organization name is required.');return;}
+    if(!n||!e||!u||!p){this.showErr('regErr','All fields are required.');return;}
     this.setLoading(true);
-    this.showOk('regOk','Creating your organization — this takes 15–20 seconds, please wait…');
+    this.showOk('regOk','Setting up your organization… this may take 15–20 seconds.');
     try {
       const r = await gasRun('createOrganizationAPI', ch, e, n, u, p);
       if(r?.success){
-        this.showOk('regOk','Organization created! Sign in with your credentials.');
-        ['regChurch','regName','regEmail','regUser','regPass','regPass2'].forEach(id=>{
-          const el=document.getElementById(id); if(el) el.value='';
-        });
-        setTimeout(()=>this.tab('login'), 2500);
+        this.showOk('regOk','Organization created! Sign in now.');
+        setTimeout(()=>this.tab('login'),2000);
       } else {
-        this.showErr('regErr', r?.error || 'Registration failed. Please try again.');
+        this.showErr('regErr', r?.error||'Registration failed.');
       }
-    } catch(err){ this.showErr('regErr','Connection error. Please try again.'); }
+    } catch(err){this.showErr('regErr','Connection error.');}
     this.setLoading(false);
-  },
-
-  _ensureChurchField() {
-    if (document.getElementById('regChurch')) return; // already present in HTML
-    const pane = document.getElementById('pRegister');
-    if (!pane) return;
-    // Find first input or field container to insert before
-    const anchor = pane.querySelector('input, .field, .field-group, .form-field');
-    if (!anchor) return;
-    const wrap = document.createElement('div');
-    wrap.style.cssText = 'margin-bottom:14px';
-    wrap.innerHTML = '<div style="font-size:11px;font-weight:600;color:var(--muted,#7aacb8);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px">Church / Organization</div>'
-      + '<input id="regChurch" type="text" placeholder="e.g. Grace Community Church" autocapitalize="words" '
-      + 'style="width:100%;padding:13px 16px;border-radius:12px;background:rgba(255,255,255,0.07);'
-      + 'border:1.5px solid rgba(255,255,255,0.15);color:#fff;font-size:16px;font-family:inherit;'
-      + 'outline:none;-webkit-appearance:none;box-sizing:border-box">';
-    const parent = anchor.closest('.field,.field-group,.form-field') || anchor.parentNode;
-    parent.parentNode.insertBefore(wrap, parent);
   },
   async forgot() {
     const email=document.getElementById('fgtEmail').value.trim();
@@ -599,23 +554,11 @@ const KIOSK = {
 
   async loadAllStudents() {
     try {
-      // Load students and today's check-ins in parallel
-      const [studRes, ciRes] = await Promise.all([
-        API.getAllStudents(),
-        API.getTodayCheckins().catch(() => [])
-      ]);
-      const raw = Array.isArray(studRes) ? studRes : (studRes?.students || []);
+      const r = await API.getAllStudents();
+      // Backend returns array directly (not wrapped in {students:[]})
+      const raw = Array.isArray(r) ? r : (r?.students || []);
       _allStudents = raw.map(toDisplayStudent);
       document.getElementById('kStatTotal').textContent = _allStudents.length;
-
-      // Restore _checkedToday from server so it persists across sign-ins
-      const cis = Array.isArray(ciRes) ? ciRes : (ciRes?.checkins || ciRes?.checkIns || []);
-      cis.forEach(ci => {
-        if (ci.id || ci.studentId) _checkedToday.add(String(ci.id || ci.studentId));
-      });
-      // Update checked-in count
-      const ciCount = document.getElementById('kStatChecked');
-      if (ciCount) ciCount.textContent = _checkedToday.size;
     } catch(e){ console.error('loadAllStudents error',e); }
   },
 
@@ -636,7 +579,7 @@ const KIOSK = {
 
   async startSession() {
     const sel = document.getElementById('leaderSelect');
-    if(!sel.value){toast('Select your name first','err');return;}
+    if(!sel.value){toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Select your name first','err');return;}
     _kLeader = sel.value;
     document.getElementById('epGreeting').textContent = `Hey, ${_kLeader}!`;
       document.getElementById('eventPicker').classList.add('open');
@@ -650,11 +593,11 @@ const KIOSK = {
   },
 
   confirmEvent() {
-    if(!_selectedEvent){toast('Pick an event type','err');return;}
+    if(!_selectedEvent){toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Pick an event type','err');return;}
     let eventName = _selectedEvent.name;
     if(eventName==='__other__'){
       eventName = document.getElementById('epOtherInput').value.trim();
-      if(!eventName){toast('Enter event name','err');return;}
+      if(!eventName){toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Enter event name','err');return;}
     }
 
     // Auto-set leader from signed-in session — no leader login screen needed
@@ -719,7 +662,7 @@ const KIOSK = {
       banner.style.background = bc.bg;
       banner.style.borderColor = bc.border;
       banner.style.color = bc.color;
-      const icon = document.getElementById('kBannerIcon'); if(icon) icon.innerHTML = bc.icon;
+      const icon = document.getElementById('kBannerIcon'); if(icon) icon.textContent = bc.icon;
       const title = document.getElementById('kBannerTitle'); if(title) title.textContent = bc.title;
       const desc = document.getElementById('kBannerDesc'); if(desc) desc.textContent = bc.desc;
     }
@@ -730,48 +673,34 @@ const KIOSK = {
 
     // Config per event type — defines all labels so nothing is hardcoded
     const evtCfg = {
-      // showBatch: ONLY Youth Night has batch check-in
-      'Sunday Service':       { search:'Search members or guests…',     addBtn:icon('plus',13)+' New Member',    addLbl:'New Member',    manageLbl:'Update Records', showBatch:false, firstTimer:true,  firstLbl:icon('star',13)+' Register First Timer' },
-      'Youth Night':          { search:'Search students by name…',      addBtn:icon('plus',13)+' New Student',   addLbl:'New Student',   manageLbl:'Manage Students', showBatch:true,  batchLbl:'Batch Check-In', firstTimer:false },
-      'Young Adult Ministry': { search:'Search young adults by name…',  addBtn:icon('plus',13)+' New Attendee',  addLbl:'New Attendee',  manageLbl:'Update Records', showBatch:false, firstTimer:true,  firstLbl:icon('star',13)+' Register First Timer' },
-      'Small Groups':         { search:'Search group members…',         addBtn:icon('plus',13)+' New Member',    addLbl:'New Member',    manageLbl:'Manage Groups',  showBatch:false, firstTimer:false },
-      'Special Event':        { search:'Search attendees…',             addBtn:icon('plus',13)+' New Attendee',  addLbl:'New Attendee',  manageLbl:'Manage',         showBatch:false, firstTimer:true,  firstLbl:icon('star',13)+' Register Guest' },
+      'Sunday Service':       { search:'Search members or guests…',  addBtn:icon('plus',13)+' New Member',    addLbl:'New Member',    manageLbl:'Update Records', batchLbl:'Batch Check-In', firstTimer:true,  firstLbl:icon('star',13)+' Register First Timer' },
+      'Youth Night':          { search:'Search students by name…',   addBtn:'<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 5v14M5 12h14"/></svg> New Student',   addLbl:'New Student',   manageLbl:'Manage',         batchLbl:'Batch Check-In', firstTimer:false },
+      'Young Adult Ministry': { search:'Search attendees by name…',  addBtn:'<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 5v14M5 12h14"/></svg> New Attendee',  addLbl:'New Attendee',  manageLbl:'Update Records', batchLbl:'Batch Check-In', firstTimer:true,  firstLbl:'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Register First Timer' },
+      'Small Groups':         { search:'Search group members…',      addBtn:icon('plus',13)+' New Member',    addLbl:'New Member',    manageLbl:'Manage Groups',  batchLbl:'Batch Check-In', firstTimer:false },
+      'Special Event':        { search:'Search attendees…',          addBtn:'<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 5v14M5 12h14"/></svg> New Attendee',  addLbl:'New Attendee',  manageLbl:'Manage',         batchLbl:'Batch Check-In', firstTimer:true,  firstLbl:'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Register Guest' },
     };
-    const cfg = evtCfg[eventName] || { search:'Search by name…', addBtn:icon('plus',13)+' Add', addLbl:'Add', manageLbl:'Manage', showBatch:false, firstTimer:false };
+    const cfg = evtCfg[eventName] || { search:'Search by name…', addBtn:'<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 5v14M5 12h14"/></svg> Add Attendee', addLbl:'Add Attendee', manageLbl:'Manage', batchLbl:'Batch Check-In', firstTimer:false };
 
     // Store cfg for use in batch modal and other places
     window._kEventCfg = cfg;
     window._kEventName = eventName;
-    // Sync _kRegLabel so manage modal always has correct labels
-    window._kRegLabel = (() => {
-      const m = {
-        'Sunday Service':       { total:'Members',     listTitle:'Members & Guests',   searchHint:'Search members or guests…' },
-        'Youth Night':          { total:'Students',    listTitle:'Youth Students',      searchHint:'Search students by name…' },
-        'Young Adult Ministry': { total:'Young Adults',listTitle:'Young Adults',        searchHint:'Search young adults…' },
-        'Small Groups':         { total:'Members',     listTitle:'Group Members',       searchHint:'Search group members…' },
-        'Special Event':        { total:'Attendees',   listTitle:'Event Attendees',     searchHint:'Search attendees…' },
-      };
-      return m[eventName] || { total:'Attendees', listTitle:'Attendees', searchHint:'Search by name…' };
-    })();
-    // Show/hide the static batch button in kiosk.html based on event type
-    const staticBatch = document.getElementById('staticBatchBtn');
-    if (staticBatch) staticBatch.style.display = cfg.showBatch ? '' : 'none';
 
     // Update search placeholder
     if (searchEl) searchEl.placeholder = cfg.search;
 
     // Build action buttons
     if (acts) {
-      // Build action buttons based on showBatch + firstTimer flags
-      const manageBtn = `<button class="k-btn" onclick="KIOSK.openManage()">${icon('manage',13)} ${cfg.manageLbl}</button>`;
-      const addBtn    = `<button class="k-btn" onclick="KIOSK.openNewStudent()">${cfg.addBtn}</button>`;
-      const batchBtn  = cfg.showBatch ? `<button class="k-btn teal full" onclick="KIOSK.openBatch()">${icon('batch',13)} ${cfg.batchLbl||'Batch Check-In'}</button>` : '';
-      const firstBtn  = cfg.firstTimer ? `<button class="k-btn amber full" onclick="KIOSK.openFirstTimerFlow()" style="background:rgba(245,158,11,0.18);border-color:rgba(245,158,11,0.5);color:#fcd34d;font-weight:800">${cfg.firstLbl}</button>` : '';
-
       if (cfg.firstTimer) {
-        acts.innerHTML = firstBtn + batchBtn + addBtn + manageBtn;
+        acts.innerHTML = `
+          <button class="k-btn amber full" onclick="KIOSK.openFirstTimerFlow()" style="background:rgba(245,158,11,0.18);border-color:rgba(245,158,11,0.5);color:#fcd34d;font-weight:800">${cfg.firstLbl}</button>
+          <button class="k-btn" onclick="KIOSK.openBatch()">${cfg.batchLbl ? icon('batch',13)+' '+cfg.batchLbl : icon('batch',13)+' Batch Check-In'}</button>
+          <button class="k-btn" onclick="KIOSK.openNewStudent()">${cfg.addBtn}</button>
+          <button class="k-btn" onclick="KIOSK.openManage()"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6" stroke-width="2.5"/><line x1="3" y1="12" x2="3.01" y2="12" stroke-width="2.5"/><line x1="3" y1="18" x2="3.01" y2="18" stroke-width="2.5"/></svg> ${cfg.manageLbl}</button>`;
       } else {
-        acts.innerHTML = batchBtn + addBtn + manageBtn;
+        acts.innerHTML = `
+          <button class="k-btn teal full" onclick="KIOSK.openBatch()"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg> ${cfg.batchLbl || 'Batch Check-In'}</button>
+          <button class="k-btn" onclick="KIOSK.openNewStudent()">${cfg.addBtn}</button>
+          <button class="k-btn" onclick="KIOSK.openManage()"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6" stroke-width="2.5"/><line x1="3" y1="12" x2="3.01" y2="12" stroke-width="2.5"/><line x1="3" y1="18" x2="3.01" y2="18" stroke-width="2.5"/></svg> ${cfg.manageLbl}</button>`;
       }
     }
 
@@ -783,27 +712,28 @@ const KIOSK = {
           <div style="font-size:48px;margin-bottom:14px"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
           <div style="font-family:var(--font);font-size:17px;font-weight:800;color:var(--text);margin-bottom:6px">Welcome to Sunday Service</div>
           <div style="font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.6">Search for a member or guest above,<br>or use the quick actions below</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;max-width:480px;margin:0 auto">
-            <button onclick="KIOSK.openFirstTimerFlow()" style="padding:14px 10px;border-radius:14px;background:rgba(245,158,11,0.12);border:1.5px solid rgba(245,158,11,0.4);color:#fcd34d;font-family:var(--body);font-size:12px;font-weight:800;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px">${icon('star',22)}<span>First Timer</span></button>
-            <button onclick="KIOSK.openNewStudent()" style="padding:14px 10px;border-radius:14px;background:var(--surface2);border:1.5px solid var(--rim);color:var(--muted);font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px">${icon('person',22)}<span>New Member</span></button>
-            <button onclick="KIOSK.openManage()" style="padding:14px 10px;border-radius:14px;background:var(--surface2);border:1.5px solid var(--rim);color:var(--muted);font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px">${icon('manage',22)}<span>Update Records</span></button>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:400px;margin:0 auto">
+            <button onclick="KIOSK.openFirstTimerFlow()" style="padding:14px 10px;border-radius:14px;background:rgba(245,158,11,0.12);border:1.5px solid rgba(245,158,11,0.4);color:#fcd34d;font-family:var(--body);font-size:12px;font-weight:800;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px"><span style="font-size:24px"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>First Timer</button>
+            <button onclick="KIOSK.openBatch()" style="padding:14px 10px;border-radius:14px;background:var(--surface2);border:1.5px solid var(--rim);color:var(--muted);font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px"><span style="font-size:24px"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Batch Check-In</button>
+            <button onclick="KIOSK.openNewStudent()" style="padding:14px 10px;border-radius:14px;background:var(--surface2);border:1.5px solid var(--rim);color:var(--muted);font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px"><span style="font-size:24px"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 5v14M5 12h14"/></svg></span>New Member</button>
+            <button onclick="KIOSK.openManage()" style="padding:14px 10px;border-radius:14px;background:var(--surface2);border:1.5px solid var(--rim);color:var(--muted);font-family:var(--body);font-size:12px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px"><span style="font-size:24px"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6" stroke-width="2.5"/><line x1="3" y1="12" x2="3.01" y2="12" stroke-width="2.5"/><line x1="3" y1="18" x2="3.01" y2="18" stroke-width="2.5"/></svg></span>Update Records</button>
           </div>
         </div>`;
     }
 
     API.checkIn({type:'leader',leader:_kLeader}, {leader:_kLeader,event:eventName,type:'leader'}).catch(()=>{});
-    toast(`Session started — ${eventName}`,'ok');
+    toast(`${style.icon} Session started — ${eventName}`,'ok');
   },
 
   updateSidebarLabels(eventName) {
     const labelMap = {
-      'Sunday Service':       { total:'Members',   checked:'Checked In', newBtn:'New Member',    regTitle:'Register Member / Guest',   saveBtn:'Register & Save', listTitle:'Members & Guests',   searchHint:'Search members or guests…'   },
-      'Youth Night':          { total:'Students',  checked:'Checked In', newBtn:'New Student',   regTitle:'Register Student',          saveBtn:'Register & Save', listTitle:'Youth Students',     searchHint:'Search students by name…'    },
-      'Young Adult Ministry': { total:'Young Adults', checked:'Checked In', newBtn:'New Attendee', regTitle:'Register Young Adult',   saveBtn:'Register & Save', listTitle:'Young Adults',       searchHint:'Search young adults…'        },
-      'Small Groups':         { total:'Members',   checked:'Checked In', newBtn:'New Member',    regTitle:'Register Group Member',     saveBtn:'Register & Save', listTitle:'Group Members',      searchHint:'Search group members…'       },
-      'Special Event':        { total:'Attendees', checked:'Checked In', newBtn:'New Attendee',  regTitle:'Register Attendee / Guest', saveBtn:'Register & Save', listTitle:'Event Attendees',    searchHint:'Search attendees…'           },
+      'Sunday Service':       { total:'Attendees', checked:'Checked In', newBtn:'New Member',    regTitle:'Register Member / Guest',   saveBtn:'Register & Save' },
+      'Youth Night':          { total:'Students',  checked:'Checked In', newBtn:'New Student',   regTitle:'Register Student',          saveBtn:'Register & Save' },
+      'Young Adult Ministry': { total:'Attendees', checked:'Checked In', newBtn:'New Attendee',  regTitle:'Register Young Adult',      saveBtn:'Register & Save' },
+      'Small Groups':         { total:'Members',   checked:'Checked In', newBtn:'New Member',    regTitle:'Register Member',           saveBtn:'Register & Save' },
+      'Special Event':        { total:'Attendees', checked:'Checked In', newBtn:'New Attendee',  regTitle:'Register Attendee',         saveBtn:'Register & Save' },
     };
-    const lbl = labelMap[eventName] || { total:'Attendees', checked:'Checked In', newBtn:'New Attendee', regTitle:'Register Attendee', saveBtn:'Register & Save', listTitle:'Attendees', searchHint:'Search by name…' };
+    const lbl = labelMap[eventName] || { total:'Attendees', checked:'Checked In', newBtn:'New Attendee', regTitle:'Register Attendee', saveBtn:'Register & Save' };
 
     // Update sidebar stat labels
     const el1 = document.getElementById('kLblChecked'); if(el1) el1.textContent = lbl.checked;
@@ -826,7 +756,7 @@ const KIOSK = {
   search(q) {
     document.getElementById('kClear').classList.toggle('show', q.length>0);
     if(!q.trim()){
-      document.getElementById('kResults').innerHTML = `<div class="k-empty"><div class="k-empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg></div><div class="k-empty-title">Search by name</div><div class="k-empty-sub">Type a name to find and check in</div></div>`;
+      document.getElementById('kResults').innerHTML = `<div class="k-empty"><div class="k-empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg></div><div class="k-empty-title">Search for a student</div><div class="k-empty-sub">Type a name to find and check in</div></div>`;
       return;
     }
     const ql = q.toLowerCase();
@@ -837,7 +767,7 @@ const KIOSK = {
   renderResults(students) {
     const el = document.getElementById('kResults');
     if(!students.length){
-      el.innerHTML=`<div class="k-empty"><div class="k-empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><div class="k-empty-title">No results found</div><div class="k-empty-sub">Try a different name or add a new student</div></div>`;
+      el.innerHTML=`<div class="k-empty"><div class="k-empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><div class="k-empty-title">No students found</div><div class="k-empty-sub">Try a different name or add a new student</div></div>`;
       return;
     }
     const today = new Date();
@@ -874,7 +804,7 @@ const KIOSK = {
   },
 
   async checkIn(studentId, name) {
-    if(!_kLeader){toast('Start your session first','err');return;}
+    if(!_kLeader){toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Start your session first','err');return;}
     const sid = String(studentId);
     const student = _allStudents.find(s=>String(s.id)===sid);
     if(!student) return;
@@ -895,14 +825,14 @@ const KIOSK = {
         _checkedToday.delete(sid);
         const _sc1=document.getElementById('kStatChecked');if(_sc1)_sc1.textContent=_checkedToday.size;
       const _sc2=document.getElementById('kStatCheckedSide');if(_sc2)_sc2.textContent=_checkedToday.size;
-        toast('Check-in failed — try again','err');
+        toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Check-in failed — try again','err');
         this.search(document.getElementById('kSearch').value);
       }
     } catch(e){
       _checkedToday.delete(sid);
       const _sc1=document.getElementById('kStatChecked');if(_sc1)_sc1.textContent=_checkedToday.size;
       const _sc2=document.getElementById('kStatCheckedSide');if(_sc2)_sc2.textContent=_checkedToday.size;
-      toast('Connection error','err');
+      toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Connection error','err');
       this.search(document.getElementById('kSearch').value);
     }
   },
@@ -911,7 +841,7 @@ const KIOSK = {
     const today = new Date();
     let isBday = false;
     if(student?.dob){ try{ const d=new Date(student.dob); isBday=d.getMonth()===today.getMonth()&&d.getDate()===today.getDate(); }catch(e){} }
-    document.getElementById('sucIcon').innerHTML = isBday?'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M8 3.5c0-1 1-2 2-1.5s2 .5 2-.5 1-2 2-1.5"/></svg>':'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg>';
+    document.getElementById('sucIcon').textContent = isBday?'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M8 3.5c0-1 1-2 2-1.5s2 .5 2-.5 1-2 2-1.5"/></svg>':'<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg>';
     document.getElementById('sucName').textContent = name;
     document.getElementById('sucMsg').textContent = isBday?`Happy Birthday, ${name.split(' ')[0]}!`:sub;
     const wrap = document.getElementById('confettiWrap');
@@ -970,7 +900,7 @@ const KIOSK = {
       this.clearSearch(); this.renderManage('');
       document.getElementById('kStatTotal').textContent = _allStudents.length;
       toast('Student deleted','ok');
-    } catch(e){ toast('Delete failed','err'); }
+    } catch(e){ toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Delete failed','err'); }
     hideSaving();
   },
 
@@ -980,7 +910,7 @@ const KIOSK = {
     });
     document.getElementById('ns_checkin').checked = true;
     const title = document.getElementById('nsModalTitle');
-    if (title) { title.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> First Timer / Guest Registration'; title.style.color = '#fcd34d'; }
+    if (title) { title.textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> First Timer / Guest Registration'; title.style.color = '#fcd34d'; }
     const saveBtn = document.getElementById('nsModalSave');
     if (saveBtn) saveBtn.textContent = 'Register & Check In';
     // Always adult fields for first-timer flow
@@ -997,7 +927,7 @@ const KIOSK = {
     // Reset title in case first-timer flow changed it
     const regLbl = window._kRegLabel || {};
     const title = document.getElementById('nsModalTitle');
-    if (title) { title.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 5v14M5 12h14"/></svg> ' + (regLbl.regTitle || 'Register Attendee'); title.style.color = ''; }
+    if (title) { title.textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 5v14M5 12h14"/></svg> ' + (regLbl.regTitle || 'Register Attendee'); title.style.color = ''; }
     const saveBtn = document.getElementById('nsModalSave');
     if (saveBtn) saveBtn.textContent = regLbl.saveBtn || 'Register & Save';
     // Adapt form fields for youth vs adults
@@ -1021,7 +951,7 @@ const KIOSK = {
 
   async saveNewStudent() {
     const name = document.getElementById('ns_name').value.trim();
-    if(!name){toast('Name is required','err');return;}
+    if(!name){toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Name is required','err');return;}
     const display = {
       name,
       grade: document.getElementById('ns_grade').value.trim(),
@@ -1035,26 +965,26 @@ const KIOSK = {
     const backend = toBackendStudent(display);
     const ci = document.getElementById('ns_checkin').checked;
     const meta = ci && _kLeader ? {leader:_kLeader, event:_kEvent} : null;
-    showSaving('Adding ' + ((window._kEventCfg && window._kEventCfg.addLbl) || 'attendee') + '…');
+    showSaving('Adding student…');
     try {
       const r = await API.addStudent(backend, meta);
       if(r?.status==='error'||r?.success===false){
-        toast(''+(r?.message||r?.error||'Failed to add student'),'err');
+        toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> '+(r?.message||r?.error||'Failed to add student'),'err');
       } else {
         closeModal('newStudentModal');
         await this.loadAllStudents();
         if(ci && r?.id) _checkedToday.add(String(r.id));
         this.clearSearch();
-        toast(`${name} added!`,'ok');
+        toast(`<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> ${name} added!`,'ok');
       }
-    } catch(e){ toast('Connection error','err'); }
+    } catch(e){ toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Connection error','err'); }
     hideSaving();
   },
 
   async saveEditStudent() {
     const id = document.getElementById('es_id').value;
     const name = document.getElementById('es_name').value.trim();
-    if(!name){toast('Name is required','err');return;}
+    if(!name){toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Name is required','err');return;}
     const display = {
       name,
       grade: document.getElementById('es_grade').value.trim(),
@@ -1073,20 +1003,14 @@ const KIOSK = {
         closeModal('editStudentModal');
         await this.loadAllStudents();
         this.clearSearch();
-        toast('Student updated','ok');
-      } else toast(''+(r?.error||'Failed to save'),'err');
-    } catch(e){ toast('Connection error','err'); }
+        toast('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Student updated','ok');
+      } else toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> '+(r?.error||'Failed to save'),'err');
+    } catch(e){ toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Connection error','err'); }
     hideSaving();
   },
 
   openManage() {
     _manageAll = [..._allStudents];
-    // Update modal title to match event type
-    const lbl = window._kRegLabel || {};
-    const manTitle = document.querySelector('.manage-modal-title');
-    if (manTitle) manTitle.innerHTML = icon('manage',16) + ' ' + (lbl.listTitle || 'Attendees');
-    const manSearch = document.getElementById('manageSearch');
-    if (manSearch) manSearch.placeholder = lbl.searchHint || 'Search by name…';
     openModal('manageModal');
     this.renderManage('');
   },
@@ -1095,13 +1019,10 @@ const KIOSK = {
     const students = q
       ? _manageAll.filter(s=>(s.name||'').toLowerCase().includes(q.toLowerCase()))
       : _manageAll;
-    const _lbl = window._kRegLabel || {};
-    const _term = (_lbl.total || 'Attendees').toLowerCase();
-    const _termSingular = _term.endsWith('s') ? _term.slice(0,-1) : _term;
-    document.getElementById('manageCount').textContent = `${students.length} ${students.length!==1 ? _term : _termSingular}`;
+    document.getElementById('manageCount').textContent = `${students.length} student${students.length!==1?'s':''}`;
     const list = document.getElementById('manageList');
     if(!students.length){
-      list.innerHTML=`<div class="empty-state"><p class="empty-txt">No ${_term} found</p></div>`;
+      list.innerHTML='<div class="empty-state"><p class="empty-txt">No students found</p></div>';
       return;
     }
     list.innerHTML = students.map(s=>{
@@ -1141,7 +1062,7 @@ const KIOSK = {
       this.renderManage(document.getElementById('manageSearch').value||'');
       document.getElementById('kStatTotal').textContent = _allStudents.length;
       toast('Student deleted','ok');
-    } catch(e){ toast('Delete failed','err'); }
+    } catch(e){ toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Delete failed','err'); }
     hideSaving();
   },
 
@@ -1158,15 +1079,15 @@ const KIOSK = {
         opt.value = name.trim(); opt.textContent = name.trim();
         sel.appendChild(opt);
         sel.value = name.trim();
-        toast('Leader added','ok');
-      } else toast(''+(r?.error||'Failed'),'err');
-    } catch(e){ toast('Connection error','err'); }
+        toast('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Leader added','ok');
+      } else toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> '+(r?.error||'Failed'),'err');
+    } catch(e){ toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Connection error','err'); }
     hideSaving();
   },
 
   /* ── BATCH ── */
   openBatch() {
-    if(!_allStudents.length){ toast('No ' + ((window._kRegLabel && window._kRegLabel.total) || 'attendees').toLowerCase() + ' loaded yet', 'err'); return; }
+    if(!_allStudents.length){ toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> No students loaded yet','err'); return; }
     _batchSelected.clear();
     this.updateBatchUI();
     document.getElementById('batchSearch').value = '';
@@ -1215,7 +1136,7 @@ const KIOSK = {
       }).join('');
     }
 
-    el.innerHTML = html || '<div class="empty-state"><p class="empty-txt">No results found</p></div>';
+    el.innerHTML = html || '<div class="empty-state"><p class="empty-txt">No students found</p></div>';
   },
 
   toggleBatch(id) {
@@ -1234,14 +1155,14 @@ const KIOSK = {
     document.getElementById('batchPill').textContent = n;
     document.getElementById('batchGo').disabled = n===0;
     document.getElementById('batchSelLbl').textContent =
-      (() => { const _bl = window._kRegLabel || {}; const _bt = (_bl.total || 'Attendees').toLowerCase(); const _bs = _bt.endsWith('s') ? _bt.slice(0,-1) : _bt; return n===0 ? `Tap ${_bt} to select` : `${n} ${n!==1 ? _bt : _bs} selected`; })();
+      n===0 ? 'Tap students to select' : `${n} student${n!==1?'s':''} selected`;
   },
 
   filterBatch(q) { this.renderBatch(q); },
 
   async submitBatch() {
     if(_batchSelected.size===0) return;
-    if(!_kLeader){toast('Start your session first (select a leader)','err');return;}
+    if(!_kLeader){toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Start your session first (select a leader)','err');return;}
     const ids = [..._batchSelected];
     const students = ids.map(id=>_allStudents.find(s=>String(s.id)===id)).filter(Boolean);
     showSaving(`Checking in ${ids.length} students…`);
@@ -1257,8 +1178,8 @@ const KIOSK = {
       const _sc1=document.getElementById('kStatChecked');if(_sc1)_sc1.textContent=_checkedToday.size;
       const _sc2=document.getElementById('kStatCheckedSide');if(_sc2)_sc2.textContent=_checkedToday.size;
       this.search(document.getElementById('kSearch').value);
-      toast(`${ids.length} students checked in!`,'ok');
-    } catch(e){ toast('Batch check-in failed — check connection','err'); }
+      toast(`<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> ${ids.length} students checked in!`,'ok');
+    } catch(e){ toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Batch check-in failed — check connection','err'); }
     hideSaving();
   }
 };
@@ -1296,18 +1217,6 @@ const DASH = {
   async refresh(silent=false) {
     if(!silent) showSaving('Loading…');
     try {
-      // Children's Ministry mode uses dedicated CM data
-      if (this._ministry === 'children') {
-        const cmDash = await gasRun('getCMDashboardData');
-        this._rawDash = cmDash;
-        this._rawCheckins = cmDash?.checkins || [];
-        this.renderCMStats(cmDash);
-        this.renderBirthdays(cmDash?.birthdays || []);
-        this.loadVolunteerDash();
-        if(!silent) hideSaving();
-        return;
-      }
-
       const [dash, week, atRisk] = await Promise.all([
         API.getDashboard(),
         API.getWeeklyReport(0),
@@ -1320,31 +1229,8 @@ const DASH = {
       this.renderWeek(week);
       this.renderAtRisk(atRisk);
       this.loadVolunteerDash();
-    } catch(e){ if(!silent) toast('Refresh failed','err'); console.error(e); }
+    } catch(e){ if(!silent) toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Refresh failed','err'); console.error(e); }
     if(!silent) hideSaving();
-  },
-
-  renderCMStats(cm) {
-    // Use the same renderStats IDs as the normal dashboard
-    const set = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v ?? '—'; };
-    set('dStatToday',    cm?.checkedInToday  ?? 0);
-    set('dStatNew',      cm?.firstTimersToday?? 0);
-    set('dStatTodaySub', 'Children checked in');
-    set('dStatTotal',    cm?.totalChildren   ?? 0);
-    set('dStatLeaders',  cm?.totalFamilies   ?? 0);
-    set('dStatRisk',     cm?.atRisk          ?? 0);
-
-    // Update stat card sub-labels to be CM-specific
-    ['dStatTotalSub','dStatTotal-lbl'].forEach(id => {
-      const el = document.getElementById(id); if(el) el.textContent = 'Registered';
-    });
-    ['dStatLeadersSub','dStatLeaders-lbl'].forEach(id => {
-      const el = document.getElementById(id); if(el) el.textContent = 'Active today';
-    });
-
-    // Live feed — show CM check-ins
-    this.renderFeed(cm?.checkins || []);
-    this.renderBirthdays(cm?.birthdays || []);
   },
 
   /* ── Ministry switcher ── */
@@ -1407,7 +1293,7 @@ const DASH = {
     const atRisk = atRiskTitleMap[key] || atRiskTitleMap.all;
     const arTitle = document.getElementById('atRiskTitle');
     const arSub   = document.getElementById('atRiskSubtitle');
-    if(arTitle) arTitle.innerHTML = atRisk.title;
+    if(arTitle) arTitle.textContent = atRisk.title;
     if(arSub)   arSub.textContent   = atRisk.sub;
 
     // Update analytics week title
@@ -1415,7 +1301,7 @@ const DASH = {
       youngadult:'Young Adult Ministry', smallgroups:'Small Groups',
       children:"Children's Ministry", volunteers:'Volunteers' };
     const weekHead = document.getElementById('analyticsWeekTitle');
-    if(weekHead) weekHead.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> This Week — ' + (labelMap[key]||'All Events');
+    if(weekHead) weekHead.textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> This Week — ' + (labelMap[key]||'All Events');
 
     // Update stat labels
     this.updateStatLabels(key);
@@ -1816,7 +1702,7 @@ DASH.loadAnalytics = async function() {
     children:"Children's Ministry", volunteers:'Volunteers'
   };
   const weekHead = document.getElementById('analyticsWeekTitle');
-  if(weekHead) weekHead.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> This Week — ' + (labelMap[ministry]||'All Events');
+  if(weekHead) weekHead.textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> This Week — ' + (labelMap[ministry]||'All Events');
 };
 
 DASH.loadWeek = async function(offset) {
@@ -2025,14 +1911,14 @@ DASH.lookupSearch = async function(q) {
   document.getElementById('lookupHistory').style.display = 'none';
   el.style.display = 'block';
   if (!q.trim()) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg></div><p class="empty-txt">Search for an attendee to see their history</p></div>';
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg></div><p class="empty-txt">Search for a student to see their attendance history</p></div>';
     return;
   }
   const ql = q.toLowerCase();
   const matches = _allStudents.filter(s => (s.name||'').toLowerCase().includes(ql));
   DASH._lookupResults = matches;
   if (!matches.length) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><p class="empty-txt">No attendees found matching that name</p></div>';
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><p class="empty-txt">No students found matching that name</p></div>';
     return;
   }
   el.innerHTML = matches.slice(0,15).map(s =>
@@ -2242,7 +2128,7 @@ DASH.downloadReport = async function() {
 
     toast('Report downloaded!', 'ok');
   } catch(e) {
-    toast('Download failed — try again', 'err');
+    toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Download failed — try again', 'err');
     console.error(e);
   }
   hideSaving();
@@ -2273,7 +2159,7 @@ const CM = {
       this.updateStats();
       this.render(this._filtered);
     } catch(e) {
-      toast('Failed to load families', 'err');
+      toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Failed to load families', 'err');
     }
     hideSaving();
   },
@@ -2417,10 +2303,10 @@ const CM = {
       const el = document.getElementById('cmStatChecked');
       if (el) el.textContent = this._checkedFamilies.size;
       this.render(this._filtered);
-      toast(`${name} checked in!`, 'ok');
+      toast(`<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> ${name} checked in!`, 'ok');
     } catch(e) {
       this._checkedFamilies.delete(childId);
-      toast('Check-in failed', 'err');
+      toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Check-in failed', 'err');
     }
   },
 
@@ -2428,7 +2314,7 @@ const CM = {
   async checkInAll(familyId) {
     const family = this._families.find(f => f.id === familyId);
     if (!family || !family.children.length) {
-      toast('No children in this family', 'err');
+      toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> No children in this family', 'err');
       return;
     }
     showSaving('Checking in family…');
@@ -2438,9 +2324,9 @@ const CM = {
       const el = document.getElementById('cmStatChecked');
       if (el) el.textContent = this._checkedFamilies.size;
       this.render(this._filtered);
-      toast(`${family.parentName} family checked in!`, 'ok');
+      toast(`<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> ${family.parentName} family checked in!`, 'ok');
     } catch(e) {
-      toast('Check-in failed', 'err');
+      toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Check-in failed', 'err');
     }
     hideSaving();
   },
@@ -2466,7 +2352,7 @@ const CM = {
     document.getElementById('cmf_email').value   = f.email;
     document.getElementById('cmf_address').value = f.address;
     document.getElementById('cmf_notes').value   = f.notes;
-    document.getElementById('cmFamilyModalTitle').innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Edit Family';
+    document.getElementById('cmFamilyModalTitle').textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Edit Family';
     openModal('cmFamilyModal');
   },
 
@@ -2474,8 +2360,8 @@ const CM = {
     const id   = document.getElementById('cmf_id').value;
     const name = document.getElementById('cmf_name').value.trim();
     const phone= document.getElementById('cmf_phone').value.trim();
-    if (!name)  { toast('Parent name is required', 'err'); return; }
-    if (!phone) { toast('Phone number is required', 'err'); return; }
+    if (!name)  { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Parent name is required', 'err'); return; }
+    if (!phone) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Phone number is required', 'err'); return; }
     const data = { parentName:name, phone, email:document.getElementById('cmf_email').value.trim(),
       address:document.getElementById('cmf_address').value.trim(), notes:document.getElementById('cmf_notes').value.trim() };
     showSaving(id ? 'Updating family…' : 'Registering family…');
@@ -2499,9 +2385,9 @@ const CM = {
         closeModal('cmFamilyModal');
         this.updateStats();
         this.render(this._filtered);
-        toast(id ? 'Family updated' : 'Family registered!', 'ok');
-      } else toast(''+(r?.error||'Failed'), 'err');
-    } catch(e) { toast('Connection error', 'err'); }
+        toast(id ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Family updated' : '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Family registered!', 'ok');
+      } else toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> '+(r?.error||'Failed'), 'err');
+    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Connection error', 'err'); }
     hideSaving();
   },
 
@@ -2514,8 +2400,8 @@ const CM = {
       this._filtered = this._filtered.filter(f => f.id !== id);
       this.updateStats();
       this.render(this._filtered);
-      toast('Family deleted', 'ok');
-    } catch(e) { toast('Delete failed', 'err'); }
+      toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg> Family deleted', 'ok');
+    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Delete failed', 'err'); }
     hideSaving();
   },
 
@@ -2526,7 +2412,7 @@ const CM = {
     document.getElementById('cmc_familyId').value = familyId;
     document.getElementById('cmc_familyBadge').textContent = `Family: ${family?.parentName || ''}`;
     ['cmc_first','cmc_last','cmc_grade','cmc_dob','cmc_room','cmc_allergy','cmc_notes'].forEach(id=>{ document.getElementById(id).value=''; });
-    document.getElementById('cmChildModalTitle').innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 5v14M5 12h14"/></svg> Add Child';
+    document.getElementById('cmChildModalTitle').textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 5v14M5 12h14"/></svg> Add Child';
     openModal('cmChildModal');
   },
 
@@ -2544,7 +2430,7 @@ const CM = {
     document.getElementById('cmc_room').value    = child.room||'';
     document.getElementById('cmc_allergy').value = child.allergies||'';
     document.getElementById('cmc_notes').value   = child.notes||'';
-    document.getElementById('cmChildModalTitle').innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Edit Child';
+    document.getElementById('cmChildModalTitle').textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Edit Child';
     openModal('cmChildModal');
   },
 
@@ -2552,7 +2438,7 @@ const CM = {
     const id       = document.getElementById('cmc_id').value;
     const familyId = document.getElementById('cmc_familyId').value;
     const first    = document.getElementById('cmc_first').value.trim();
-    if (!first) { toast('First name is required', 'err'); return; }
+    if (!first) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> First name is required', 'err'); return; }
     const data = {
       familyId,
       firstName: first,
@@ -2601,9 +2487,9 @@ const CM = {
           const el = document.getElementById(`cmChildren_${familyId}`);
           if (el) el.style.display = 'block';
         }, 50);
-        toast(id ? 'Child updated' : 'Child added!', 'ok');
-      } else toast(''+(r?.error||'Failed'), 'err');
-    } catch(e) { toast('Connection error', 'err'); }
+        toast(id ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Child updated' : '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Child added!', 'ok');
+      } else toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> '+(r?.error||'Failed'), 'err');
+    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Connection error', 'err'); }
     hideSaving();
   },
 
@@ -2616,8 +2502,8 @@ const CM = {
       this._filtered = [...this._families];
       this.updateStats();
       this.render(this._filtered);
-      toast('Child removed', 'ok');
-    } catch(e) { toast('Delete failed', 'err'); }
+      toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg> Child removed', 'ok');
+    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Delete failed', 'err'); }
     hideSaving();
   },
 
@@ -2875,7 +2761,7 @@ const CM = {
     ].join('');
 
     const win = window.open('', '_blank', 'width=900,height=700');
-    if (!win) { toast('Allow pop-ups to print tags','err'); return; }
+    if (!win) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Allow pop-ups to print tags','err'); return; }
 
     // Write HTML without inline scripts to avoid escaping issues
     const fullHTML = '<!DOCTYPE html><html><head>'
@@ -2913,7 +2799,7 @@ const CM = {
     };
     qrLib.onerror = function() {
       win.setTimeout(function() { win.print(); }, 500);
-      toast('QR library failed to load', 'err');
+      toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> QR library failed to load', 'err');
     };
     win.document.head.appendChild(qrLib);
 
@@ -2925,7 +2811,7 @@ const CM = {
 
 CM.printAllTags = function() {
   const checked = this._families.filter(f=>f.children.some(ch=>this._checkedFamilies.has(ch.id)));
-  if (!checked.length) { toast('No checked-in children yet','err'); return; }
+  if (!checked.length) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> No checked-in children yet','err'); return; }
   const today = new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
   const time  = new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
   const tagsHTML = checked.flatMap(family =>
@@ -2995,7 +2881,7 @@ const VOL = {
       this._filtered = [...this._volunteers];
       this.updateStats();
       this.render(this._filtered);
-    } catch(e) { toast('Failed to load volunteers','err'); }
+    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Failed to load volunteers','err'); }
     hideSaving();
   },
 
@@ -3085,14 +2971,14 @@ const VOL = {
     this.render(this._filtered);
     try {
       const r = await API.checkInVolunteer(volId, { event: _kEvent||this._department, leader: _kLeader });
-      if (!r?.success) { this._checkedIn.delete(volId); this.updateStats(); this.render(this._filtered); toast('Check-in failed','err'); return; }
-      toast(`${name} checked in!`,'ok');
-    } catch(e) { this._checkedIn.delete(volId); this.updateStats(); this.render(this._filtered); toast('Connection error','err'); }
+      if (!r?.success) { this._checkedIn.delete(volId); this.updateStats(); this.render(this._filtered); toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Check-in failed','err'); return; }
+      toast(`<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> ${name} checked in!`,'ok');
+    } catch(e) { this._checkedIn.delete(volId); this.updateStats(); this.render(this._filtered); toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Connection error','err'); }
   },
 
   async batchCheckInAll() {
     const unchecked = this._volunteers.filter(v => !this._checkedIn.has(v.id));
-    if (!unchecked.length) { toast('All volunteers already checked in','ok'); return; }
+    if (!unchecked.length) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> All volunteers already checked in','ok'); return; }
     if (!confirm(`Check in all ${unchecked.length} volunteers in this department?`)) return;
     showSaving(`Checking in ${unchecked.length} volunteers…`);
     let done = 0;
@@ -3104,7 +2990,7 @@ const VOL = {
     }
     this.updateStats(); this.render(this._filtered);
     hideSaving();
-    toast(`${done} volunteers checked in!`,'ok');
+    toast(`<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> ${done} volunteers checked in!`,'ok');
   },
 
   /* ── ADD / EDIT ── */
@@ -3112,7 +2998,7 @@ const VOL = {
     document.getElementById('vol_id').value = '';
     ['vol_first','vol_last','vol_phone','vol_email','vol_role','vol_notes'].forEach(id => { document.getElementById(id).value=''; });
     document.getElementById('vol_dept').value = this._department || '';
-    document.getElementById('volModalTitle').innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 5v14M5 12h14"/></svg> Add Volunteer';
+    document.getElementById('volModalTitle').textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 5v14M5 12h14"/></svg> Add Volunteer';
     openModal('volModal');
   },
 
@@ -3127,7 +3013,7 @@ const VOL = {
     document.getElementById('vol_dept').value  = v.department||'';
     document.getElementById('vol_role').value  = v.role||'';
     document.getElementById('vol_notes').value = v.notes||'';
-    document.getElementById('volModalTitle').innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Edit Volunteer';
+    document.getElementById('volModalTitle').textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Edit Volunteer';
     openModal('volModal');
   },
 
@@ -3135,7 +3021,7 @@ const VOL = {
     const id    = document.getElementById('vol_id').value;
     const first = document.getElementById('vol_first').value.trim();
     const dept  = document.getElementById('vol_dept').value;
-    if (!first) { toast('First name is required','err'); return; }
+    if (!first) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> First name is required','err'); return; }
     const data = { firstName:first, lastName:document.getElementById('vol_last').value.trim(),
       phone:document.getElementById('vol_phone').value.trim(), email:document.getElementById('vol_email').value.trim(),
       department:dept, role:document.getElementById('vol_role').value.trim(),
@@ -3146,9 +3032,9 @@ const VOL = {
       if (r?.success) {
         closeModal('volModal');
         await this.load();
-        toast(id ? 'Volunteer updated' : 'Volunteer added!','ok');
-      } else toast(''+(r?.error||'Failed'),'err');
-    } catch(e) { toast('Connection error','err'); }
+        toast(id ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Volunteer updated' : '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Volunteer added!','ok');
+      } else toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> '+(r?.error||'Failed'),'err');
+    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Connection error','err'); }
     hideSaving();
   },
 
@@ -3158,8 +3044,8 @@ const VOL = {
     try {
       await API.deleteVolunteer(id);
       await this.load();
-      toast('Volunteer removed','ok');
-    } catch(e) { toast('Delete failed','err'); }
+      toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg> Volunteer removed','ok');
+    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Delete failed','err'); }
     hideSaving();
   },
 
@@ -3187,7 +3073,7 @@ const VOL = {
 
   async addDept() {
     const name = document.getElementById('newDeptInput').value.trim();
-    if (!name) { toast('Enter a department name','err'); return; }
+    if (!name) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Enter a department name','err'); return; }
     try {
       const r = await API.addDepartment(name, '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7" stroke-width="2.5"/></svg>', '#6b7280');
       if (r?.success) {
@@ -3200,9 +3086,9 @@ const VOL = {
           opt.value = name; opt.textContent = name;
           sel.appendChild(opt);
         }
-        toast('Department added','ok');
+        toast('<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Department added','ok');
       }
-    } catch(e) { toast('Failed','err'); }
+    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Failed','err'); }
   },
 
   async deleteDept(id, name) {
@@ -3210,8 +3096,8 @@ const VOL = {
     try {
       await API.deleteDepartment(id);
       await this.loadDepts();
-      toast('Department deleted','ok');
-    } catch(e) { toast('Failed','err'); }
+      toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg> Department deleted','ok');
+    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Failed','err'); }
   }
 };
 
@@ -3244,7 +3130,7 @@ const SG = {
       this._filtered = [...this._groups];
       this.updateStats();
       this.render(this._filtered);
-    } catch(e) { toast('Failed to load groups','err'); }
+    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Failed to load groups','err'); }
     hideSaving();
   },
 
@@ -3359,7 +3245,7 @@ const SG = {
   /* ── CHECK IN ── */
   async checkInAll(groupId) {
     const group = this._groups.find(g=>g.id===groupId);
-    if (!group || !group.members.length) { toast('No members in this group','err'); return; }
+    if (!group || !group.members.length) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> No members in this group','err'); return; }
     showSaving('Checking in group…');
     try {
       const r = await API.checkInSGGroup(groupId, { leader:_kLeader, event:_kEvent||'Small Groups' });
@@ -3368,9 +3254,9 @@ const SG = {
         const el2 = document.getElementById('sgStatChecked');
         if (el2) el2.textContent = parseInt(el2.textContent||0) + (r.count||group.members.length);
         this.render(this._filtered);
-        toast(`${group.name} — ${r.count||group.members.length} members checked in!`,'ok');
-      } else toast(''+(r?.error||'Check-in failed'),'err');
-    } catch(e) { toast('Connection error','err'); }
+        toast(`<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> ${group.name} — ${r.count||group.members.length} members checked in!`,'ok');
+      } else toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> '+(r?.error||'Check-in failed'),'err');
+    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Connection error','err'); }
     hideSaving();
   },
 
@@ -3380,7 +3266,7 @@ const SG = {
     ['sg_name','sg_leader','sg_leader_phone','sg_time','sg_location','sg_notes'].forEach(id=>{ document.getElementById(id).value=''; });
     document.getElementById('sg_day').value = '';
     document.getElementById('sg_category').value = '';
-    document.getElementById('sgGroupModalTitle').innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg> Create Small Group';
+    document.getElementById('sgGroupModalTitle').textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg> Create Small Group';
     openModal('sgGroupModal');
   },
 
@@ -3396,7 +3282,7 @@ const SG = {
     document.getElementById('sg_location').value = g.location;
     document.getElementById('sg_category').value = g.category;
     document.getElementById('sg_notes').value = g.notes;
-    document.getElementById('sgGroupModalTitle').innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Edit Group';
+    document.getElementById('sgGroupModalTitle').textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Edit Group';
     openModal('sgGroupModal');
   },
 
@@ -3404,8 +3290,8 @@ const SG = {
     const id   = document.getElementById('sg_id').value;
     const name = document.getElementById('sg_name').value.trim();
     const leader = document.getElementById('sg_leader').value.trim();
-    if (!name)  { toast('Group name is required','err'); return; }
-    if (!leader){ toast('Leader name is required','err'); return; }
+    if (!name)  { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Group name is required','err'); return; }
+    if (!leader){ toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Leader name is required','err'); return; }
     const data = { name, leader, leaderPhone:document.getElementById('sg_leader_phone').value.trim(),
       day:document.getElementById('sg_day').value, time:document.getElementById('sg_time').value.trim(),
       location:document.getElementById('sg_location').value.trim(),
@@ -3425,9 +3311,9 @@ const SG = {
         this._filtered = [...this._groups];
         this.updateStats();
         this.render(this._filtered);
-        toast(id?'Group updated':'Group created!','ok');
-      } else toast(''+(r?.error||'Failed'),'err');
-    } catch(e) { toast('Connection error','err'); }
+        toast(id?'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Group updated':'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Group created!','ok');
+      } else toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> '+(r?.error||'Failed'),'err');
+    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Connection error','err'); }
     hideSaving();
   },
 
@@ -3439,8 +3325,8 @@ const SG = {
       this._groups = this._groups.filter(g=>g.id!==id);
       this._filtered = this._filtered.filter(g=>g.id!==id);
       this.updateStats(); this.render(this._filtered);
-      toast('Group deleted','ok');
-    } catch(e) { toast('Delete failed','err'); }
+      toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg> Group deleted','ok');
+    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Delete failed','err'); }
     hideSaving();
   },
 
@@ -3449,7 +3335,7 @@ const SG = {
     document.getElementById('sgm_group_id').value = groupId;
     document.getElementById('sgm_member_id').value = '';
     document.getElementById('sgMemberGroupBadge').textContent = `Group: ${groupName}`;
-    document.getElementById('sgMemberModalTitle').innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 5v14M5 12h14"/></svg> Add Member';
+    document.getElementById('sgMemberModalTitle').textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 5v14M5 12h14"/></svg> Add Member';
     ['sgm_first','sgm_last','sgm_phone','sgm_email'].forEach(id=>{ document.getElementById(id).value=''; });
     document.getElementById('sgm_role').value = 'Member';
     openModal('sgMemberModal');
@@ -3462,7 +3348,7 @@ const SG = {
     document.getElementById('sgm_group_id').value = groupId;
     document.getElementById('sgm_member_id').value = memberId;
     document.getElementById('sgMemberGroupBadge').textContent = `Group: ${group.name}`;
-    document.getElementById('sgMemberModalTitle').innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Edit Member';
+    document.getElementById('sgMemberModalTitle').textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Edit Member';
     document.getElementById('sgm_first').value = m.firstName;
     document.getElementById('sgm_last').value  = m.lastName;
     document.getElementById('sgm_phone').value = m.phone;
@@ -3475,7 +3361,7 @@ const SG = {
     const gid  = document.getElementById('sgm_group_id').value;
     const mid  = document.getElementById('sgm_member_id').value;
     const first = document.getElementById('sgm_first').value.trim();
-    if (!first) { toast('First name required','err'); return; }
+    if (!first) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> First name required','err'); return; }
     const group = this._groups.find(g=>g.id===gid);
     const data = { groupId:gid, groupName:group?.name||'',
       firstName:first, lastName:document.getElementById('sgm_last').value.trim(),
@@ -3505,9 +3391,9 @@ const SG = {
         this.updateStats(); this.render(this._filtered);
         setTimeout(()=>{ const b=document.getElementById(`sgBody_${gid}`); if(b) b.style.display='block';
           const a=document.getElementById(`sgArrow_${gid}`); if(a) a.textContent='⌄'; }, 50);
-        toast(mid?'Member updated':'Member added!','ok');
-      } else toast(''+(r?.error||'Failed'),'err');
-    } catch(e) { toast('Connection error','err'); }
+        toast(mid?'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Member updated':'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Member added!','ok');
+      } else toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> '+(r?.error||'Failed'),'err');
+    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Connection error','err'); }
     hideSaving();
   },
 
@@ -3518,8 +3404,8 @@ const SG = {
       await API.deleteSGMember(memberId);
       this._groups.forEach(g=>{ g.members=g.members.filter(m=>m.id!==memberId); });
       this.updateStats(); this.render(this._filtered);
-      toast('Member removed','ok');
-    } catch(e) { toast('Delete failed','err'); }
+      toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg> Member removed','ok');
+    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Delete failed','err'); }
     hideSaving();
   }
 };
@@ -3602,13 +3488,12 @@ const SCHED = {
       }
     }
     try {
-      // Sequential calls to avoid GAS timeout from concurrent requests
-      const evRes = await gasRun('getScheduledEventsAPI', this._year, this._month);
+      const [evRes, volRes] = await Promise.all([
+        gasRun('getScheduledEventsAPI', this._year, this._month),
+        gasRun('getVolunteersAPI', 'all')
+      ]);
       this._events = evRes?.events || [];
-      try {
-        const volRes = await gasRun('getVolunteersAPI', 'all');
-        this._volunteers = volRes?.volunteers || [];
-      } catch(ve) { this._volunteers = []; }
+      this._volunteers = volRes?.volunteers || [];
     } catch(e) {
       console.error('SCHED.load error:', e);
       this._events = [];
@@ -3821,7 +3706,7 @@ const SCHED = {
     // Set date to today
     const today = new Date().toISOString().slice(0,10);
     document.getElementById('se_date').value = today;
-    document.getElementById('schedEventModalTitle').innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Schedule Event';
+    document.getElementById('schedEventModalTitle').textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Schedule Event';
     this.renderVolAssignList();
     openModal('schedEventModal');
   },
@@ -3844,7 +3729,7 @@ const SCHED = {
     document.getElementById('se_end').value = ev.endTime || '12:00';
     document.getElementById('se_location').value = ev.location || '';
     document.getElementById('se_notes').value = ev.notes || '';
-    document.getElementById('schedEventModalTitle').innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Edit Event';
+    document.getElementById('schedEventModalTitle').textContent = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Edit Event';
     this.renderVolAssignList();
     openModal('schedEventModal');
   },
@@ -3877,7 +3762,7 @@ const SCHED = {
   addVolAssignment() {
     // Show a quick volunteer picker
     const vols = this._volunteers;
-    if (!vols.length) { toast('No volunteers registered yet','err'); return; }
+    if (!vols.length) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> No volunteers registered yet','err'); return; }
 
     // Build a simple selection modal inline
     const picker = document.createElement('div');
@@ -3921,9 +3806,9 @@ const SCHED = {
           location: ev2?.location, notes: ev2?.notes,
           newAssignments: newAssign
         });
-        if (r?.success) { await this.load(); toast(volEmail ? 'Volunteer added & invitation sent!' : 'Volunteer added (no email on file)','ok'); }
-        else toast(''+(r?.error||'Failed'),'err');
-      } catch(e) { toast('Error','err'); }
+        if (r?.success) { await this.load(); toast(volEmail ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Volunteer added & invitation sent!' : '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Volunteer added (no email on file)','ok'); }
+        else toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> '+(r?.error||'Failed'),'err');
+      } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Error','err'); }
       hideSaving();
       this._pickVol = origPick;
     };
@@ -3933,7 +3818,7 @@ const SCHED = {
     const id = document.getElementById('se_id').value;
     const name = document.getElementById('se_name').value.trim();
     const date = document.getElementById('se_date').value;
-    if (!name || !date) { toast('Event name and date are required','err'); return; }
+    if (!name || !date) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Event name and date are required','err'); return; }
     const data = {
       name, type: document.getElementById('se_type').value,
       date, startTime: document.getElementById('se_start').value,
@@ -3953,9 +3838,9 @@ const SCHED = {
         closeModal('schedEventModal');
         await this.load();
         const sent = r.emailsSent?.length || 0;
-        toast(id ? 'Event updated' :`Event created! ${sent} invitation${sent!==1?'s':''} sent`,'ok');
-      } else toast(''+(r?.error||'Failed'),'err');
-    } catch(e) { toast('Error','err'); }
+        toast(id ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Event updated' : `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><circle cx="12" cy="12" r="10"/><path d="M7 12l3 3 7-7"/></svg> Event created! ${sent} invitation${sent!==1?'s':''} sent`,'ok');
+      } else toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> '+(r?.error||'Failed'),'err');
+    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Error','err'); }
     hideSaving();
   },
 
@@ -3964,8 +3849,8 @@ const SCHED = {
     showSaving('Deleting…');
     try {
       const r = await gasRun('deleteScheduledEventAPI', id);
-      if (r?.success) { document.getElementById('schedDayDetail').style.display = 'none'; await this.load(); toast('Event deleted','ok'); }
-    } catch(e) { toast('Error','err'); }
+      if (r?.success) { document.getElementById('schedDayDetail').style.display = 'none'; await this.load(); toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg> Event deleted','ok'); }
+    } catch(e) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Error','err'); }
     hideSaving();
   },
 
@@ -4083,7 +3968,7 @@ const SCHED = {
       @media print{body{padding:16px}.sched-event{break-inside:avoid}}`;
 
     const win = window.open('','_blank','width=1000,height=800');
-    if (!win) { toast('Allow pop-ups to print','err'); return; }
+    if (!win) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Allow pop-ups to print','err'); return; }
     win.document.open();
     win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Volunteer Schedule — ${monthName}</title><style>${css}</style></head>
 <body>
@@ -4100,15 +3985,14 @@ const SCHED = {
   },
 
   /* ── RSVP HANDLER (called from URL params) ── */
-  async handleRsvp(assignId, response, orgId) {
-    orgId = orgId || 'ORG_DEFAULT';
+  async handleRsvp(assignId, response) {
     const el = document.getElementById('rsvpContent');
     const overlay = document.getElementById('vRsvp');
     if (overlay) overlay.style.display = 'flex';
     if (!el) return;
-    el.innerHTML = '<div style="text-align:center;padding:30px 0"><div style="font-size:32px;margin-bottom:12px"></div><div style="color:#94a3b8">Recording your response…</div></div>';
+    el.innerHTML = '<div style="text-align:center;padding:30px 0"><div style="font-size:32px;margin-bottom:12px">⏳</div><div style="color:#94a3b8">Recording your response…</div></div>';
     try {
-      const r = await gasRun('rsvpResponseAPI', assignId, response, orgId);
+      const r = await gasRun('rsvpResponseAPI', assignId, response);
       if (r?.success) {
         const isAccepted = response === 'accepted';
         el.innerHTML = `<div style="text-align:center">
@@ -4156,719 +4040,205 @@ function showSchedule() {
 
 /* ── Add to API ── */
 
-/* ══════════════════════════════════════════════════════
-   PWA REGISTER OVERRIDE
-   Replaces the static doRegister() in index.html with
-   a church-aware version that calls createOrganizationAPI
-   Also injects the Church Name field into the form
-══════════════════════════════════════════════════════ */
-window.addEventListener('load', function pwaRegisterOverride() {
-
-  // ── Inject church field into the static register form ──
-  function injectChurchField() {
-    if (document.getElementById('regChurch')) return; // already there
-
-    const pane = document.getElementById('pRegister');
-    if (!pane) return;
-
-    // Build the church field wrapper
-    const wrap = document.createElement('div');
-    wrap.className = 'field';
-    wrap.innerHTML =
-      '<label style="display:block;font-size:11px;font-weight:700;color:var(--muted,#6b9aaa);' +
-      'text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px">Church / Organization</label>' +
-      '<input id="regChurch" type="text" placeholder="e.g. Grace Community Church" ' +
-      'autocapitalize="words" ' +
-      'style="width:100%;padding:13px 16px;border-radius:12px;font-size:16px;' +
-      'font-family:inherit;outline:none;-webkit-appearance:none;box-sizing:border-box;' +
-      'background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.15);color:#fff">';
-
-    // Insert as the FIRST field in the pane (before Full Name)
-    const firstField = pane.querySelector('.field, input');
-    if (firstField) {
-      const parent = firstField.closest('.field') || firstField.parentNode;
-      pane.insertBefore(wrap, parent);
-    } else {
-      // Fallback: prepend to pane
-      pane.insertBefore(wrap, pane.firstChild);
-    }
-  }
-
-  // Run injection immediately and whenever register tab becomes visible
-  injectChurchField();
-  setTimeout(injectChurchField, 300);
-  setTimeout(injectChurchField, 800);
-
-  // Hook into auth tab switching if it exists
-  var origAuthTab = window.authTab;
-  window.authTab = function(tab) {
-    if (origAuthTab) origAuthTab(tab);
-    if (tab === 'register') setTimeout(injectChurchField, 50);
-  };
-
-  // ── Override doRegister() globally ──
-  window.doRegister = async function() {
-    // Make sure church field is there
-    injectChurchField();
-
-    // Grab all field values
-    var ch = (document.getElementById('regChurch')?.value || '').trim();
-    var n  = (document.getElementById('regName')?.value || '').trim();
-    var e  = (document.getElementById('regEmail')?.value || '').trim();
-    var u  = (document.getElementById('regUser')?.value || document.getElementById('regUsername')?.value || '').trim();
-    var p  = document.getElementById('regPass')?.value || '';
-    var p2 = document.getElementById('regPass2')?.value || '';
-
-    // Clear previous messages
-    ['regErr','regOk'].forEach(function(id) {
-      var el = document.getElementById(id);
-      if (el) { el.style.display = 'none'; el.textContent = ''; }
-    });
-
-    function showErr(msg) {
-      var el = document.getElementById('regErr');
-      if (el) { el.textContent = msg; el.style.display = 'block'; }
-      else alert(msg);
-    }
-    function showOk(msg) {
-      var el = document.getElementById('regOk');
-      if (el) { el.textContent = msg; el.style.display = 'block'; }
-    }
-    function setLoading(on) {
-      var btn = document.getElementById('regBtn');
-      if (btn) btn.disabled = on;
-      var load = document.getElementById('authLoad');
-      if (load) load.style.display = on ? 'block' : 'none';
-    }
-
-    // Validate
-    if (!ch || ch.length < 2) {
-      showErr('Church or organization name is required.');
-      document.getElementById('regChurch')?.focus();
-      return;
-    }
-    if (!n)                            return showErr('Full name is required.');
-    if (!e || e.indexOf('@') < 0)      return showErr('Valid email address required.');
-    if (!u || u.length < 3)            return showErr('Username must be at least 3 characters.');
-    if (p.length < 8)                  return showErr('Password must be at least 8 characters.');
-    if (p2 && p !== p2)               return showErr('Passwords do not match.');
-
-    setLoading(true);
-    showOk('Creating your organization — please wait 15–20 seconds…');
-
-    try {
-      var r = await gasRun('createOrganizationAPI', ch, e, n, u, p);
-
-      if (r && r.success) {
-        showOk('Organization created! Sign in with your credentials.');
-        // Clear form fields
-        ['regChurch','regName','regEmail','regUser','regUsername','regPass','regPass2'].forEach(function(id) {
-          var el = document.getElementById(id);
-          if (el) el.value = '';
-        });
-        // Switch to login tab after short delay
-        setTimeout(function() {
-          if (window.authTab) authTab('login');
-          else if (window.AUTH) AUTH.tab('login');
-        }, 2500);
-      } else {
-        showErr((r && r.error) || 'Registration failed. Please try again.');
-      }
-    } catch(err) {
-      showErr('Connection error. Please check your internet and try again.');
-    }
-
-    setLoading(false);
-  };
-
-}, false);
-
-/* ══ MANAGE STUDENTS MODAL OVERRIDE ══
-   Patches the static "All Students" title in the GitHub index.html
-   manage modal to show event-specific labels ══ */
-window.addEventListener('load', function patchManageModal() {
-
-  // Override openManageStudents to fix the modal title
-  var _origOpenManageStudents = window.openManageStudents;
-  window.openManageStudents = function() {
-    // Call the original function first
-    if (_origOpenManageStudents) _origOpenManageStudents.apply(this, arguments);
-
-    // Fix the modal title to match the current event type
-    setTimeout(function() {
-      var lbl = window._kRegLabel || {};
-      var listTitle = lbl.listTitle || 'Attendees';
-      var searchHint = lbl.searchHint || 'Search by name…';
-
-      // Fix the modal title element (has class or id containing "manage")
-      var titleEls = document.querySelectorAll(
-        '.manage-modal-title, #manageStudentsTitle, [class*="manage"][class*="title"], h2'
-      );
-      titleEls.forEach(function(el) {
-        var txt = el.textContent || '';
-        if (txt.includes('Students') || txt.includes('All ')) {
-          el.innerHTML = el.innerHTML
-            .replace(/All Students/g, listTitle)
-            .replace(/Manage Students/g, listTitle)
-            .replace(/All Attendees/g, listTitle);
-        }
-      });
-
-      // Fix the footer count text
-      var countEl = document.getElementById('manageCount') ||
-                    document.querySelector('[id*="manage"][id*="count"]');
-      if (countEl) {
-        var txt = countEl.textContent || '';
-        if (txt.includes('student')) {
-          countEl.textContent = txt
-            .replace(/students?/gi, (listTitle || 'attendees').toLowerCase());
-        }
-      }
-
-      // Fix search placeholder
-      var searchEls = document.querySelectorAll(
-        '#manageSearch, [id*="manage"] input[type="text"], [id*="manage"] input[type="search"]'
-      );
-      searchEls.forEach(function(el) {
-        if (el.placeholder && (el.placeholder.includes('student') || el.placeholder.includes('member') || el.placeholder.includes('guest'))) {
-          el.placeholder = searchHint;
-        }
-      });
-
-      // Fix empty state text
-      var emptyEls = document.querySelectorAll('.empty-state p, .empty-txt');
-      emptyEls.forEach(function(el) {
-        if (el.textContent.includes('student')) {
-          el.textContent = el.textContent
-            .replace(/students?/gi, (listTitle || 'attendees').toLowerCase());
-        }
-      });
-    }, 50);
-  };
-
-  // Also patch the manage modal title on every openManage call
-  var _origKIOSKOpenManage = null;
-  var _patchInterval = setInterval(function() {
-    if (window.KIOSK && window.KIOSK.openManage) {
-      var _origOpen = window.KIOSK.openManage.bind(window.KIOSK);
-      window.KIOSK.openManage = function() {
-        _origOpen();
-        setTimeout(function() {
-          var lbl = window._kRegLabel || {};
-          var allEls = document.querySelectorAll('.manage-modal-title, #manageModalTitle');
-          allEls.forEach(function(el) {
-            el.innerHTML = el.innerHTML
-              .replace(/All Students/g, lbl.listTitle || 'Attendees')
-              .replace(/Manage Students/g, lbl.listTitle || 'Attendees')
-              .replace(/All Attendees/g, lbl.listTitle || 'Attendees');
-          });
-        }, 30);
-      };
-      clearInterval(_patchInterval);
-    }
-  }, 300);
-
-}, false);
-
-/* ══ MOBILE DASHBOARD SIMPLIFICATION ══════════════════════
-   On phones: show only Overview + Live Feed
-   Hide analytics, detailed report, lookup tabs
-   On tablets: show condensed view
-════════════════════════════════════════════════════════════ */
-function applyMobileDashboard() {
-  const isMob = window.innerWidth <= 600;
-  const isTab = window.innerWidth > 600 && window.innerWidth <= 900;
-  if (!isMob && !isTab) return;
-
-  // ── Simplify toolbar on mobile: keep Overview, At-Risk, Volunteers ──
-  if (isMob) {
-    document.querySelectorAll('.tb-btn').forEach(btn => {
-      const txt = btn.textContent || '';
-      // Only show: Overview, At-Risk, Volunteers, Live (hide Analytics, Lookup, Report)
-      const keep = ['Overview','At-Risk','Volunteer','Live','Refresh','Home','Sign Out','Theme'];
-      const shouldShow = keep.some(k => txt.includes(k));
-      if (!shouldShow && !btn.classList.contains('tb-logo') && !btn.closest('.tb-right')) {
-        btn.style.display = 'none';
-      }
-    });
-
-    // On mobile, default to Overview tab
-    const overviewTab = document.querySelector('.tb-btn[onclick*="overview"], .tb-btn[onclick*="Overview"]');
-    if (overviewTab && !document.querySelector('.tb-btn.active')) overviewTab.click();
-  }
-
-  // ── Stats: ensure 2-col on mobile ──
-  const strip = document.querySelector('.stat-strip, [class*="stat-strip"]');
-  if (strip && isMob) {
-    strip.style.gridTemplateColumns = '1fr 1fr';
-    strip.style.gap = '8px';
-    strip.style.padding = '10px';
-  }
-
-  // ── Make dashboard body scrollable ──
-  const dashBody = document.querySelector('.dash-body, #dashBody, main, [id*="dash"][id*="content"]');
-  if (dashBody && isMob) {
-    dashBody.style.overflowY = 'auto';
-    dashBody.style.webkitOverflowScrolling = 'touch';
-    dashBody.style.height = 'auto';
-    dashBody.style.minHeight = '0';
-    dashBody.style.paddingBottom = '40px';
-  }
-}
-
-// Run on load and on resize
-window.addEventListener('load', function() {
-  setTimeout(applyMobileDashboard, 400);
-});
-window.addEventListener('resize', applyMobileDashboard);
-
-/* ── Sync SESSION to embedded GAS page frames ── */
+/* ── SESSION SYNC TO FRAMES ── */
 function _syncSessionToFrames() {
   try {
-    const msg = { type: 'SESSION_SYNC', session: {
-      token: SESSION.token || '',
-      orgId: SESSION.orgId || '',
-      name: SESSION.name || '',
-      role: SESSION.role || ''
-    }};
-    // Post to all iframes
-    document.querySelectorAll('iframe').forEach(f => {
-      try { f.contentWindow.postMessage(msg, '*'); } catch(e){}
-    });
-    // Also set on child windows if GAS serves as separate page
-    if (window.frames) {
-      for (let i = 0; i < window.frames.length; i++) {
-        try { window.frames[i].SESSION = msg.session; } catch(e){}
-      }
-    }
+    const msg = { type:'SESSION_SYNC', session:{token:SESSION.token||'',orgId:SESSION.orgId||'',name:SESSION.name||'',role:SESSION.role||''} };
+    document.querySelectorAll('iframe').forEach(f=>{try{f.contentWindow.postMessage(msg,'*');}catch(e){}});
+    if(window.frames){for(let i=0;i<window.frames.length;i++){try{window.frames[i].SESSION=msg.session;}catch(e){}}}
   } catch(e){}
 }
 
+/* ── MOBILE DASHBOARD SIMPLIFICATION ── */
+function applyMobileDashboard() {
+  const isMob = window.innerWidth <= 600;
+  if (!isMob) return;
+  const strip = document.querySelector('.stat-strip,[class*="stat-strip"]');
+  if (strip) { strip.style.gridTemplateColumns='1fr 1fr'; strip.style.gap='8px'; }
+}
+window.addEventListener('resize', applyMobileDashboard);
+window.addEventListener('load', function(){ setTimeout(applyMobileDashboard,400); });
 
 /* ═══════════════════════════════════════════════════════════════
-   BOLT KIOSK — INTERACTIVE TOUR SYSTEM
-   Professional spotlight tour with animated overlays
-   Shows once per device, skippable, resumable
+   BOLT KIOSK — INTERACTIVE TOUR v2
+   Fixes: mobile cutoff, pre-login firing, card positioning
 ═══════════════════════════════════════════════════════════════ */
 
 const TOUR = {
   _step: 0,
   _active: false,
-  _el: null,
 
-  // ── Tour steps definition ─────────────────────────────────────
   steps: [
-    {
-      title: 'Welcome to Bolt Kiosk',
-      body: 'The all-in-one ministry check-in system. This quick tour will show you everything in under 60 seconds.',
-      target: null,
-      icon: 'bolt',
-      position: 'center',
-      action: null,
-    },
-    {
-      title: 'Ministry Events',
-      body: 'Tap this card to start a check-in session. Choose from Sunday Service, Youth Night, Young Adults, Small Groups, or Special Events.',
-      target: '.home-card:first-child, [onclick*="showKiosk"]',
-      icon: 'bolt',
-      position: 'bottom',
-      action: null,
-    },
-    {
-      title: 'Dashboard & Analytics',
-      body: 'See live check-ins, attendance trends, at-risk members, and weekly reports — all updated in real time.',
-      target: '.home-card:nth-child(2), [onclick*="showDash"]',
-      icon: 'analytics',
-      position: 'bottom',
-      action: null,
-    },
-    {
-      title: "Children's Ministry",
-      body: 'Register families, check in children, and print secure name tags with parent pickup QR codes.',
-      target: '[onclick*="showCM"], .home-card-wide:first-of-type',
-      icon: 'child',
-      position: 'top',
-      action: null,
-    },
-    {
-      title: 'Volunteer Departments',
-      body: 'Manage Worship Team, Ushers, Security, Media, and more. Track who\'s on duty and check in your whole team.',
-      target: '[onclick*="openVolDeptModal"], .home-card-wide:nth-of-type(2)',
-      icon: 'shield',
-      position: 'top',
-      action: null,
-    },
-    {
-      title: 'Volunteer Schedule',
-      body: 'Schedule volunteers for upcoming events, send email invitations, and track RSVP responses — all from one calendar.',
-      target: '[onclick*="showSchedule"], .home-card-wide:nth-of-type(3)',
-      icon: 'schedule',
-      position: 'top',
-      action: null,
-    },
-    {
-      title: 'Check-In Flow',
-      body: 'Search by name → tap to check in → done. It takes under 3 seconds per person. You can also batch check-in entire groups for Youth Night.',
-      target: null,
-      icon: 'checkin',
-      position: 'center',
-      illustration: 'checkin',
-    },
-    {
-      title: 'Multi-Organization Ready',
-      body: 'Each church gets its own private database. Data is never shared between organizations — fully isolated and secure.',
-      target: null,
-      icon: 'shield',
-      position: 'center',
-      illustration: 'org',
-    },
-    {
-      title: 'You\'re all set!',
-      body: 'Start by selecting a ministry event, or explore any module from the home screen. You can replay this tour anytime from Settings.',
-      target: null,
-      icon: 'check',
-      position: 'center',
-      action: 'finish',
-    },
+    { title:'Welcome to Bolt Kiosk!', body:"Your all-in-one ministry check-in system. This 60-second tour walks you through everything.", target:null, icon:'bolt', wide:true },
+    { title:'Ministry Events', body:"Tap this card to open a live check-in session — Sunday Service, Youth Night, Young Adults, Small Groups, or a Special Event.", target:'[onclick*="showKiosk"]', icon:'bolt' },
+    { title:'Dashboard & Analytics', body:"See live check-ins, attendance trends, at-risk members, and weekly reports — updated every 30 seconds in real time.", target:'[onclick*="showDash"]', icon:'analytics' },
+    { title:"Children's Ministry", body:"Register families, check in children, and track attendance. The right panel shows every family's check-in status.", target:'[onclick*="showCM"]', icon:'child' },
+    { title:'Volunteer Departments', body:"Manage Worship Team, Ushers, Security, Media, and more. Check in your whole team and see who's on duty.", target:'[onclick*="openVolDeptModal"]', icon:'shield' },
+    { title:'Volunteer Schedule', body:"Plan upcoming events, assign volunteers, send email invites, and track RSVP responses from one calendar view.", target:'[onclick*="showSchedule"]', icon:'schedule' },
+    { title:'Check-In Flow', body:"Search by name, tap to check in — done in under 3 seconds. Youth Night also supports batch check-in for entire groups.", target:null, icon:'checkin', illustration:'checkin' },
+    { title:'Private & Secure', body:"Each church gets its own isolated database. Your data is never shared with other organizations.", target:null, icon:'shield', illustration:'org' },
+    { title:"You're all set!", body:"Start by choosing a ministry event from the home screen. Tap the info button anytime to replay this tour.", target:null, icon:'check', wide:true },
   ],
 
-  // ── Init: show on first visit ─────────────────────────────────
   init() {
-    const seen = localStorage.getItem('bk_tour_done');
-    if (!seen) {
-      setTimeout(() => this.start(), 1200);
-    }
+    if (!window.SESSION || !SESSION.token) return;
+    const home = document.getElementById('vHome');
+    if (!home || !home.classList.contains('active')) return;
+    if (localStorage.getItem('bk_tour_done')) return;
+    setTimeout(() => this.start(), 700);
   },
 
-  // ── Start tour ────────────────────────────────────────────────
-  start() {
-    this._step = 0;
-    this._active = true;
-    this._render();
-    document.body.style.overflow = 'hidden';
-  },
+  start() { this._step=0; this._active=true; this._css(); this._render(); },
+  finish() { this._active=false; localStorage.setItem('bk_tour_done','1'); this._destroy(); },
+  goto(n) { this._step=Math.max(0,Math.min(n,this.steps.length-1)); this._render(); },
+  next() { this._step<this.steps.length-1 ? this.goto(this._step+1) : this.finish(); },
+  prev() { this._step>0 ? this.goto(this._step-1) : null; },
 
-  // ── Skip/finish tour ──────────────────────────────────────────
-  finish() {
-    this._active = false;
-    localStorage.setItem('bk_tour_done', '1');
-    this._destroy();
-    document.body.style.overflow = '';
-  },
-
-  // ── Go to step ────────────────────────────────────────────────
-  goto(n) {
-    this._step = Math.max(0, Math.min(n, this.steps.length - 1));
-    this._render();
-  },
-
-  next() { if (this._step < this.steps.length - 1) this.goto(this._step + 1); else this.finish(); },
-  prev() { if (this._step > 0) this.goto(this._step - 1); },
-
-  // ── Destroy overlay ───────────────────────────────────────────
   _destroy() {
-    const el = document.getElementById('bkTourOverlay');
-    if (el) {
-      el.style.opacity = '0';
-      el.style.transform = 'scale(1.02)';
-      setTimeout(() => el.remove(), 300);
-    }
-    const sp = document.getElementById('bkTourSpotlight');
-    if (sp) sp.remove();
+    ['bkTourOverlay','bkTourSpotlight'].forEach(id=>{
+      const el=document.getElementById(id); if(!el) return;
+      el.style.opacity='0'; el.style.transition='opacity .22s ease';
+      setTimeout(()=>el.remove(),240);
+    });
   },
 
-  // ── Get spotlight rect for target element ─────────────────────
-  _getTargetRect(step) {
-    if (!step.target) return null;
-    const selectors = step.target.split(', ');
-    for (const sel of selectors) {
-      try {
-        const el = document.querySelector(sel.trim());
-        if (el) {
-          const r = el.getBoundingClientRect();
-          if (r.width > 0) return { el, rect: r };
-        }
-      } catch(e) {}
-    }
-    return null;
+  _css() {
+    if(document.getElementById('bkTourCSS')) return;
+    const s=document.createElement('style'); s.id='bkTourCSS';
+    s.textContent=[
+      '@keyframes bkCardIn{from{opacity:0;transform:translate(-50%,-50%) scale(0.94)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}',
+      '@keyframes bkFadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}',
+      '@keyframes bkPulse{0%,100%{box-shadow:0 0 0 9999px rgba(0,0,0,.8),0 0 0 3px rgba(3,213,225,.85),0 0 30px rgba(3,213,225,.3)}50%{box-shadow:0 0 0 9999px rgba(0,0,0,.8),0 0 0 3px rgba(3,213,225,.4),0 0 50px rgba(3,213,225,.55)}}',
+      '#bkTourCard{animation:bkCardIn .32s cubic-bezier(.22,.68,0,1.2) forwards}',
+      '.bkNext:hover{filter:brightness(1.12);transform:scale(1.02)}.bkNext:active,.bkBack:active{transform:scale(.97)}',
+      '.bkBack:hover{background:rgba(255,255,255,.1)!important}',
+      '.bkDot{cursor:pointer;transition:all .25s ease}',
+      '.bkRow{animation:bkFadeIn .35s ease both}',
+    ].join('');
+    document.head.appendChild(s);
   },
 
-  // ── SVG icons for tour ────────────────────────────────────────
-  _getIcon(name) {
-    const paths = {
-      bolt:     '<path d="M13 2L4.5 13.5H12L11 22l8.5-11.5H13Z"/>',
-      analytics:'<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>',
-      child:    '<circle cx="12" cy="6" r="3"/><path d="M9 21v-5a3 3 0 0 1 6 0v5"/><path d="M6 21l3-5M18 21l-3-5"/>',
-      shield:   '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
-      schedule: '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
-      checkin:  '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
-      check:    '<polyline points="20 6 9 17 4 12"/>',
-      people:   '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
-    };
-    const p = paths[name] || paths.bolt;
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+  _svg(name) {
+    const d={bolt:'M13 2L4.5 13.5H12L11 22l8.5-11.5H13Z',analytics:'M22 12h-4l-3 9L9 3l-3 9H2',child:'M12 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6zm-3 8v11m6-11v11',shield:'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',schedule:'M3 4h18v16H3zM16 2v4M8 2v4M3 10h18',checkin:'M20 6L9 17l-5-5',check:'M20 6L9 17l-5-5'};
+    return '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="'+(d[name]||d.bolt)+'"/></svg>';
   },
 
-  // ── Illustrations for center steps ────────────────────────────
-  _getIllustration(type) {
-    if (type === 'checkin') {
-      return `<div style="display:flex;flex-direction:column;gap:8px;width:100%;margin:0 0 6px">
-        ${['Marcus Johnson','Rachel Pena','David Kim'].map((name, i) => `
-        <div style="display:flex;align-items:center;gap:10px;background:rgba(3,213,225,0.06);border:1px solid rgba(3,213,225,0.15);border-radius:12px;padding:10px 14px;animation:tourSlideIn .4s ease ${i*0.1}s both">
-          <div style="width:32px;height:32px;border-radius:50%;background:rgba(3,213,225,0.15);color:#03d5e1;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center">${name.split(' ').map(n=>n[0]).join('')}</div>
-          <div style="flex:1;font-size:13px;color:#d4f0f4;font-weight:600">${name}</div>
-          <div style="background:#0fa86a;color:#fff;font-size:10px;font-weight:700;padding:4px 12px;border-radius:100px">${i===0?'✓ Checked In':'Check In'}</div>
-        </div>`).join('')}
-      </div>`;
+  _illus(type) {
+    if(type==='checkin'){
+      return ['Marcus Johnson','Rachel Pena','David Kim'].map((n,i)=>{
+        const ok=i===0;
+        return '<div class="bkRow" style="display:flex;align-items:center;gap:10px;background:rgba(3,213,225,.06);border:1px solid rgba(3,213,225,'+(ok?.3:.1)+');border-radius:11px;padding:10px 13px;margin-bottom:7px;animation-delay:'+(i*.1)+'s">'+
+          '<div style="width:30px;height:30px;border-radius:50%;background:rgba(3,213,225,.15);color:#03d5e1;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center">'+n.split(' ').map(w=>w[0]).join('')+'</div>'+
+          '<div style="flex:1;font-size:13px;font-weight:700;color:#d4f0f4">'+n+'</div>'+
+          '<div style="background:'+(ok?'#0fa86a':'rgba(3,213,225,.15)')+';color:'+(ok?'#fff':'#03d5e1')+';font-size:10px;font-weight:800;padding:4px 11px;border-radius:100px">'+(ok?'Checked In':'Check In')+'</div>'+
+          '</div>';
+      }).join('');
     }
-    if (type === 'org') {
-      return `<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:4px 0 10px">
-        ${['Grace Community','Rock Church','Hope Fellowship'].map((name, i) => `
-        <div style="background:rgba(3,213,225,0.08);border:1px solid rgba(3,213,225,0.2);border-radius:12px;padding:10px 14px;text-align:center;animation:tourSlideIn .4s ease ${i*0.12}s both">
-          <div style="font-size:18px;margin-bottom:4px">⛪</div>
-          <div style="font-size:11px;color:#d4f0f4;font-weight:600">${name}</div>
-          <div style="font-size:9px;color:#4a7a88;margin-top:2px">Private DB</div>
-        </div>`).join('')}
-      </div>`;
+    if(type==='org'){
+      return '<div style="display:flex;gap:8px;margin-bottom:4px">'+
+        ['Grace Community','Rock Church','Hope Fellowship'].map((n,i)=>
+          '<div class="bkRow" style="flex:1;background:rgba(3,213,225,.07);border:1px solid rgba(3,213,225,.18);border-radius:11px;padding:11px 8px;text-align:center;animation-delay:'+(i*.11)+'s">'+
+          '<div style="font-size:20px;margin-bottom:5px">⛪</div>'+
+          '<div style="font-size:11px;font-weight:700;color:#d4f0f4">'+n+'</div>'+
+          '<div style="font-size:9px;color:rgba(3,213,225,.5);margin-top:3px;font-weight:600">PRIVATE DB</div></div>'
+        ).join('')+'</div>';
     }
     return '';
   },
 
-  // ── Render current step ───────────────────────────────────────
+  _target(sel) {
+    if(!sel) return null;
+    for(const s of sel.split(',')){
+      try{const el=document.querySelector(s.trim());if(el){const r=el.getBoundingClientRect();if(r.width>0&&r.height>0)return{el,rect:r};}}catch(e){}
+    }
+    return null;
+  },
+
   _render() {
     this._destroy();
-    const step = this.steps[this._step];
-    const total = this.steps.length;
-    const isFirst = this._step === 0;
-    const isLast = this._step === total - 1;
-    const targetInfo = this._getTargetRect(step);
-    const isCentered = step.position === 'center' || !targetInfo;
+    const step=this.steps[this._step], total=this.steps.length;
+    const isFirst=this._step===0, isLast=this._step===total-1;
+    const isMob=window.innerWidth<=640;
+    const tgt=isMob?null:this._target(step.target);
+    const cardW=Math.min(step.wide?420:380,window.innerWidth-32);
+    const pct=Math.round(this._step/(total-1)*100);
 
-    // ── Spotlight ──
-    if (targetInfo) {
-      const sp = document.createElement('div');
-      sp.id = 'bkTourSpotlight';
-      const pad = 10;
-      const { rect } = targetInfo;
-      sp.style.cssText = `
-        position:fixed;
-        top:${rect.top - pad}px;
-        left:${rect.left - pad}px;
-        width:${rect.width + pad*2}px;
-        height:${rect.height + pad*2}px;
-        border-radius:18px;
-        box-shadow:0 0 0 9999px rgba(0,0,0,0.72),0 0 0 3px rgba(3,213,225,0.7),0 0 40px rgba(3,213,225,0.3);
-        z-index:9998;
-        pointer-events:none;
-        transition:all .35s cubic-bezier(0.22,0.68,0,1.2);
-        animation:tourPulse 2s ease infinite;
-      `;
+    if(tgt){
+      const pad=11,{rect}=tgt,sp=document.createElement('div');
+      sp.id='bkTourSpotlight';
+      sp.style.cssText='position:fixed;top:'+(rect.top-pad)+'px;left:'+(rect.left-pad)+'px;width:'+(rect.width+pad*2)+'px;height:'+(rect.height+pad*2)+'px;border-radius:16px;z-index:9997;pointer-events:none;animation:bkPulse 2s ease infinite;';
       document.body.appendChild(sp);
+      tgt.el.scrollIntoView({behavior:'smooth',block:'center'});
     }
 
-    // ── Card overlay ──
-    const overlay = document.createElement('div');
-    overlay.id = 'bkTourOverlay';
+    const ov=document.createElement('div'); ov.id='bkTourOverlay';
+    ov.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,'+(tgt?0:.82)+');backdrop-filter:blur('+(tgt?0:10)+'px);-webkit-backdrop-filter:blur('+(tgt?0:10)+'px);display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;';
 
-    // Position the card
-    let cardStyle = '';
-    if (isCentered) {
-      cardStyle = 'top:50%;left:50%;transform:translate(-50%,-50%);';
-    } else if (targetInfo) {
-      const { rect } = targetInfo;
-      const cardW = Math.min(360, window.innerWidth - 32);
-      let left = rect.left + rect.width/2 - cardW/2;
-      left = Math.max(16, Math.min(left, window.innerWidth - cardW - 16));
-      
-      if (step.position === 'bottom') {
-        cardStyle = `top:${rect.bottom + 18}px;left:${left}px;`;
-      } else {
-        cardStyle = `bottom:${window.innerHeight - rect.top + 18}px;left:${left}px;`;
-      }
+    let cardStyle='';
+    if(tgt){
+      const{rect}=tgt,vp=window.innerHeight;
+      const spB=vp-rect.bottom, spA=rect.top;
+      let top=spB>=240||spB>=spA ? rect.bottom+16 : Math.max(16,rect.top-256);
+      let left=Math.max(16,Math.min(rect.left+rect.width/2-cardW/2,window.innerWidth-cardW-16));
+      cardStyle='position:fixed;top:'+top+'px;left:'+left+'px;';
     }
 
-    const progress = ((this._step) / (total - 1)) * 100;
+    const dots=this.steps.map((_,i)=>'<div class="bkDot" onclick="TOUR.goto('+i+')" style="width:'+(i===this._step?16:6)+'px;height:6px;border-radius:3px;background:'+(i===this._step?'#03d5e1':i<this._step?'rgba(3,213,225,.4)':'rgba(255,255,255,.1)')+'"></div>').join('');
+    const ill=step.illustration?'<div style="margin-bottom:14px">'+this._illus(step.illustration)+'</div>':'';
 
-    overlay.style.cssText = `
-      position:fixed;inset:0;z-index:9999;
-      ${isCentered ? 'background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;' : ''}
-      pointer-events:all;
-      transition:opacity .3s ease;
-    `;
+    ov.innerHTML='<div id="bkTourCard" style="'+cardStyle+'width:'+cardW+'px;max-height:min(84vh,660px);overflow-y:auto;-webkit-overflow-scrolling:touch;background:linear-gradient(155deg,#0d1f27,#091519);border:1px solid rgba(3,213,225,.2);border-radius:20px;padding:22px;box-shadow:0 28px 80px rgba(0,0,0,.72),inset 0 1px 0 rgba(255,255,255,.06);font-family:-apple-system,BlinkMacSystemFont,sans-serif;color:#d4f0f4;scrollbar-width:thin;">'+
+      '<div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#03d5e1 '+pct+'%,rgba(255,255,255,.07) '+pct+'%);border-radius:20px 20px 0 0;transition:background .4s"></div>'+
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px">'+
+        '<div style="display:flex;align-items:center;gap:11px">'+
+          '<div style="width:42px;height:42px;border-radius:12px;background:rgba(3,213,225,.1);border:1px solid rgba(3,213,225,.2);display:flex;align-items:center;justify-content:center;color:#03d5e1;flex-shrink:0">'+this._svg(step.icon)+'</div>'+
+          '<div><div style="font-size:9px;font-weight:800;color:#03d5e1;text-transform:uppercase;letter-spacing:2px;margin-bottom:3px">'+(this._step+1)+' of '+total+'</div><div style="font-size:16px;font-weight:800;color:#fff;line-height:1.2">'+step.title+'</div></div>'+
+        '</div>'+
+        '<button onclick="TOUR.finish()" style="background:none;border:none;color:rgba(255,255,255,.25);font-size:22px;cursor:pointer;padding:0 4px;line-height:1;border-radius:6px;flex-shrink:0">&times;</button>'+
+      '</div>'+
+      ill+
+      '<p style="font-size:14px;line-height:1.65;color:rgba(212,240,244,.82);margin:0 0 16px">'+step.body+'</p>'+
+      '<div style="display:flex;gap:5px;align-items:center;margin-bottom:14px;flex-wrap:wrap">'+dots+'</div>'+
+      '<div style="display:flex;gap:9px;align-items:center">'+
+        (!isFirst?'<button class="bkBack" onclick="TOUR.prev()" style="flex-shrink:0;padding:10px 15px;border-radius:11px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:rgba(255,255,255,.55);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .18s">\u2190 Back</button>':'')+
+        '<button class="bkNext" onclick="TOUR.next()" style="flex:1;padding:12px 18px;border-radius:11px;border:none;background:linear-gradient(135deg,#03d5e1,#028a94);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .18s">'+
+          (isLast?'Get Started':isFirst?'Start Tour \u2192':'Next \u2192')+
+        '</button>'+
+      '</div>'+
+      (isFirst?'<p style="text-align:center;font-size:11px;color:rgba(255,255,255,.18);margin:11px 0 0">Tap \xd7 to skip \xb7 Replay anytime with the info button</p>':'')+
+      '</div>';
 
-    overlay.innerHTML = `
-      <style>
-        @keyframes tourSlideIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes tourPulse { 0%,100%{box-shadow:0 0 0 9999px rgba(0,0,0,0.72),0 0 0 3px rgba(3,213,225,0.7),0 0 40px rgba(3,213,225,0.3)} 50%{box-shadow:0 0 0 9999px rgba(0,0,0,0.72),0 0 0 3px rgba(3,213,225,0.5),0 0 60px rgba(3,213,225,0.5)} }
-        @keyframes tourCardIn { from{opacity:0;transform:${isCentered?'translate(-50%,-48%) scale(0.96)':'translateY(8px) scale(0.97)'}} to{opacity:1;transform:${isCentered?'translate(-50%,-50%) scale(1)':'translateY(0) scale(1)'}} }
-        #bkTourCard { animation: tourCardIn .35s cubic-bezier(0.22,0.68,0,1.2) both; }
-        #bkTourCard button:hover { filter:brightness(1.15); transform:scale(1.02); }
-        #bkTourCard button:active { transform:scale(0.97); }
-        .bk-step-dot { transition:all .3s ease; }
-      </style>
-
-      <div id="bkTourCard" style="
-        position:${isCentered ? 'relative' : 'fixed'};
-        ${isCentered ? '' : cardStyle}
-        width:${isCentered ? 'min(400px,calc(100vw - 32px))' : 'min(360px,calc(100vw - 32px))'};
-        background:linear-gradient(160deg,#0d1f27 0%,#091519 100%);
-        border:1px solid rgba(3,213,225,0.25);
-        border-radius:22px;
-        padding:24px;
-        box-shadow:0 24px 80px rgba(0,0,0,0.6),0 0 0 1px rgba(255,255,255,0.04),inset 0 1px 0 rgba(255,255,255,0.06);
-        font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-        color:#d4f0f4;
-        overflow:hidden;
-      ">
-        <!-- Gradient top bar -->
-        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#03d5e1,#014d51);border-radius:22px 22px 0 0"></div>
-
-        <!-- Header -->
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px">
-          <div style="display:flex;align-items:center;gap:12px">
-            <div style="width:48px;height:48px;border-radius:14px;background:rgba(3,213,225,0.1);border:1px solid rgba(3,213,225,0.2);display:flex;align-items:center;justify-content:center;color:#03d5e1;flex-shrink:0">
-              ${this._getIcon(step.icon)}
-            </div>
-            <div>
-              <div style="font-size:9px;font-weight:700;color:#03d5e1;text-transform:uppercase;letter-spacing:2px;margin-bottom:3px">Step ${this._step + 1} of ${total}</div>
-              <div style="font-size:17px;font-weight:800;color:#fff;line-height:1.2">${step.title}</div>
-            </div>
-          </div>
-          <button onclick="TOUR.finish()" style="background:none;border:none;color:rgba(255,255,255,0.3);font-size:18px;cursor:pointer;padding:4px;border-radius:8px;line-height:1;transition:all .2s;flex-shrink:0" title="Skip tour">&times;</button>
-        </div>
-
-        <!-- Illustration (for center steps) -->
-        ${step.illustration ? this._getIllustration(step.illustration) : ''}
-
-        <!-- Body -->
-        <p style="font-size:14px;line-height:1.6;color:rgba(212,240,244,0.8);margin:0 0 20px">${step.body}</p>
-
-        <!-- Progress dots -->
-        <div style="display:flex;gap:6px;align-items:center;margin-bottom:18px">
-          ${this.steps.map((_, i) => `
-            <div class="bk-step-dot" onclick="TOUR.goto(${i})" style="
-              width:${i === this._step ? '20px' : '6px'};height:6px;
-              border-radius:3px;cursor:pointer;
-              background:${i === this._step ? '#03d5e1' : i < this._step ? 'rgba(3,213,225,0.4)' : 'rgba(255,255,255,0.12)'};
-            "></div>
-          `).join('')}
-        </div>
-
-        <!-- Progress bar -->
-        <div style="height:2px;background:rgba(255,255,255,0.08);border-radius:2px;margin-bottom:18px;overflow:hidden">
-          <div style="height:100%;width:${progress}%;background:linear-gradient(90deg,#03d5e1,#014d51);border-radius:2px;transition:width .4s ease"></div>
-        </div>
-
-        <!-- Actions -->
-        <div style="display:flex;gap:10px;align-items:center">
-          ${!isFirst ? `<button onclick="TOUR.prev()" style="flex:0 0 auto;padding:10px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.6);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s">← Back</button>` : ''}
-          <button onclick="TOUR.next()" style="flex:1;padding:12px 20px;border-radius:12px;border:none;background:linear-gradient(135deg,#03d5e1,#028a94);color:#fff;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:0.3px">
-            ${isLast ? 'Get Started →' : isFirst ? 'Start Tour →' : 'Next →'}
-          </button>
-        </div>
-
-        ${isFirst ? `<p style="text-align:center;font-size:11px;color:rgba(255,255,255,0.25);margin:12px 0 0">Tap &times; to skip · Available anytime in Settings</p>` : ''}
-      </div>
-    `;
-
-    // Click outside to advance (on centered steps)
-    if (isCentered) {
-      overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) this.next();
-      });
-    }
-
-    document.body.appendChild(overlay);
-
-    // Scroll target into view
-    if (targetInfo) {
-      targetInfo.el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
+    if(!tgt||isMob) ov.addEventListener('click',e=>{if(e.target===ov)this.next();});
+    document.body.appendChild(ov);
   },
 };
 
-// ── Replay tour from any menu ──────────────────────────────────
-function replayTour() {
-  localStorage.removeItem('bk_tour_done');
-  TOUR.start();
-}
+function replayTour(){localStorage.removeItem('bk_tour_done');TOUR.start();}
 
-// Start tour after home view loads
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    if (document.getElementById('vHome')) {
-      TOUR.init();
-    }
-  }, 2000);
-});
-
-/* ── TOUR BUTTON: inject on home load ── */
-(function() {
-  function injectTourButton() {
-    if (document.getElementById('bkTourBtn')) return;
-    var btn = document.createElement('button');
-    btn.id = 'bkTourBtn';
-    btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Quick Tour';
-    btn.onclick = function() { if(typeof TOUR!=='undefined') TOUR.start(); };
-    btn.setAttribute('title', 'Replay the app tour');
-    btn.style.cssText = [
-      'position:fixed', 'bottom:88px', 'right:16px',
-      'background:rgba(3,213,225,0.1)',
-      'border:1px solid rgba(3,213,225,0.28)',
-      'color:#03d5e1',
-      'font-size:11px', 'font-weight:700',
-      'padding:8px 14px', 'border-radius:100px',
-      'cursor:pointer', 'display:none',
-      'align-items:center', 'gap:6px',
-      'font-family:inherit', 'z-index:500',
-      'backdrop-filter:blur(10px)',
-      'box-shadow:0 4px 24px rgba(3,213,225,0.12)',
-      'transition:all .2s ease',
-      'letter-spacing:0.3px',
-    ].join(';');
-    btn.onmouseenter = function() {
-      btn.style.background = 'rgba(3,213,225,0.18)';
-      btn.style.transform = 'scale(1.04)';
-      btn.style.boxShadow = '0 6px 28px rgba(3,213,225,0.2)';
-    };
-    btn.onmouseleave = function() {
-      btn.style.background = 'rgba(3,213,225,0.1)';
-      btn.style.transform = '';
-      btn.style.boxShadow = '0 4px 24px rgba(3,213,225,0.12)';
-    };
+/* ── Quick Tour button ── */
+(function(){
+  function mkBtn(){
+    if(document.getElementById('bkTourBtn')) return;
+    const btn=document.createElement('button');
+    btn.id='bkTourBtn';
+    btn.title='Quick Tour';
+    btn.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.8"/></svg><span style="margin-left:5px">Quick Tour</span>';
+    btn.onclick=()=>replayTour();
+    btn.style.cssText='display:none;align-items:center;position:fixed;bottom:80px;right:16px;background:rgba(3,213,225,.08);border:1px solid rgba(3,213,225,.24);color:#03d5e1;font-size:11px;font-weight:700;padding:8px 13px;border-radius:100px;cursor:pointer;font-family:inherit;z-index:400;backdrop-filter:blur(8px);box-shadow:0 4px 18px rgba(3,213,225,.1);transition:all .2s;letter-spacing:.3px';
+    btn.onmouseenter=()=>{btn.style.background='rgba(3,213,225,.16)';btn.style.transform='scale(1.04)';};
+    btn.onmouseleave=()=>{btn.style.background='rgba(3,213,225,.08)';btn.style.transform='';};
     document.body.appendChild(btn);
   }
-
-  // Show/hide tour button based on active view
-  var _origShowViewForTour = window.showView;
-  window.addEventListener('load', function() {
-    injectTourButton();
-    var orig = window.showView;
-    if (orig && orig !== _origShowViewForTour) {
-      window.showView = function(id) {
-        orig.apply(this, arguments);
-        var btn = document.getElementById('bkTourBtn');
-        if (btn) btn.style.display = (id === 'vHome') ? 'flex' : 'none';
+  function setVis(v){const b=document.getElementById('bkTourBtn');if(b)b.style.display=v?'flex':'none';}
+  window.addEventListener('load',function(){
+    mkBtn();
+    const orig=window.showView;
+    if(orig){
+      window.showView=function(id){
+        orig.apply(this,arguments);
+        setVis(id==='vHome');
+        // Start tour on home — only if logged in
+        if(id==='vHome') setTimeout(()=>{if(window.SESSION&&SESSION.token)TOUR.init();},500);
       };
-    } else {
-      // Fallback: watch for vHome becoming active
-      var observer = new MutationObserver(function() {
-        var vHome = document.getElementById('vHome');
-        var btn = document.getElementById('bkTourBtn');
-        if (btn && vHome) {
-          btn.style.display = vHome.classList.contains('active') ? 'flex' : 'none';
-        }
-      });
-      var app = document.getElementById('app') || document.body;
-      observer.observe(app, { attributes: true, subtree: true, attributeFilter: ['class'] });
     }
-    // Show on initial home load
-    setTimeout(function() {
-      var vHome = document.getElementById('vHome');
-      var btn = document.getElementById('bkTourBtn');
-      if (btn && vHome && vHome.classList.contains('active')) {
-        btn.style.display = 'flex';
-      }
-    }, 1000);
   });
 })();
