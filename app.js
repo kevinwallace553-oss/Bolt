@@ -1216,20 +1216,21 @@ const DASH = {
 
   async refresh(silent=false) {
     if(!silent) showSaving('Loading…');
+    const ministry = this._ministry || 'all';
     try {
-      const [dash, week, atRisk] = await Promise.all([
-        API.getDashboard(),
-        API.getWeeklyReport(0),
-        API.getAtRisk()
-      ]);
-      this._rawDash = dash;
-      this._rawCheckins = dash?.checkins || [];
-      this.applyFilters();
-      this.renderBirthdays(dash?.birthdays || []);
-      this.renderWeek(week);
-      this.renderAtRisk(atRisk);
+      if(ministry === 'children') {
+        const cm = await API.getCMDash();
+        this._rawDash = cm; this._rawCheckins = cm?.checkins||[];
+        this.renderCMStats(cm); this.renderBirthdays(cm?.birthdays||[]);
+        if(!silent) hideSaving(); return;
+      }
+      const dash = await API.getDashboard();
+      this._rawDash = dash; this._rawCheckins = dash?.checkins||[];
+      this.applyFilters(); this.renderBirthdays(dash?.birthdays||[]);
+      try{ const wk=await API.getWeeklyReport(0); this.renderWeek(wk); }catch(e){}
+      try{ const ar=await API.getAtRisk(); this.renderAtRisk(ar); }catch(e){}
       this.loadVolunteerDash();
-    } catch(e){ if(!silent) toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> Refresh failed','err'); console.error(e); }
+    } catch(e){ if(!silent) toast('Refresh failed','err'); console.error('refresh:',e); }
     if(!silent) hideSaving();
   },
 
@@ -4172,14 +4173,19 @@ const TOUR = {
     }
 
     const ov=document.createElement('div'); ov.id='bkTourOverlay';
-    ov.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,'+(tgt?0:.82)+');backdrop-filter:blur('+(tgt?0:10)+'px);-webkit-backdrop-filter:blur('+(tgt?0:10)+'px);display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;';
+    ov.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,'+(tgt?0:.82)+');backdrop-filter:blur('+(tgt?0:10)+'px);-webkit-backdrop-filter:blur('+(tgt?0:10)+'px);display:'+(tgt?'block':'flex')+';align-items:center;justify-content:center;padding:'+(tgt?'0':'16px')+';box-sizing:border-box;';
 
     let cardStyle='';
     if(tgt){
-      const{rect}=tgt,vp=window.innerHeight;
+      const{rect}=tgt,vp=window.innerHeight,vw=window.innerWidth;
       const spB=vp-rect.bottom, spA=rect.top;
-      let top=spB>=240||spB>=spA ? rect.bottom+16 : Math.max(16,rect.top-256);
-      let left=Math.max(16,Math.min(rect.left+rect.width/2-cardW/2,window.innerWidth-cardW-16));
+      // Vertical: prefer below, fallback above
+      let top=spB>=240||spB>=spA ? rect.bottom+14 : Math.max(16,rect.top-260);
+      // Horizontal: center on target, clamp to viewport with 16px margin each side
+      let left=rect.left+rect.width/2-cardW/2;
+      left=Math.max(16,Math.min(left,vw-cardW-16));
+      // If card would go below viewport, clamp it up
+      if(top+280>vp) top=Math.max(16,vp-300);
       cardStyle='position:fixed;top:'+top+'px;left:'+left+'px;';
     }
 

@@ -102,3 +102,4 @@ API.addScheduledEvent  = (d)   => gasRun('addScheduledEventAPI', d);
 API.editScheduledEvent = (id,d)=> gasRun('editScheduledEventAPI', id, d);
 API.deleteScheduledEvent=(id)  => gasRun('deleteScheduledEventAPI', id);
 API.rsvpResponse       = (id,r)=> gasRun('rsvpResponseAPI', id, r);
+API.getCMDash = () => gasRun('getCMDashboardData');
