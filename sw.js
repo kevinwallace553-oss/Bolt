@@ -1,4 +1,4 @@
-const CACHE = 'bolt-kiosk-v5';
+const CACHE = 'bolt-kiosk-v6';
 const SHELL = [
   './',
   './index.html',
