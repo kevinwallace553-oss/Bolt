@@ -1217,20 +1217,46 @@ const DASH = {
   async refresh(silent=false) {
     if(!silent) showSaving('Loading…');
     const ministry = this._ministry || 'all';
+
+    // Wait for SESSION token — retry up to 8 times (4 seconds)
+    let tok = SESSION?.token || '';
+    for(let t=0; !tok && t<8; t++){
+      await new Promise(r=>setTimeout(r,500));
+      tok = SESSION?.token || '';
+      // Also try parent window
+      try{ if(!tok && window.parent?.SESSION?.token) { tok=window.parent.SESSION.token; SESSION.token=tok; SESSION.orgId=window.parent.SESSION.orgId||''; } }catch(e){}
+    }
+    if(!tok){
+      if(!silent) { toast('Sign in to view dashboard','err'); hideSaving(); }
+      return;
+    }
+
     try {
       if(ministry === 'children') {
         const cm = await API.getCMDash();
+        if(cm?.code==='AUTH_REQUIRED'){ if(!silent) toast('Please sign in again','err'); hideSaving(); return; }
         this._rawDash = cm; this._rawCheckins = cm?.checkins||[];
         this.renderCMStats(cm); this.renderBirthdays(cm?.birthdays||[]);
         if(!silent) hideSaving(); return;
       }
+
       const dash = await API.getDashboard();
-      this._rawDash = dash; this._rawCheckins = dash?.checkins||[];
-      this.applyFilters(); this.renderBirthdays(dash?.birthdays||[]);
-      try{ const wk=await API.getWeeklyReport(0); this.renderWeek(wk); }catch(e){}
-      try{ const ar=await API.getAtRisk(); this.renderAtRisk(ar); }catch(e){}
-      this.loadVolunteerDash();
-    } catch(e){ if(!silent) toast('Refresh failed','err'); console.error('refresh:',e); }
+      if(dash?.code==='AUTH_REQUIRED'){ if(!silent) toast('Please sign in again','err'); hideSaving(); return; }
+
+      this._rawDash = dash;
+      this._rawCheckins = dash?.checkins || [];
+      this.applyFilters();
+      this.renderBirthdays(dash?.birthdays || []);
+
+      try{ const wk=await API.getWeeklyReport(0); this.renderWeek(wk); }catch(e){ console.warn('Weekly report failed:',e); }
+      try{ const ar=await API.getAtRisk(); this.renderAtRisk(ar); }catch(e){ console.warn('At-risk failed:',e); }
+
+      if(ministry==='volunteers') this.loadVolunteerDash();
+
+    } catch(e){
+      console.error('DASH.refresh error:', e);
+      if(!silent) toast('Dashboard refresh failed','err');
+    }
     if(!silent) hideSaving();
   },
 
@@ -3763,7 +3789,14 @@ const SCHED = {
   addVolAssignment() {
     // Show a quick volunteer picker
     const vols = this._volunteers;
-    if (!vols.length) { toast('No volunteers registered yet','err'); return; } // Build a simple selection modal inline const picker = document.createElement('div'); picker.style.cssText = 'position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.7);display:flex;align-items:flex-end;justify-content:center'; picker.innerHTML = `<div style="background:var(--ink2);border-radius:20px 20px 0 0;padding:20px 16px 32px;width:100%;max-width:480px;max-height:70vh;overflow-y:auto"> <div style="font-family:var(--font);font-size:14px;font-weight:800;color:#fff;margin-bottom:14px">Select Volunteer</div> ${vols.map(v => `<div onclick="SCHED._pickVol('${v.id}','${v.name.replace(/'/,"\\'")}','${(v.email||'').replace(/'/,"\\'")}','${(v.role||'Volunteer').replace(/'/,"\\'")}','${(v.department||'').replace(/'/,"\\'")}',this.parentElement.parentElement)" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;cursor:pointer;margin-bottom:6px;background:var(--ink3);border:1px solid var(--rim)">
+    if (!vols.length) { toast('<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0;display:inline-block"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg> No volunteers registered yet','err'); return; }
+
+    // Build a simple selection modal inline
+    const picker = document.createElement('div');
+    picker.style.cssText = 'position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.7);display:flex;align-items:flex-end;justify-content:center';
+    picker.innerHTML = `<div style="background:var(--ink2);border-radius:20px 20px 0 0;padding:20px 16px 32px;width:100%;max-width:480px;max-height:70vh;overflow-y:auto">
+      <div style="font-family:var(--font);font-size:14px;font-weight:800;color:#fff;margin-bottom:14px">Select Volunteer</div>
+      ${vols.map(v => `<div onclick="SCHED._pickVol('${v.id}','${v.name.replace(/'/,"\\'")}','${(v.email||'').replace(/'/,"\\'")}','${(v.role||'Volunteer').replace(/'/,"\\'")}','${(v.department||'').replace(/'/,"\\'")}',this.parentElement.parentElement)" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;cursor:pointer;margin-bottom:6px;background:var(--ink3);border:1px solid var(--rim)">
         <div style="width:34px;height:34px;border-radius:50%;background:${gradientForName(v.name)};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0">${initials(v.name)}</div>
         <div style="flex:1">
           <div style="font-size:13px;font-weight:700;color:var(--text)">${v.name}</div>
