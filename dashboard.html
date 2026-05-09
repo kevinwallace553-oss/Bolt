@@ -4,883 +4,575 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Bolt Kiosk — Dashboard</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-<!-- SESSION TOKEN BRIDGE -->
 <script>
+/* ── SESSION BRIDGE ── */
 var SESSION = { token:'', orgId:'' };
-var _bkReady = false;
 (function(){
-  try {
-    var ss = window.sessionStorage;
-    if(ss && ss.getItem('bk_token')){
-      SESSION.token = ss.getItem('bk_token')||'';
-      SESSION.orgId = ss.getItem('bk_orgId')||'';
-    }
-  } catch(e){}
-  // Sync from parent every second
-  setInterval(function(){
+  function tryLoad(){
     try {
-      var ws = window.SESSION||(window.parent&&window.parent.SESSION);
-      if(ws && ws.token && ws.token !== SESSION.token){
-        SESSION.token = ws.token;
-        SESSION.orgId = ws.orgId||SESSION.orgId;
-      }
-    } catch(e){}
+      var ss = window.sessionStorage;
+      if(ss && ss.getItem('bk_token')){ SESSION.token=ss.getItem('bk_token')||''; SESSION.orgId=ss.getItem('bk_orgId')||''; }
+    }catch(e){}
+    try { var p=window.parent&&window.parent.SESSION; if(p&&p.token){ SESSION.token=p.token; SESSION.orgId=p.orgId||''; } }catch(e){}
+  }
+  tryLoad();
+  setInterval(function(){
+    try { var p=window.SESSION||(window.parent&&window.parent.SESSION); if(p&&p.token&&p.token!==SESSION.token){ SESSION.token=p.token; SESSION.orgId=p.orgId||''; } }catch(e){}
   }, 800);
-  window.addEventListener('message', function(e){
-    if(e.data && e.data.type==='SESSION_SYNC' && e.data.session){
-      SESSION = Object.assign(SESSION, e.data.session);
-    }
-  });
+  window.addEventListener('message', function(e){ if(e.data&&e.data.type==='SESSION_SYNC'&&e.data.session) SESSION=Object.assign(SESSION,e.data.session); });
 })();
 
-function getBKToken(){ 
-  try{
-    var ws = window.SESSION||(window.parent&&window.parent.SESSION);
-    if(ws && ws.token) return ws.token;
-  }catch(e){}
+function getBKToken(){
+  try{ var p=window.SESSION||(window.parent&&window.parent.SESSION); if(p&&p.token) return p.token; }catch(e){}
   return SESSION.token||'';
 }
 
-// Wait for token then run fn
 function withToken(fn, tries){
-  tries = tries||0;
-  var tok = getBKToken();
-  if(tok){ fn(tok); return; }
-  if(tries < 15) setTimeout(function(){ withToken(fn, tries+1); }, 600);
-  else { showError('Session not found. Please sign in again.'); }
+  tries=tries||0;
+  var t=getBKToken();
+  if(t){ fn(t); return; }
+  if(tries<12) setTimeout(function(){ withToken(fn,tries+1); }, 500);
+  else showErr('No session found. Please sign in again.');
 }
 </script>
 
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,*::before,*::after{ box-sizing:border-box; margin:0; padding:0; }
+:root{
+  --bg:#080e14; --s1:#0d1a24; --s2:#112030;
+  --rim:rgba(255,255,255,0.07); --rim2:rgba(255,255,255,0.13);
+  --text:#e8f4f8; --muted:#5a8a9a;
+  --cyan:#03d5e1; --cyan-d:rgba(3,213,225,0.12); --cyan-b:rgba(3,213,225,0.25);
+  --green:#0fa86a; --amber:#f59e0b; --red:#ef4444; --purple:#8b5cf6;
+  --font:'Inter',-apple-system,sans-serif; --r:16px;
+}
+html,body{ height:100%; font-family:var(--font); background:var(--bg); color:var(--text); overflow:hidden; }
 
-:root {
-  --bg: #080e14;
-  --surface: #0d1a24;
-  --surface2: #112030;
-  --rim: rgba(255,255,255,0.07);
-  --rim2: rgba(255,255,255,0.12);
-  --text: #e8f4f8;
-  --muted: #5a8a9a;
-  --cyan: #03d5e1;
-  --cyan-dim: rgba(3,213,225,0.12);
-  --cyan-border: rgba(3,213,225,0.25);
-  --green: #0fa86a;
-  --amber: #f59e0b;
-  --red: #ef4444;
-  --purple: #8b5cf6;
-  --font: 'Inter', -apple-system, sans-serif;
-  --r: 16px;
-  --r-sm: 10px;
-}
+/* Layout */
+.layout{ display:grid; grid-template-rows:54px 1fr; height:100vh; }
+.topbar{ display:flex; align-items:center; gap:10px; padding:0 20px; background:rgba(8,14,20,0.96); border-bottom:1px solid var(--rim); }
+.tb-logo{ width:28px; height:28px; border-radius:8px; background:rgba(6,20,22,0.9)!important; border:1px solid var(--cyan-b)!important; box-shadow:0 0 14px rgba(3,213,225,0.35)!important; overflow:hidden; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.tb-logo img{ width:100%; height:100%; object-fit:cover; }
+.tb-brand{ font-size:14px; font-weight:800; color:#fff; letter-spacing:0.5px; }
+.tb-brand span{ color:var(--cyan); }
+.live-dot{ display:flex; align-items:center; gap:5px; font-size:10px; font-weight:700; color:var(--green); background:rgba(15,168,106,0.1); border:1px solid rgba(15,168,106,0.25); padding:3px 10px; border-radius:100px; letter-spacing:0.5px; }
+.live-dot::before{ content:''; width:6px; height:6px; border-radius:50%; background:var(--green); animation:pulse 1.4s ease infinite; }
+@keyframes pulse{ 0%,100%{opacity:1}50%{opacity:0.4} }
+.sp{ flex:1; }
+.btn{ display:flex; align-items:center; gap:5px; padding:6px 12px; border-radius:10px; font-size:12px; font-weight:600; font-family:var(--font); cursor:pointer; border:1px solid var(--rim2); background:var(--s1); color:var(--muted); transition:all .18s; white-space:nowrap; }
+.btn:hover{ background:var(--s2); color:var(--text); border-color:var(--cyan-b); }
+.btn.accent{ background:var(--cyan-d); border-color:var(--cyan-b); color:var(--cyan); }
+.btn.red{ background:rgba(239,68,68,0.1); border-color:rgba(239,68,68,0.2); color:#ef4444; }
 
-html, body {
-  height: 100%;
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--font);
-  overflow: hidden;
-}
+/* Body */
+.body{ display:flex; overflow:hidden; }
 
-/* ── Layout ── */
-.layout {
-  display: grid;
-  grid-template-rows: 56px 1fr;
-  height: 100vh;
-  overflow: hidden;
-}
+/* Sidebar */
+.sidebar{ width:220px; flex-shrink:0; background:var(--s1); border-right:1px solid var(--rim); display:flex; flex-direction:column; }
+.sidebar-scroll{ flex:1; overflow-y:auto; padding:14px 10px; }
+.nav-btn{ display:flex; align-items:center; gap:10px; width:100%; padding:9px 12px; border-radius:10px; font-family:var(--font); font-size:13px; font-weight:600; color:var(--muted); background:none; border:none; cursor:pointer; text-align:left; margin-bottom:3px; transition:all .18s; }
+.nav-btn:hover{ background:var(--s2); color:var(--text); }
+.nav-btn.active{ background:var(--cyan-d); border:1px solid var(--cyan-b); color:var(--cyan); }
+.nav-btn svg{ flex-shrink:0; }
+.nav-section{ font-size:9px; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:2px; padding:10px 12px 6px; }
+.sidebar-footer{ padding:10px; border-top:1px solid var(--rim); }
 
-/* ── Topbar ── */
-.topbar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 0 20px;
-  background: rgba(8,14,20,0.95);
-  border-bottom: 1px solid var(--rim);
-  backdrop-filter: blur(12px);
-  position: relative;
-  z-index: 50;
-}
-.tb-logo {
-  width: 30px; height: 30px;
-  border-radius: 8px;
-  background: rgba(6,20,22,0.9) !important;
-  border: 1px solid var(--cyan-border) !important;
-  box-shadow: 0 0 16px rgba(3,213,225,0.35) !important;
-  overflow: hidden;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-}
-.tb-logo img { width: 100%; height: 100%; object-fit: cover; }
-.tb-brand { font-size: 15px; font-weight: 800; color: #fff; letter-spacing: 0.5px; }
-.tb-brand span { color: var(--cyan); }
-.tb-live {
-  display: flex; align-items: center; gap: 5px;
-  font-size: 10px; font-weight: 700; color: var(--green);
-  background: rgba(15,168,106,0.1); border: 1px solid rgba(15,168,106,0.25);
-  padding: 3px 10px; border-radius: 100px;
-  letter-spacing: 0.5px;
-}
-.tb-live::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: livePulse 1.4s ease infinite; }
-@keyframes livePulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.7)} }
-.tb-spacer { flex: 1; }
-.tb-btn {
-  display: flex; align-items: center; gap: 6px;
-  padding: 6px 12px; border-radius: var(--r-sm);
-  font-size: 12px; font-weight: 600; font-family: var(--font);
-  cursor: pointer; border: 1px solid var(--rim2);
-  background: var(--surface); color: var(--muted);
-  transition: all .2s; white-space: nowrap;
-}
-.tb-btn:hover { background: var(--surface2); color: var(--text); border-color: var(--cyan-border); }
-.tb-btn.primary { background: var(--cyan-dim); border-color: var(--cyan-border); color: var(--cyan); }
-.tb-btn.danger { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.25); color: #ef4444; }
+/* Main */
+.main{ flex:1; display:flex; flex-direction:column; overflow:hidden; }
+.main-head{ padding:16px 20px 12px; border-bottom:1px solid var(--rim); display:flex; align-items:center; gap:12px; flex-shrink:0; }
+.main-icon{ font-size:24px; }
+.main-title{ font-size:18px; font-weight:800; color:var(--text); }
+.main-sub{ font-size:12px; color:var(--muted); margin-top:2px; }
+.main-right{ margin-left:auto; display:flex; gap:8px; }
+.scroll{ flex:1; overflow-y:auto; padding:20px; scrollbar-width:thin; scrollbar-color:var(--rim) transparent; }
 
-/* ── Body ── */
-.body {
-  display: grid;
-  grid-template-columns: 240px 1fr;
-  overflow: hidden;
-  height: 100%;
-}
+/* Stat cards */
+.stats{ display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin-bottom:20px; }
+.stat{ background:var(--s1); border:1px solid var(--rim); border-radius:var(--r); padding:16px; position:relative; overflow:hidden; }
+.stat::before{ content:''; position:absolute; top:0; left:0; right:0; height:2px; }
+.stat.c::before{ background:linear-gradient(90deg,var(--cyan),transparent); }
+.stat.g::before{ background:linear-gradient(90deg,var(--green),transparent); }
+.stat.a::before{ background:linear-gradient(90deg,var(--amber),transparent); }
+.stat.p::before{ background:linear-gradient(90deg,var(--purple),transparent); }
+.stat.r::before{ background:linear-gradient(90deg,var(--red),transparent); }
+.stat-lbl{ font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:1.5px; color:var(--muted); margin-bottom:8px; }
+.stat-val{ font-size:34px; font-weight:900; color:var(--text); line-height:1; }
+.stat-sub{ font-size:11px; color:var(--muted); margin-top:4px; }
 
-/* ── Sidebar ── */
-.sidebar {
-  background: var(--surface);
-  border-right: 1px solid var(--rim);
-  display: flex; flex-direction: column;
-  overflow: hidden;
-}
-.sidebar-inner {
-  flex: 1; overflow-y: auto; padding: 16px 12px;
-  scrollbar-width: thin; scrollbar-color: var(--rim) transparent;
-}
+/* Section */
+.section{ margin-bottom:20px; }
+.sec-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.sec-title{ font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:1.5px; color:var(--muted); }
+.badge{ background:var(--s2); border:1px solid var(--rim); border-radius:100px; padding:2px 8px; font-size:10px; font-weight:700; color:var(--muted); }
 
-.min-label {
-  font-size: 9px; font-weight: 800; color: var(--muted);
-  text-transform: uppercase; letter-spacing: 2px;
-  padding: 4px 8px 8px;
-}
-.min-btn {
-  display: flex; align-items: center; gap: 10px;
-  padding: 10px 12px; border-radius: var(--r-sm);
-  cursor: pointer; border: 1px solid transparent;
-  margin-bottom: 3px; transition: all .18s;
-  font-family: var(--font); font-size: 13px; font-weight: 600;
-  color: var(--muted); background: none; width: 100%;
-  text-align: left;
-}
-.min-btn:hover { background: var(--surface2); color: var(--text); }
-.min-btn.active {
-  background: var(--cyan-dim); border-color: var(--cyan-border);
-  color: var(--cyan);
-}
-.min-btn svg { flex-shrink: 0; }
-.min-divider { height: 1px; background: var(--rim); margin: 10px 0; }
+/* Feed */
+.feed{ display:flex; flex-direction:column; gap:6px; }
+.feed-item{ display:flex; align-items:center; gap:12px; padding:11px 14px; background:var(--s1); border:1px solid var(--rim); border-radius:10px; transition:border-color .18s; animation:fadeIn .25s ease both; }
+.feed-item:hover{ border-color:var(--rim2); }
+@keyframes fadeIn{ from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:none} }
+.av{ width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; color:#fff; flex-shrink:0; }
+.fi-info{ flex:1; min-width:0; }
+.fi-name{ font-size:13px; font-weight:700; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.fi-meta{ font-size:11px; color:var(--muted); margin-top:1px; }
+.fi-time{ font-size:10px; color:var(--muted); flex-shrink:0; }
+.tag{ font-size:9px; font-weight:800; padding:3px 8px; border-radius:100px; text-transform:uppercase; letter-spacing:0.5px; flex-shrink:0; }
+.tag.new{ background:rgba(245,158,11,0.15); color:var(--amber); border:1px solid rgba(245,158,11,0.25); }
+.tag.leader{ background:rgba(139,92,246,0.15); color:var(--purple); border:1px solid rgba(139,92,246,0.25); }
+.empty{ text-align:center; padding:32px 20px; color:var(--muted); font-size:13px; display:flex; flex-direction:column; align-items:center; gap:10px; }
 
-.sidebar-footer {
-  padding: 12px;
-  border-top: 1px solid var(--rim);
-  display: flex; flex-direction: column; gap: 6px;
-}
+/* Birthday cards */
+.bdays{ display:flex; flex-direction:column; gap:8px; }
+.bday{ display:flex; align-items:center; gap:12px; padding:12px 14px; background:var(--s1); border:1px solid var(--rim); border-radius:10px; }
+.bday.today{ border-color:rgba(245,158,11,0.4); background:rgba(245,158,11,0.04); }
+.bday-info{ flex:1; }
+.bday-name{ font-size:13px; font-weight:700; color:var(--text); }
+.bday-detail{ font-size:11px; color:var(--muted); margin-top:2px; }
+.bday-when{ font-size:11px; font-weight:700; padding:4px 10px; border-radius:100px; flex-shrink:0; }
+.bday-when.today{ background:rgba(245,158,11,0.2); color:var(--amber); }
+.bday-when.soon{ background:rgba(3,213,225,0.1); color:var(--cyan); }
+.send-btn{ display:flex; align-items:center; gap:4px; padding:5px 12px; border-radius:8px; font-size:11px; font-weight:700; font-family:var(--font); cursor:pointer; border:1px solid var(--cyan-b); background:var(--cyan-d); color:var(--cyan); transition:all .18s; flex-shrink:0; }
+.send-btn:hover{ background:rgba(3,213,225,0.2); transform:scale(1.02); }
+.send-btn:disabled{ opacity:0.4; cursor:not-allowed; transform:none; }
+.send-btn.sent{ border-color:rgba(15,168,106,0.4); background:rgba(15,168,106,0.1); color:var(--green); }
 
-/* ── Main area ── */
-.main {
-  display: flex; flex-direction: column;
-  overflow: hidden; background: var(--bg);
-}
+/* Toast */
+.toast{ position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--s2); border:1px solid var(--rim2); border-radius:100px; padding:10px 20px; font-size:13px; font-weight:600; color:var(--text); opacity:0; transition:all .3s; z-index:9999; white-space:nowrap; pointer-events:none; }
+.toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+.toast.ok{ border-color:rgba(15,168,106,0.4); color:var(--green); }
+.toast.err{ border-color:rgba(239,68,68,0.4); color:#ef4444; }
 
-/* ── Ministry header ── */
-.min-header {
-  padding: 16px 20px 0;
-  display: flex; align-items: center; gap: 12px;
-  flex-shrink: 0;
-}
-.min-header-icon {
-  width: 40px; height: 40px; border-radius: 12px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 20px; flex-shrink: 0;
-}
-.min-header h2 { font-size: 20px; font-weight: 800; color: var(--text); }
-.min-header p { font-size: 12px; color: var(--muted); margin-top: 2px; }
-.min-header-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
-.refresh-btn {
-  display: flex; align-items: center; gap: 5px;
-  padding: 7px 14px; border-radius: var(--r-sm);
-  font-size: 12px; font-weight: 600; font-family: var(--font);
-  background: var(--cyan-dim); border: 1px solid var(--cyan-border);
-  color: var(--cyan); cursor: pointer; transition: all .2s;
-}
-.refresh-btn:hover { background: rgba(3,213,225,0.2); }
-.refresh-btn.spinning svg { animation: spin .7s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
+/* Error banner */
+.err-banner{ background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.25); border-radius:10px; padding:10px 14px; color:#f87171; font-size:13px; margin-bottom:16px; display:none; }
 
-/* ── Scroll area ── */
-.scroll {
-  flex: 1; overflow-y: auto; padding: 16px 20px 24px;
-  scrollbar-width: thin; scrollbar-color: var(--rim) transparent;
-}
+/* Loading skeleton */
+.skel{ background:linear-gradient(90deg,var(--s1) 25%,var(--s2) 50%,var(--s1) 75%); background-size:200% 100%; animation:shimmer 1.4s ease infinite; border-radius:10px; }
+@keyframes shimmer{ to{background-position:-200% 0} }
 
-/* ── Stat cards ── */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 10px; margin-bottom: 16px;
-}
-.stat-card {
-  background: var(--surface);
-  border: 1px solid var(--rim);
-  border-radius: var(--r);
-  padding: 16px;
-  position: relative; overflow: hidden;
-  transition: border-color .2s;
-}
-.stat-card::before {
-  content: ''; position: absolute;
-  top: 0; left: 0; right: 0; height: 2px;
-}
-.stat-card.cyan::before { background: linear-gradient(90deg, var(--cyan), transparent); }
-.stat-card.green::before { background: linear-gradient(90deg, var(--green), transparent); }
-.stat-card.amber::before { background: linear-gradient(90deg, var(--amber), transparent); }
-.stat-card.red::before { background: linear-gradient(90deg, var(--red), transparent); }
-.stat-card.purple::before { background: linear-gradient(90deg, var(--purple), transparent); }
-.stat-label { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 8px; }
-.stat-value { font-size: 32px; font-weight: 900; color: var(--text); line-height: 1; margin-bottom: 4px; }
-.stat-sub { font-size: 11px; color: var(--muted); }
-.stat-icon { position: absolute; top: 14px; right: 14px; opacity: 0.15; }
-
-/* ── Section ── */
-.section { margin-bottom: 16px; }
-.section-head {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 10px;
-}
-.section-title {
-  font-size: 12px; font-weight: 800; text-transform: uppercase;
-  letter-spacing: 1.5px; color: var(--muted);
-  display: flex; align-items: center; gap: 6px;
-}
-.badge {
-  background: var(--surface2); border: 1px solid var(--rim);
-  border-radius: 100px; padding: 2px 8px;
-  font-size: 10px; font-weight: 700; color: var(--muted);
-}
-
-/* ── Feed ── */
-.feed { display: flex; flex-direction: column; gap: 6px; }
-.feed-empty {
-  text-align: center; padding: 32px 20px;
-  color: var(--muted); font-size: 13px;
-}
-.feed-empty svg { margin-bottom: 10px; opacity: 0.3; }
-.feed-item {
-  display: flex; align-items: center; gap: 12px;
-  padding: 12px 14px; border-radius: var(--r-sm);
-  background: var(--surface); border: 1px solid var(--rim);
-  transition: border-color .2s;
-  animation: feedIn .25s ease both;
-}
-@keyframes feedIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
-.feed-item:hover { border-color: var(--rim2); }
-.feed-av {
-  width: 36px; height: 36px; border-radius: 50%;
-  font-size: 12px; font-weight: 800;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0; color: #fff;
-}
-.feed-info { flex: 1; min-width: 0; }
-.feed-name { font-size: 13px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.feed-meta { font-size: 11px; color: var(--muted); margin-top: 1px; }
-.feed-time { font-size: 10px; color: var(--muted); flex-shrink: 0; }
-.feed-badge {
-  font-size: 9px; font-weight: 800; padding: 3px 8px;
-  border-radius: 100px; text-transform: uppercase; letter-spacing: 0.5px;
-  flex-shrink: 0;
-}
-.feed-badge.green { background: rgba(15,168,106,0.15); color: var(--green); border: 1px solid rgba(15,168,106,0.25); }
-.feed-badge.amber { background: rgba(245,158,11,0.15); color: var(--amber); border: 1px solid rgba(245,158,11,0.25); }
-.feed-badge.purple { background: rgba(139,92,246,0.15); color: var(--purple); border: 1px solid rgba(139,92,246,0.25); }
-.feed-badge.cyan { background: var(--cyan-dim); color: var(--cyan); border: 1px solid var(--cyan-border); }
-
-/* ── Dept bars (volunteers) ── */
-.dept-list { display: flex; flex-direction: column; gap: 8px; }
-.dept-item { }
-.dept-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
-.dept-name { font-size: 12px; font-weight: 600; color: var(--text); }
-.dept-count { font-size: 12px; color: var(--muted); }
-.dept-bar-wrap { height: 5px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
-.dept-bar { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--cyan), #014d51); transition: width .6s cubic-bezier(0.22,0.68,0,1.2); }
-
-/* ── Family cards (CM) ── */
-.family-list { display: flex; flex-direction: column; gap: 8px; }
-.family-card {
-  background: var(--surface); border: 1px solid var(--rim);
-  border-radius: var(--r-sm); padding: 12px 14px;
-  display: flex; align-items: center; gap: 12px;
-  transition: border-color .2s;
-}
-.family-card.checked { border-color: rgba(15,168,106,0.3); }
-.family-av {
-  width: 38px; height: 38px; border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 13px; font-weight: 800; color: #fff; flex-shrink: 0;
-}
-.family-info { flex: 1; min-width: 0; }
-.family-name { font-size: 13px; font-weight: 700; color: var(--text); }
-.family-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
-.family-status { font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 100px; flex-shrink: 0; }
-.family-status.in { background: rgba(15,168,106,0.15); color: var(--green); }
-.family-status.out { background: rgba(255,255,255,0.06); color: var(--muted); }
-
-/* ── Birthday strip ── */
-.bday-strip { display: flex; gap: 8px; flex-wrap: wrap; }
-.bday-pill {
-  display: flex; align-items: center; gap: 8px;
-  background: var(--surface); border: 1px solid var(--rim);
-  border-radius: var(--r-sm); padding: 8px 12px;
-  font-size: 12px;
-}
-.bday-pill .name { font-weight: 700; color: var(--text); }
-.bday-pill .days { color: var(--amber); font-weight: 600; }
-
-/* ── Loading skeleton ── */
-.skel {
-  background: linear-gradient(90deg, var(--surface) 25%, var(--surface2) 50%, var(--surface) 75%);
-  background-size: 200% 100%;
-  animation: skelShimmer 1.4s ease infinite;
-  border-radius: var(--r-sm);
-}
-@keyframes skelShimmer { to { background-position: -200% 0; } }
-
-/* ── Error/empty states ── */
-.error-banner {
-  background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25);
-  border-radius: var(--r-sm); padding: 12px 16px;
-  color: #f87171; font-size: 13px; margin-bottom: 16px;
-}
-
-/* ── Two-col layout for wider screens ── */
-@media(min-width:900px){
-  .two-col { display: grid; grid-template-columns: 1fr 320px; gap: 14px; align-items: start; }
-}
-
-/* ── Mobile ── */
+/* Mobile */
 @media(max-width:700px){
-  .body { grid-template-columns: 1fr; }
-  .sidebar { display: none; }
-  .min-header { padding: 12px 14px 0; }
-  .scroll { padding: 12px 14px 80px; }
-  .stats-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
-  .stat-value { font-size: 26px; }
-  .tb-brand { display: none; }
+  .sidebar{ display:none; }
+  .stats{ grid-template-columns:1fr 1fr; }
+  .stat-val{ font-size:28px; }
+  .scroll{ padding:14px; }
+  .main-head{ padding:12px 14px 10px; }
+  .main-title{ font-size:16px; }
 }
 </style>
 </head>
+
 <body>
 <div class="layout">
 
-  <!-- Topbar -->
+  <!-- Top bar -->
   <header class="topbar">
-    <div class="tb-logo">
-      <img src="icon-192.png" alt="Bolt" onerror="this.style.display='none'">
-    </div>
+    <div class="tb-logo"><img src="icon-192.png" alt="B" onerror="this.style.display='none'"></div>
     <span class="tb-brand">BOLT <span>KIOSK</span></span>
-    <div class="tb-live">LIVE</div>
-    <div class="tb-spacer"></div>
-    <button class="tb-btn primary" onclick="loadAll()" id="refreshBtn">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+    <div class="live-dot">LIVE</div>
+    <div class="sp"></div>
+    <button class="btn accent" onclick="loadData()" id="refreshBtn">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
       Refresh
     </button>
-    <button class="tb-btn" onclick="goHome()">← Home</button>
-    <button class="tb-btn danger" onclick="signOut()">Sign Out</button>
+    <button class="btn" onclick="goHome()">← Home</button>
+    <button class="btn red" onclick="signOut()">Sign Out</button>
   </header>
 
-  <!-- Body -->
   <div class="body">
 
     <!-- Sidebar -->
-    <aside class="sidebar">
-      <div class="sidebar-inner">
-        <div class="min-label">Ministry</div>
-        <button class="min-btn active" id="btn-all" onclick="switchMin('all',this)">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-          All Events
+    <nav class="sidebar">
+      <div class="sidebar-scroll">
+        <div class="nav-section">Views</div>
+        <button class="nav-btn active" id="nav-overview" onclick="switchView('overview',this)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          Overview
         </button>
-        <button class="min-btn" id="btn-sunday" onclick="switchMin('sunday',this)">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-          Sunday Service
+        <button class="nav-btn" id="nav-checkins" onclick="switchView('checkins',this)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Today's Check-ins
         </button>
-        <button class="min-btn" id="btn-youth" onclick="switchMin('youth',this)">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4.5 13.5H12L11 22l8.5-11.5H13Z"/></svg>
-          Youth Night
-        </button>
-        <button class="min-btn" id="btn-youngadult" onclick="switchMin('youngadult',this)">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          Young Adults
-        </button>
-        <button class="min-btn" id="btn-children" onclick="switchMin('children',this)">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="6" r="3"/><path d="M9 21v-5a3 3 0 0 1 6 0v5"/><path d="M6 21l3-5M18 21l-3-5"/></svg>
-          Children's Ministry
-        </button>
-        <button class="min-btn" id="btn-volunteers" onclick="switchMin('volunteers',this)">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          Volunteers
-        </button>
-
-        <div class="min-divider"></div>
-        <div class="min-label">Groups</div>
-        <button class="min-btn" id="btn-smallgroups" onclick="switchMin('smallgroups',this)">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><circle cx="17" cy="11" r="2"/></svg>
-          Small Groups
+        <button class="nav-btn" id="nav-birthdays" onclick="switchView('birthdays',this)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Birthdays
         </button>
       </div>
       <div class="sidebar-footer">
-        <button class="min-btn" onclick="goHome()" style="color:var(--muted)">
+        <button class="nav-btn" onclick="goHome()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
           Home
         </button>
-        <button class="min-btn" onclick="signOut()" style="color:#ef4444">
+        <button class="nav-btn" style="color:#ef4444" onclick="signOut()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           Sign Out
         </button>
       </div>
-    </aside>
+    </nav>
 
-    <!-- Main -->
+    <!-- Main content -->
     <main class="main">
-      <div id="errorBanner" class="error-banner" style="display:none;margin:12px 20px 0"></div>
-
-      <!-- Ministry header -->
-      <div class="min-header">
-        <div class="min-header-icon" id="minIcon">📊</div>
+      <div class="main-head">
+        <div class="main-icon" id="viewIcon">📊</div>
         <div>
-          <h2 id="minTitle">All Events</h2>
-          <p id="minSub">Loading data…</p>
+          <div class="main-title" id="viewTitle">Overview</div>
+          <div class="main-sub" id="viewSub">Loading data…</div>
         </div>
-        <div class="min-header-right">
-          <span id="lastUpdated" style="font-size:11px;color:var(--muted)"></span>
-          <button class="refresh-btn" onclick="loadAll()" id="refreshBtnMain">
-            <svg id="refreshIcon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-            Refresh
-          </button>
+        <div class="main-right">
+          <span id="lastUpdate" style="font-size:11px;color:var(--muted)"></span>
         </div>
       </div>
 
-      <!-- Scrollable content -->
       <div class="scroll" id="mainScroll">
-        <!-- Stats -->
-        <div class="stats-grid" id="statsGrid">
-          <!-- Populated by JS -->
-        </div>
+        <div class="err-banner" id="errBanner"></div>
 
-        <!-- Two-column layout -->
-        <div class="two-col">
-          <!-- LEFT: Live Feed -->
+        <!-- OVERVIEW view -->
+        <div id="view-overview">
+          <div class="stats" id="statsGrid"></div>
           <div class="section">
-            <div class="section-head">
-              <span class="section-title">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
-                Live Feed
-              </span>
-              <span class="badge" id="feedBadge">0</span>
+            <div class="sec-head">
+              <span class="sec-title">Today's Live Feed</span>
+              <span class="badge" id="feedCount">0</span>
             </div>
-            <div id="feedList" class="feed">
-              <div class="feed-empty">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
-                <div>No check-ins yet today</div>
-              </div>
+            <div class="feed" id="feedList">
+              <div class="skel" style="height:56px"></div>
+              <div class="skel" style="height:56px;animation-delay:.1s"></div>
+              <div class="skel" style="height:56px;animation-delay:.2s"></div>
             </div>
           </div>
-
-          <!-- RIGHT: Context panel -->
-          <div id="rightPanel"></div>
         </div>
 
-        <!-- Birthdays -->
-        <div class="section" id="bdaySection" style="display:none">
-          <div class="section-head">
-            <span class="section-title">🎂 Upcoming Birthdays</span>
-            <span class="badge" id="bdayBadge">0</span>
+        <!-- CHECKINS view -->
+        <div id="view-checkins" style="display:none">
+          <div class="section">
+            <div class="sec-head">
+              <span class="sec-title">All Check-ins Today</span>
+              <span class="badge" id="ciCount">0</span>
+            </div>
+            <div class="feed" id="ciList"></div>
           </div>
-          <div id="bdayList" class="bday-strip"></div>
         </div>
+
+        <!-- BIRTHDAYS view -->
+        <div id="view-birthdays" style="display:none">
+          <div class="section">
+            <div class="sec-head">
+              <span class="sec-title">🎂 Upcoming Birthdays — Next 30 Days</span>
+              <span class="badge" id="bdayCount">0</span>
+            </div>
+            <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Send a birthday message directly to their email or phone number on file.</p>
+            <div class="bdays" id="bdayList"></div>
+          </div>
+        </div>
+
       </div>
     </main>
+
   </div>
 </div>
 
+<div class="toast" id="toast"></div>
+
 <script>
-/* ═══════════════════════════════════════
-   BOLT KIOSK DASHBOARD — CLEAN REBUILD
-   Simple: load data → render → done
-═══════════════════════════════════════ */
+/* ════════════════════════════════════════════════
+   BOLT KIOSK DASHBOARD — Simple & Fast
+   3 views: Overview · Check-ins · Birthdays
+   Data from: getDashboardData + getAllStudentsAPI
+════════════════════════════════════════════════ */
 
-var _state = {
-  ministry: 'all',
-  dash: null,
-  vols: null,
-  cm: null,
-  loading: false,
-};
+var _state = { dash: null, students: [], view: 'overview' };
+var _sent = {}; // track sent birthday messages
 
-var MINISTRY_CONFIG = {
-  all:        { label:'All Events',          icon:'📊', sub:'All ministry check-ins today', color:'var(--cyan)' },
-  sunday:     { label:'Sunday Service',      icon:'☀️', sub:'Members & guests checked in',  color:'var(--amber)' },
-  youth:      { label:'Youth Night',         icon:'⚡', sub:'Students checked in today',    color:'#f472b6' },
-  youngadult: { label:'Young Adult Ministry',icon:'🔥', sub:'Young adults present today',   color:'var(--amber)' },
-  children:   { label:"Children's Ministry", icon:'👨‍👩‍👧', sub:'Families registered & checked in', color:'var(--green)' },
-  volunteers: { label:'Volunteers',          icon:'🛡️', sub:'Volunteers on duty today',     color:'var(--purple)' },
-  smallgroups:{ label:'Small Groups',        icon:'👥', sub:'Group members present',        color:'var(--cyan)' },
-};
-
-// ── Ministry keywords for filtering checkins ──
-var MINISTRY_KEYWORDS = {
-  sunday:     ['sunday service','sunday'],
-  youth:      ['youth night','youth'],
-  youngadult: ['young adult','youngadult'],
-  children:   ["children's ministry","children"],
-  smallgroups:['small groups','small group'],
-  volunteers: [], // volunteers have their own data
-};
-
-// ── Switch ministry ──
-function switchMin(key, btn) {
-  _state.ministry = key;
-  document.querySelectorAll('.min-btn').forEach(function(b){ b.classList.remove('active'); });
+/* ── Switch view ── */
+function switchView(key, btn) {
+  _state.view = key;
+  document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('active'); });
   if(btn) btn.classList.add('active');
-  var cfg = MINISTRY_CONFIG[key] || MINISTRY_CONFIG.all;
-  document.getElementById('minIcon').textContent = cfg.icon;
-  document.getElementById('minTitle').textContent = cfg.label;
-  document.getElementById('minSub').textContent = cfg.sub;
+  ['overview','checkins','birthdays'].forEach(function(v){
+    document.getElementById('view-'+v).style.display = v===key ? 'block' : 'none';
+  });
+  var cfg = {
+    overview:  { icon:'📊', title:'Overview',            sub:'Today\'s attendance at a glance' },
+    checkins:  { icon:'✅', title:'Today\'s Check-ins',  sub:'Everyone who checked in today'   },
+    birthdays: { icon:'🎂', title:'Birthdays',            sub:'Next 30 days — tap to send message' },
+  };
+  var c = cfg[key] || cfg.overview;
+  document.getElementById('viewIcon').textContent  = c.icon;
+  document.getElementById('viewTitle').textContent = c.title;
+  document.getElementById('viewSub').textContent   = c.sub;
   render();
 }
 
-// ── Load all data ──
-function loadAll() {
-  if(_state.loading) return;
-  _state.loading = true;
-  setRefreshSpinning(true);
-  document.getElementById('minSub').textContent = 'Loading…';
+/* ── Load data from backend ── */
+function loadData() {
+  var btn = document.getElementById('refreshBtn');
+  if(btn){ btn.disabled=true; btn.textContent='Loading…'; }
 
   withToken(function(tok) {
-    // Load general dashboard data + volunteer data + CM data in parallel
     var done = 0;
-    var total = 3;
-    function check(){ done++; if(done>=total){ _state.loading=false; setRefreshSpinning(false); render(); } }
+    function check(){ done++; if(done>=2){ renderAll(); if(btn){btn.disabled=false;btn.textContent='Refresh';} var now=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); document.getElementById('lastUpdate').textContent='Updated '+now; document.getElementById('viewSub').textContent=(cfg()[_state.view]||{}).sub||''; } }
+    function cfg(){ return {overview:{sub:'Today\'s attendance at a glance'},checkins:{sub:'Everyone who checked in today'},birthdays:{sub:'Next 30 days — tap to send message'}}; }
 
-    // 1. General dashboard (students, check-ins)
+    // 1. Dashboard data (check-ins, counts)
     google.script.run
       .withSuccessHandler(function(d){
         _state.dash = d || {};
         check();
       })
       .withFailureHandler(function(e){
-        showError('Failed to load check-in data: '+String(e));
+        showErr('Could not load check-in data. Check your connection.');
         _state.dash = {};
         check();
       })
       .gasCall(tok, 'getDashboardData');
 
-    // 2. Volunteer dashboard
+    // 2. All students (for birthday lookups)
     google.script.run
       .withSuccessHandler(function(d){
-        _state.vols = d || {};
+        _state.students = Array.isArray(d) ? d : (d||[]);
         check();
       })
       .withFailureHandler(function(e){
-        _state.vols = {};
+        _state.students = [];
         check();
       })
-      .gasCall(tok, 'getVolunteerDashboardAPI');
-
-    // 3. CM dashboard
-    google.script.run
-      .withSuccessHandler(function(d){
-        _state.cm = d || {};
-        check();
-      })
-      .withFailureHandler(function(e){
-        _state.cm = {};
-        check();
-      })
-      .gasCall(tok, 'getCMDashboardData');
+      .gasCall(tok, 'getAllStudentsAPI');
   });
 }
 
-// ── Render based on current ministry ──
+/* ── Render all views ── */
+function renderAll() {
+  renderStats();
+  renderFeed();
+  renderCheckins();
+  renderBirthdays();
+}
 function render() {
-  var key = _state.ministry;
-  var now = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-  document.getElementById('lastUpdated').textContent = 'Updated ' + now;
-  document.getElementById('minSub').textContent = (MINISTRY_CONFIG[key]||MINISTRY_CONFIG.all).sub;
-
-  if(key === 'volunteers') {
-    renderVolunteers();
-  } else if(key === 'children') {
-    renderChildren();
-  } else {
-    renderGeneral(key);
-  }
+  renderStats();
+  renderFeed();
+  renderCheckins();
+  renderBirthdays();
 }
 
-// ── Render general (all events, sunday, youth, youngadult, smallgroups) ──
-function renderGeneral(key) {
-  var dash = _state.dash || {};
-  var allCheckins = dash.checkins || [];
+/* ── Stat cards ── */
+function renderStats() {
+  var d = _state.dash || {};
+  var checkins = d.checkins || [];
+  var members  = checkins.filter(function(c){ return c.role!=='leader'&&c.type!=='leader'; });
+  var leaders  = checkins.filter(function(c){ return c.role==='leader'||c.type==='leader'; });
+  var newToday = members.filter(function(c){ return c.firstTime||c.isNew||c.neverSeenBefore; });
+  var total    = _state.students.length;
+  var bdays    = getBirthdaysIn(30).length;
 
-  // Filter checkins by ministry
-  var checkins = allCheckins;
-  if(key !== 'all' && MINISTRY_KEYWORDS[key]) {
-    var kws = MINISTRY_KEYWORDS[key];
-    checkins = allCheckins.filter(function(c){
-      var ev = String(c.event||c.eventName||'').toLowerCase();
-      return kws.some(function(k){ return ev.includes(k); });
-    });
-  }
-
-  // ── For youth/smallgroups — show ONLY checked-in count (no total registered) ──
-  var showCheckedOnly = (key==='youth'||key==='youngadult'||key==='smallgroups'||key==='sunday');
-
-  var stats;
-  if(showCheckedOnly) {
-    var leaders = checkins.filter(function(c){ return c.role==='leader'||c.type==='leader'; });
-    var members = checkins.filter(function(c){ return c.role!=='leader'&&c.type!=='leader'; });
-    var newToday = checkins.filter(function(c){ return c.firstTime||c.isNew||c.neverSeenBefore; });
-    stats = [
-      { label:'Checked In', value: members.length, color:'cyan', icon:'checkin' },
-      { label:'Leaders',    value: leaders.length, color:'purple', icon:'leader' },
-      { label:'First Timers', value: newToday.length, color:'amber', icon:'star' },
-      { label:'At-Risk',    value: dash.atRisk||0, color:'red', icon:'risk' },
-    ];
-  } else {
-    // All events — show total registered + checked in
-    var leaders2 = allCheckins.filter(function(c){ return c.role==='leader'||c.type==='leader'; });
-    var newToday2 = allCheckins.filter(function(c){ return c.firstTime||c.isNew||c.neverSeenBefore; });
-    stats = [
-      { label:'Checked In',  value: allCheckins.filter(function(c){return c.role!=='leader'&&c.type!=='leader';}).length, color:'cyan', icon:'checkin' },
-      { label:'Registered',  value: dash.totalStudents||0, color:'green', icon:'people' },
-      { label:'Leaders',     value: leaders2.length, color:'purple', icon:'leader' },
-      { label:'First Timers',value: newToday2.length, color:'amber', icon:'star' },
-      { label:'At-Risk',     value: dash.atRisk||0, color:'red', icon:'risk' },
-    ];
-  }
-
-  renderStats(stats);
-  renderFeed(checkins, key);
-  renderBirthdays(dash.birthdays||[]);
-  document.getElementById('rightPanel').innerHTML = '';
-}
-
-// ── Render volunteers ──
-function renderVolunteers() {
-  var vols = _state.vols || {};
-  var depts = vols.departments || {};
-  var allVols = vols.totalVolunteers || 0;
-  var checkedIn = vols.checkedInToday || 0;
-  var checkins = vols.checkins || [];
-
-  var stats = [
-    { label:'Checked In',  value: checkedIn, color:'cyan', icon:'checkin' },
-    { label:'Total Volunteers', value: allVols, color:'green', icon:'people' },
-    { label:'Departments', value: Object.keys(depts).length, color:'purple', icon:'dept' },
-    { label:'On Duty',     value: checkedIn, color:'amber', icon:'shield' },
+  var cards = [
+    { label:'Checked In Today', val:members.length,  sub:'Members present',    col:'c' },
+    { label:'Total Registered', val:total,            sub:'In the database',    col:'g' },
+    { label:'Leaders Today',    val:leaders.length,   sub:'On duty',            col:'p' },
+    { label:'First Timers',     val:newToday.length,  sub:'New today',          col:'a' },
+    { label:'Upcoming Birthdays',val:bdays,           sub:'Next 30 days',       col:'r' },
   ];
-  renderStats(stats);
-  renderFeed(checkins, 'volunteers');
-  renderBirthdays([]);
 
-  // Right panel: dept breakdown
-  var deptNames = Object.keys(depts);
-  if(deptNames.length > 0) {
-    var maxTotal = Math.max.apply(null, deptNames.map(function(d){ return depts[d].total||0; }));
-    var html = '<div class="section"><div class="section-head"><span class="section-title">Departments</span></div><div class="dept-list">';
-    deptNames.forEach(function(d){
-      var info = depts[d];
-      var pct = maxTotal > 0 ? Math.round((info.checkedIn||0)/maxTotal*100) : 0;
-      html += '<div class="dept-item">';
-      html += '<div class="dept-row"><span class="dept-name">'+esc(d)+'</span><span class="dept-count">'+( info.checkedIn||0)+'/'+( info.total||0)+'</span></div>';
-      html += '<div class="dept-bar-wrap"><div class="dept-bar" style="width:'+pct+'%"></div></div>';
-      html += '</div>';
-    });
-    html += '</div></div>';
-    document.getElementById('rightPanel').innerHTML = html;
-  } else {
-    document.getElementById('rightPanel').innerHTML = '';
-  }
-}
-
-// ── Render Children's Ministry ──
-function renderChildren() {
-  var cm = _state.cm || {};
-  var families = cm.families || [];
-  var checkedIn = cm.checkedInToday || 0;
-  var totalChildren = cm.totalChildren || 0;
-  var totalFamilies = cm.totalFamilies || 0;
-  var firstTimers = cm.firstTimersToday || 0;
-  var checkins = cm.checkins || [];
-
-  var stats = [
-    { label:'Checked In',  value: checkedIn,    color:'cyan',   icon:'checkin' },
-    { label:'Children',    value: totalChildren, color:'green',  icon:'people'  },
-    { label:'Families',    value: totalFamilies, color:'amber',  icon:'family'  },
-    { label:'First Timers',value: firstTimers,   color:'purple', icon:'star'    },
-  ];
-  renderStats(stats);
-  renderFeed(checkins, 'children');
-  renderBirthdays(cm.birthdays||[]);
-
-  // Right panel: family list
-  if(families.length > 0) {
-    var html = '<div class="section"><div class="section-head"><span class="section-title">Families</span><span class="badge">'+families.length+'</span></div><div class="family-list">';
-    var today = new Date().toDateString();
-    families.forEach(function(f){
-      var isIn = f.children && f.children.some(function(c){
-        return c.lastCheckin && new Date(c.lastCheckin).toDateString()===today;
-      });
-      var initials = (f.parentName||f.name||'?').split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
-      var col = '#' + Math.abs(hash(f.id||f.parentName||'x')).toString(16).slice(0,6).padStart(6,'0');
-      html += '<div class="family-card'+(isIn?' checked':'')+'">'+
-        '<div class="family-av" style="background:'+col+'">'+initials+'</div>'+
-        '<div class="family-info"><div class="family-name">'+esc(f.parentName||f.name||'Family')+'</div>'+
-        '<div class="family-meta">'+((f.children||[]).length)+' child'+((f.children||[]).length!==1?'ren':'')+(f.phone?' · '+esc(f.phone):'')+'</div></div>'+
-        '<div class="family-status '+(isIn?'in':'out')+'">'+(isIn?'✓ In':'Pending')+'</div>'+
-        '</div>';
-    });
-    html += '</div></div>';
-    document.getElementById('rightPanel').innerHTML = html;
-  } else {
-    document.getElementById('rightPanel').innerHTML = '';
-  }
-}
-
-// ── Render stat cards ──
-function renderStats(stats) {
-  var html = '';
-  var icons = {
-    checkin: '<polyline points="20 6 9 17 4 12"/>',
-    people:  '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
-    leader:  '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
-    star:    '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
-    risk:    '<path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/>',
-    dept:    '<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6" stroke-width="2.5"/><line x1="3" y1="12" x2="3.01" y2="12" stroke-width="2.5"/><line x1="3" y1="18" x2="3.01" y2="18" stroke-width="2.5"/>',
-    shield:  '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
-    family:  '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><circle cx="17" cy="11" r="2"/>',
-  };
-  stats.forEach(function(s, i){
-    var iconPath = icons[s.icon] || icons.people;
-    html += '<div class="stat-card '+s.color+'" style="animation:feedIn .3s ease '+(i*0.06)+'s both">'+
-      '<div class="stat-label">'+s.label+'</div>'+
-      '<div class="stat-value">'+s.value+'</div>'+
-      '<div class="stat-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">'+iconPath+'</svg></div>'+
+  document.getElementById('statsGrid').innerHTML = cards.map(function(c, i){
+    return '<div class="stat '+c.col+'" style="animation:fadeIn .3s ease '+(i*0.06)+'s both">'+
+      '<div class="stat-lbl">'+c.label+'</div>'+
+      '<div class="stat-val">'+c.val+'</div>'+
+      '<div class="stat-sub">'+c.sub+'</div>'+
       '</div>';
-  });
-  document.getElementById('statsGrid').innerHTML = html;
+  }).join('');
 }
 
-// ── Render live feed ──
-function renderFeed(checkins, key) {
+/* ── Live feed (overview) ── */
+function renderFeed() {
+  var checkins = (_state.dash||{}).checkins || [];
   var el = document.getElementById('feedList');
-  document.getElementById('feedBadge').textContent = checkins.length;
+  var countEl = document.getElementById('feedCount');
+  if(countEl) countEl.textContent = checkins.length;
 
-  if(!checkins.length) {
-    var label = key==='children'?'families':key==='volunteers'?'volunteers':'attendees';
-    el.innerHTML = '<div class="feed-empty">'+
-      '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>'+
-      '<div>No '+label+' checked in yet today</div></div>';
+  if(!checkins.length){
+    el.innerHTML = '<div class="empty"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>No check-ins yet today</span></div>';
     return;
   }
 
-  var colors = ['#0ea5e9','#8b5cf6','#f59e0b','#ec4899','#0fa86a','#f97316','#14b8a6','#6366f1'];
-  var html = '';
-  checkins.slice().reverse().forEach(function(c, i){
-    var name = c.fullName||c.name||(c.firstName+' '+(c.lastName||'')).trim()||'Unknown';
+  var colors = ['#0ea5e9','#8b5cf6','#f59e0b','#ec4899','#0fa86a','#f97316','#14b8a6'];
+  el.innerHTML = checkins.slice().reverse().slice(0,50).map(function(c, i){
+    var name = c.fullName||c.name||((c.firstName||'')+' '+(c.lastName||'')).trim()||'Unknown';
     var initials = name.split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase();
-    var col = colors[Math.abs(hash(name)) % colors.length];
-    var time = '';
-    try {
-      var d = new Date(c.timestamp||c.time||c.checkinTime||'');
-      if(!isNaN(d)) time = d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-    } catch(e){}
+    var col = colors[Math.abs(hashStr(name))%colors.length];
+    var t = '';
+    try{ var d=new Date(c.timestamp||c.time||c.checkinTime||''); if(!isNaN(d)) t=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); }catch(e){}
     var isNew = c.firstTime||c.isNew||c.neverSeenBefore;
     var isLeader = c.role==='leader'||c.type==='leader';
-    var event = c.event||c.eventName||'';
-    var badgeHtml = isNew ? '<span class="feed-badge amber">New</span>' :
-                   isLeader ? '<span class="feed-badge purple">Leader</span>' :
-                   key==='children' ? '<span class="feed-badge cyan">Child</span>' : '';
-
-    html += '<div class="feed-item" style="animation-delay:'+(i*0.03)+'s">'+
-      '<div class="feed-av" style="background:'+col+'">'+initials+'</div>'+
-      '<div class="feed-info">'+
-        '<div class="feed-name">'+esc(name)+'</div>'+
-        '<div class="feed-meta">'+(event?esc(event):'')+(c.department?' · '+esc(c.department):'')+'</div>'+
-      '</div>'+
-      badgeHtml+
-      (time ? '<span class="feed-time">'+time+'</span>' : '')+
+    return '<div class="feed-item" style="animation-delay:'+(i*0.03)+'s">'+
+      '<div class="av" style="background:'+col+'">'+initials+'</div>'+
+      '<div class="fi-info"><div class="fi-name">'+esc(name)+'</div><div class="fi-meta">'+(c.event||c.eventName||'')+(c.department?' · '+c.department:'')+'</div></div>'+
+      (isNew?'<span class="tag new">New</span>':isLeader?'<span class="tag leader">Leader</span>':'')+
+      (t?'<span class="fi-time">'+t+'</span>':'')+
       '</div>';
-  });
-
-  el.innerHTML = html;
+  }).join('');
 }
 
-// ── Render birthdays ──
-function renderBirthdays(birthdays) {
-  var section = document.getElementById('bdaySection');
-  var list = document.getElementById('bdayList');
-  document.getElementById('bdayBadge').textContent = birthdays.length;
-
-  if(!birthdays.length) { section.style.display='none'; return; }
-  section.style.display = 'block';
-
-  var html = '';
-  birthdays.slice(0,8).forEach(function(b){
-    var days = b.daysUntil||0;
-    var label = days===0?'Today!':days===1?'Tomorrow':'In '+days+'d';
-    html += '<div class="bday-pill">🎂 <span class="name">'+esc(b.fullName||b.name||'')+'</span><span class="days">'+label+'</span></div>';
-  });
-  list.innerHTML = html;
-}
-
-// ── Utilities ──
-function esc(s){ var d=document.createElement('div');d.textContent=String(s||'');return d.innerHTML; }
-function hash(s){ var h=0;for(var i=0;i<s.length;i++){h=Math.imul(31,h)+s.charCodeAt(i)|0;}return h; }
-
-function setRefreshSpinning(on) {
-  var btn = document.getElementById('refreshBtn');
-  var icon = document.getElementById('refreshIcon');
-  if(btn) btn.disabled = on;
-  if(icon) { if(on){ icon.style.animation='spin .7s linear infinite'; }else{ icon.style.animation=''; } }
-}
-
-function showError(msg) {
-  var el = document.getElementById('errorBanner');
+/* ── Full check-ins list ── */
+function renderCheckins() {
+  var checkins = (_state.dash||{}).checkins || [];
+  var el = document.getElementById('ciList');
+  var countEl = document.getElementById('ciCount');
   if(!el) return;
-  if(msg){ el.textContent = msg; el.style.display='block'; }
-  else { el.style.display='none'; }
-  if(msg) setTimeout(function(){ el.style.display='none'; }, 6000);
+  if(countEl) countEl.textContent = checkins.length;
+
+  if(!checkins.length){
+    el.innerHTML = '<div class="empty"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>No check-ins yet today</span></div>';
+    return;
+  }
+  // Reuse feed render
+  var tmp = document.createElement('div');
+  tmp.innerHTML = document.getElementById('feedList').innerHTML;
+  el.innerHTML = tmp.innerHTML;
 }
 
-function goHome() {
-  try { if(window.parent && window.parent.showView) window.parent.showView('vHome'); } catch(e){}
-  try { if(typeof showView!=='undefined') showView('vHome'); } catch(e){}
-}
-
-function signOut() {
-  try { if(window.parent && window.parent.AUTH) window.parent.AUTH.logout(); } catch(e){}
-  try { if(typeof AUTH!=='undefined') AUTH.logout(); } catch(e){}
-}
-
-// ── Auto-refresh every 30s ──
-setInterval(function(){ if(!_state.loading) loadAll(); }, 30000);
-
-// ── Init ──
-window.addEventListener('load', function(){
-  withToken(function(){
-    loadAll();
+/* ── Birthday helpers ── */
+function getBirthdaysIn(days) {
+  var today = new Date();
+  today.setHours(0,0,0,0);
+  var out = [];
+  _state.students.forEach(function(s){
+    var bday = s.birthday || s.dob || '';
+    if(!bday) return;
+    try {
+      var d = new Date(bday);
+      if(isNaN(d)) return;
+      var thisYear = new Date(today.getFullYear(), d.getMonth(), d.getDate());
+      var diff = Math.floor((thisYear - today) / 86400000);
+      if(diff < 0) thisYear = new Date(today.getFullYear()+1, d.getMonth(), d.getDate());
+      diff = Math.floor((thisYear - today) / 86400000);
+      if(diff <= days) {
+        var age = today.getFullYear() - d.getFullYear();
+        out.push({ student:s, daysUntil:diff, age:age, date:thisYear });
+      }
+    } catch(e){}
   });
+  return out.sort(function(a,b){ return a.daysUntil-b.daysUntil; });
+}
+
+/* ── Render birthdays ── */
+function renderBirthdays() {
+  var bdays = getBirthdaysIn(30);
+  var el = document.getElementById('bdayList');
+  var countEl = document.getElementById('bdayCount');
+  if(!el) return;
+  if(countEl) countEl.textContent = bdays.length;
+
+  if(!bdays.length){
+    el.innerHTML = '<div class="empty"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>No birthdays in the next 30 days</span></div>';
+    return;
+  }
+
+  el.innerHTML = bdays.map(function(b){
+    var s = b.student;
+    var name = ((s.firstName||'')+' '+(s.lastName||'')).trim() || s.name || 'Unknown';
+    var key = s.id || name;
+    var isToday = b.daysUntil === 0;
+    var whenText = isToday ? '🎉 Today!' : b.daysUntil===1 ? 'Tomorrow' : 'In '+b.daysUntil+' days';
+    var colors = ['#0ea5e9','#8b5cf6','#f59e0b','#ec4899','#0fa86a'];
+    var col = colors[Math.abs(hashStr(name))%colors.length];
+    var initials = name.split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase();
+    var hasContact = s.email || s.phone;
+    var sentAlready = _sent[key];
+    return '<div class="bday'+(isToday?' today':'')+'">'+
+      '<div class="av" style="background:'+col+';width:40px;height:40px;border-radius:10px;font-size:13px">'+initials+'</div>'+
+      '<div class="bday-info">'+
+        '<div class="bday-name">'+esc(name)+'</div>'+
+        '<div class="bday-detail">'+
+          (b.age ? 'Turning '+b.age+' · ' : '')+
+          (s.email ? '📧 '+esc(s.email) : s.phone ? '📱 '+esc(s.phone) : '<span style="color:var(--muted);font-style:italic">No contact info</span>')+
+        '</div>'+
+      '</div>'+
+      '<div class="bday-when '+(isToday?'today':'soon')+'">'+whenText+'</div>'+
+      (hasContact
+        ? '<button class="send-btn'+(sentAlready?' sent':'')+'" id="bday-btn-'+encodeURIComponent(key)+'" onclick="sendBday(\''+encodeURIComponent(key)+'\',\''+encodeURIComponent(name)+'\',\''+encodeURIComponent(s.email||'')+'\',\''+encodeURIComponent(s.phone||'')+'\','+b.daysUntil+')" '+(sentAlready?'disabled':'')+'>'+
+            (sentAlready ? '✓ Sent' : '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Send Wishes')+
+          '</button>'
+        : '<span style="font-size:10px;color:var(--muted);padding:0 8px">No contact</span>')+
+      '</div>';
+  }).join('');
+}
+
+/* ── Send birthday message ── */
+function sendBday(keyEnc, nameEnc, emailEnc, phoneEnc, daysUntil) {
+  var key   = decodeURIComponent(keyEnc);
+  var name  = decodeURIComponent(nameEnc);
+  var email = decodeURIComponent(emailEnc);
+  var phone = decodeURIComponent(phoneEnc);
+
+  var btn = document.getElementById('bday-btn-'+keyEnc);
+  if(btn){ btn.disabled=true; btn.textContent='Sending…'; }
+
+  var isToday = daysUntil === 0;
+  var firstName = name.split(' ')[0];
+
+  var subject = isToday
+    ? 'Happy Birthday, ' + firstName + '! 🎉'
+    : 'Your birthday is coming up, ' + firstName + '! 🎂';
+
+  var message = isToday
+    ? 'Happy Birthday, ' + firstName + '!\n\nWishing you a wonderful day filled with joy and blessings. We are so glad you are part of our community!\n\nWith love,\nThe Ministry Team'
+    : 'Hi ' + firstName + ',\n\nYour birthday is just around the corner! We wanted to wish you an early Happy Birthday and let you know you are appreciated.\n\nWith love,\nThe Ministry Team';
+
+  withToken(function(tok) {
+    google.script.run
+      .withSuccessHandler(function(r){
+        if(r && r.success){
+          _sent[key] = true;
+          if(btn){ btn.className='send-btn sent'; btn.disabled=true; btn.textContent='✓ Sent'; }
+          showToast('Birthday message sent to '+firstName+'!','ok');
+        } else {
+          if(btn){ btn.disabled=false; btn.textContent='Send Wishes'; }
+          showToast('Could not send: '+(r&&r.error?r.error:'Unknown error'),'err');
+        }
+      })
+      .withFailureHandler(function(e){
+        if(btn){ btn.disabled=false; btn.textContent='Send Wishes'; }
+        showToast('Send failed: '+String(e),'err');
+      })
+      .gasCall(tok, 'sendBirthdayMessageAPI', email, phone, subject, message, name);
+  });
+}
+
+/* ── Utilities ── */
+function esc(s){ var d=document.createElement('div');d.textContent=String(s||'');return d.innerHTML; }
+function hashStr(s){ var h=0;for(var i=0;i<s.length;i++){h=Math.imul(31,h)+s.charCodeAt(i)|0;}return h; }
+
+var _toastTimer;
+function showToast(msg, type) {
+  var el = document.getElementById('toast');
+  if(!el) return;
+  el.textContent = msg;
+  el.className = 'toast show '+(type||'');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(function(){ el.classList.remove('show'); }, 3000);
+}
+function showErr(msg) {
+  var el = document.getElementById('errBanner');
+  if(!el) return;
+  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
+}
+
+function goHome(){
+  try{ if(window.parent&&window.parent.showView) window.parent.showView('vHome'); }catch(e){}
+  try{ if(typeof showView!=='undefined') showView('vHome'); }catch(e){}
+}
+function signOut(){
+  try{ if(window.parent&&window.parent.AUTH) window.parent.AUTH.logout(); }catch(e){}
+  try{ if(typeof AUTH!=='undefined') AUTH.logout(); }catch(e){}
+}
+
+/* ── Auto-refresh every 30s ── */
+setInterval(function(){ loadData(); }, 30000);
+
+/* ── Init ── */
+window.addEventListener('load', function(){
+  switchView('overview', document.getElementById('nav-overview'));
+  withToken(function(){ loadData(); });
 });
 </script>
 </body>
