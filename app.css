@@ -1554,3 +1554,71 @@ button .bk-icon, a .bk-icon { margin-right:4px; }
   margin: 0 auto !important;
   width: 100% !important;
 }
+
+
+/* ═══════════════════════════════════════════════════════
+   FORM MOBILE FIX — Complete override for phones
+   Fixes stretched forms, input sizing, modal layout
+═══════════════════════════════════════════════════════ */
+@media(max-width:600px){
+
+  /* ── All modals: bottom sheet, full width, scrollable ── */
+  .modal {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+  .modal-sheet, .sheet {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 88vh !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    border-radius: 20px 20px 0 0 !important;
+    padding: 16px 16px calc(env(safe-area-inset-bottom,16px) + 20px) !important;
+    box-sizing: border-box !important;
+  }
+
+  /* ── Form grids: force single column ── */
+  .fg-grid, .form-grid, [class*="fg-grid"] {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    width: 100% !important;
+  }
+  .fg, .fg.full, [class*="fg-"] {
+    width: 100% !important;
+    grid-column: 1 !important;
+  }
+
+  /* ── All inputs: prevent iOS auto-zoom (must be 16px+) ── */
+  input, select, textarea,
+  .fg-inp, input[type="text"], input[type="email"],
+  input[type="tel"], input[type="date"], input[type="time"],
+  input[type="password"], input[type="number"] {
+    font-size: 16px !important;
+    padding: 12px 14px !important;
+    border-radius: 12px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    -webkit-appearance: none !important;
+  }
+
+  /* ── Action buttons in forms ── */
+  .fg-actions, .modal-actions, .action-row {
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+  .fg-actions button, .modal-actions button {
+    width: 100% !important;
+    min-height: 48px !important;
+    font-size: 15px !important;
+  }
+
+  /* ── Schedule form specific ── */
+  #schedEventModal .modal-sheet,
+  #newStudentModal .modal-sheet,
+  #editStudentModal .modal-sheet {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}

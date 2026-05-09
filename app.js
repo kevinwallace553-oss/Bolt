@@ -1218,22 +1218,35 @@ const DASH = {
     if(!silent) showSaving('Loading…');
     const ministry = this._ministry || 'all';
 
-    // Wait for SESSION token — retry up to 8 times (4 seconds)
+    // Wait for SESSION token — retry up to 10 times (5 seconds)
     let tok = SESSION?.token || '';
-    for(let t=0; !tok && t<8; t++){
+    for(let t=0; !tok && t<10; t++){
       await new Promise(r=>setTimeout(r,500));
       tok = SESSION?.token || '';
-      // Also try parent window
-      try{ if(!tok && window.parent?.SESSION?.token) { tok=window.parent.SESSION.token; SESSION.token=tok; SESSION.orgId=window.parent.SESSION.orgId||''; } }catch(e){}
+      try{ 
+        if(!tok && window.parent?.SESSION?.token){ 
+          tok=window.parent.SESSION.token; 
+          SESSION.token=tok; 
+          SESSION.orgId=window.parent.SESSION.orgId||''; 
+        }
+        if(!tok){
+          var ss = window.sessionStorage;
+          if(ss && ss.getItem('bk_token')){ tok=ss.getItem('bk_token'); SESSION.token=tok; SESSION.orgId=ss.getItem('bk_orgId')||''; }
+        }
+      }catch(e){}
     }
+
     if(!tok){
-      if(!silent) { toast('Sign in to view dashboard','err'); hideSaving(); }
+      console.warn('[DASH] No token after 5s — showing sign-in prompt');
+      if(!silent){ toast('Please sign in to view dashboard','err'); hideSaving(); }
       return;
     }
+    console.log('[DASH] refresh starting, ministry='+ministry+', orgId='+SESSION.orgId);
 
     try {
       if(ministry === 'children') {
         const cm = await API.getCMDash();
+        console.log('[DASH] CM data:', cm);
         if(cm?.code==='AUTH_REQUIRED'){ if(!silent) toast('Please sign in again','err'); hideSaving(); return; }
         this._rawDash = cm; this._rawCheckins = cm?.checkins||[];
         this.renderCMStats(cm); this.renderBirthdays(cm?.birthdays||[]);
@@ -1241,6 +1254,7 @@ const DASH = {
       }
 
       const dash = await API.getDashboard();
+      console.log('[DASH] dashboard data:', JSON.stringify(dash).slice(0,200));
       if(dash?.code==='AUTH_REQUIRED'){ if(!silent) toast('Please sign in again','err'); hideSaving(); return; }
 
       this._rawDash = dash;
@@ -1248,13 +1262,13 @@ const DASH = {
       this.applyFilters();
       this.renderBirthdays(dash?.birthdays || []);
 
-      try{ const wk=await API.getWeeklyReport(0); this.renderWeek(wk); }catch(e){ console.warn('Weekly report failed:',e); }
-      try{ const ar=await API.getAtRisk(); this.renderAtRisk(ar); }catch(e){ console.warn('At-risk failed:',e); }
+      try{ const wk=await API.getWeeklyReport(0); this.renderWeek(wk); }catch(e){ console.warn('[DASH] Weekly report:',e); }
+      try{ const ar=await API.getAtRisk(); this.renderAtRisk(ar); }catch(e){ console.warn('[DASH] At-risk:',e); }
 
       if(ministry==='volunteers') this.loadVolunteerDash();
 
     } catch(e){
-      console.error('DASH.refresh error:', e);
+      console.error('[DASH] refresh error:', e);
       if(!silent) toast('Dashboard refresh failed','err');
     }
     if(!silent) hideSaving();
