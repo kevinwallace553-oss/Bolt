@@ -7,20 +7,38 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
 <script>
-// Token injected server-side by GAS template — no URL parsing needed
-var SESSION = {
-  token: '<?= injectedToken ?>',
-  orgId: '<?= injectedOrgId ?>'
-};
-// Also try sessionStorage as fallback
+// Token from GAS template (server-side injection)
+var _tmplToken = '<?= injectedToken ?>';
+var _tmplOrgId = '<?= injectedOrgId ?>';
+
+var SESSION = { token: '', orgId: '' };
+
 (function(){
-  if(!SESSION.token){
-    try{
-      var ss=window.sessionStorage;
-      if(ss&&ss.getItem('bk_token')){ SESSION.token=ss.getItem('bk_token')||''; SESSION.orgId=ss.getItem('bk_orgId')||''; }
-    }catch(e){}
+  // 1. Server-injected token (most reliable)
+  if(_tmplToken && _tmplToken.length > 10 && _tmplToken.indexOf('<?') === -1){
+    SESSION.token = _tmplToken;
+    SESSION.orgId = _tmplOrgId || '';
+    return;
   }
+  // 2. URL params — parse from window.location.href directly  
+  try{
+    var href = window.location.href;
+    var tokenMatch = href.match(/[?&]token=([^&]+)/);
+    var orgMatch   = href.match(/[?&]orgId=([^&]+)/);
+    if(tokenMatch){ SESSION.token = decodeURIComponent(tokenMatch[1]); }
+    if(orgMatch)  { SESSION.orgId = decodeURIComponent(orgMatch[1]); }
+    if(SESSION.token) return;
+  }catch(e){}
+  // 3. sessionStorage fallback
+  try{
+    var ss = window.sessionStorage;
+    if(ss && ss.getItem('bk_token')){
+      SESSION.token = ss.getItem('bk_token')||'';
+      SESSION.orgId = ss.getItem('bk_orgId')||'';
+    }
+  }catch(e){}
 })();
+
 function getBKToken(){ return SESSION.token||''; }
 </script>
 
