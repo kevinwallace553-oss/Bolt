@@ -1196,7 +1196,14 @@ function showKiosk() {
   const lbox = document.getElementById('kLeaderBox');
   if(lbox) lbox.classList.remove('show');
 }
-function showDash() { showView('vDash'); }
+function showDash() {
+  // Navigate directly to the GAS dashboard — no old view flash
+  const tok = SESSION?.token || '';
+  const orgId = SESSION?.orgId || '';
+  if (!tok) { showView('vAuth'); return; }
+  const url = GAS_URL + '?page=dashboard&token=' + encodeURIComponent(tok) + '&orgId=' + encodeURIComponent(orgId);
+  window.location.href = url;
+}
 
 /* ════════════════════════════════════════════════════
    DASHBOARD
